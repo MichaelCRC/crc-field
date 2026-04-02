@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const { read, write } = require('../lib/store');
 const { addConnection, broadcast } = require('../lib/sseManager');
 const { isAdmin } = require('../lib/repCodes');
 const { defaultChat } = require('../lib/autoPost');
+const { uploadPhoto } = require('../lib/photoStorage');
+const chatUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 function getChat() { return read('chat.json', defaultChat()); }
 function saveChat(chat) { write('chat.json', chat); }
@@ -45,6 +48,8 @@ router.get('/threads', (req, res) => {
 
 // Get messages for a thread
 router.get('/messages/:threadId', (req, res) => {
+  const code = (req.query.repCode || req.headers['x-rep-code'] || '').toUpperCase();
+  if (req.params.threadId === 'leadership' && !isAdmin(code)) return res.status(403).json({ error: 'Admin only' });
   const chat = getChat();
   const thread = chat.threads[req.params.threadId];
   if (!thread) return res.json({ messages: [] });
@@ -57,6 +62,7 @@ router.get('/messages/:threadId', (req, res) => {
 router.post('/messages', (req, res) => {
   const { threadId, text, photoUrl, repCode } = req.body;
   if (!threadId || (!text && !photoUrl)) return res.status(400).json({ error: 'threadId and text/photo required' });
+  if (threadId === 'leadership' && !isAdmin((repCode || '').toUpperCase())) return res.status(403).json({ error: 'Admin only' });
   const chat = getChat();
   // Create DM thread if needed
   if (threadId.startsWith('dm-') && !chat.threads[threadId]) {
@@ -73,6 +79,28 @@ router.post('/messages', (req, res) => {
   saveChat(chat);
   broadcast(threadId, { type: 'message', message: msg });
   res.json({ success: true, message: msg });
+});
+
+// Upload photo to chat (uses Cloudinary instead of base64 in JSON)
+router.post('/photo', chatUpload.single('photo'), async (req, res) => {
+  const { threadId, repCode } = req.body;
+  if (!req.file || !threadId) return res.status(400).json({ error: 'Photo and threadId required' });
+  if (threadId === 'leadership' && !isAdmin((repCode || '').toUpperCase())) return res.status(403).json({ error: 'Admin only' });
+  try {
+    const photo = await uploadPhoto(req.file.buffer, 'chat', repCode || 'UNKNOWN', 'chat');
+    const chat = getChat();
+    if (!chat.threads[threadId]) return res.status(404).json({ error: 'Thread not found' });
+    const msg = {
+      id: Date.now().toString(), threadId, repCode: repCode || 'UNKNOWN',
+      text: '', photoUrl: photo.thumbnail || photo.url,
+      type: 'message', timestamp: new Date().toISOString(), reactions: {},
+    };
+    chat.threads[threadId].messages.push(msg);
+    if (chat.threads[threadId].messages.length > 500) chat.threads[threadId].messages = chat.threads[threadId].messages.slice(-500);
+    saveChat(chat);
+    broadcast(threadId, { type: 'message', message: msg });
+    res.json({ success: true, message: msg });
+  } catch (e) { res.status(500).json({ error: 'Photo upload failed: ' + e.message }); }
 });
 
 // Add reaction

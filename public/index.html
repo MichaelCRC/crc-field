@@ -33,43 +33,60 @@
 
     <!-- LEADS VIEW -->
     <div id="view-leads" class="app-view active">
-      <div class="quick-add">
-        <input type="text" id="lead-address" placeholder="Enter property address..." class="input-lg" autocomplete="off">
-        <div id="address-suggestions" class="suggestions"></div>
-        <div id="street-view-preview" class="sv-preview"></div>
-        <div class="form-row">
-          <input type="text" id="lead-name" placeholder="Homeowner name" class="input-md">
-          <input type="tel" id="lead-phone" placeholder="Phone" class="input-md">
-        </div>
-        <div style="margin-top:10px">
-          <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type (select all that apply)</div>
-          <div class="chip-row" id="job-type-chips">
-            <button class="chip active" data-val="Roof" onclick="toggleJobChip(this)">Roof</button>
-            <button class="chip" data-val="Siding" onclick="toggleJobChip(this)">Siding</button>
-            <button class="chip" data-val="Gutters" onclick="toggleJobChip(this)">Gutters</button>
-            <button class="chip" data-val="Full Exterior" onclick="toggleJobChip(this)">Full Ext</button>
-            <button class="chip" data-val="Retail" onclick="toggleJobChip(this)">Retail</button>
+      <div id="leads-main">
+        <div class="quick-add">
+          <input type="text" id="lead-address" placeholder="Enter property address..." class="input-lg" autocomplete="off">
+          <div id="address-suggestions" class="suggestions"></div>
+          <div id="street-view-preview" class="sv-preview"></div>
+          <div class="form-row">
+            <input type="text" id="lead-name" placeholder="Homeowner name" class="input-md">
+            <input type="tel" id="lead-phone" placeholder="Phone" class="input-md">
           </div>
-        </div>
-        <div style="margin-top:10px">
-          <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Claim Type</div>
-          <div class="chip-row" id="claim-type-chips">
-            <button class="chip active" data-val="insurance" onclick="selectClaimType(this)">Insurance Claim</button>
-            <button class="chip" data-val="retail" onclick="selectClaimType(this)">Retail</button>
+          <div style="margin-top:10px">
+            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type (select all that apply)</div>
+            <div class="chip-row" id="job-type-chips">
+              <button class="chip active" data-val="Roof" onclick="toggleJobChip(this)">Roof</button>
+              <button class="chip" data-val="Siding" onclick="toggleJobChip(this)">Siding</button>
+              <button class="chip" data-val="Gutters" onclick="toggleJobChip(this)">Gutters</button>
+              <button class="chip" data-val="Full Exterior" onclick="toggleJobChip(this)">Full Ext</button>
+              <button class="chip" data-val="Retail" onclick="toggleJobChip(this)">Retail</button>
+            </div>
           </div>
+          <div style="margin-top:10px">
+            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Claim Type</div>
+            <div class="chip-row" id="claim-type-chips">
+              <button class="chip active" data-val="insurance" onclick="selectClaimType(this)">Insurance Claim</button>
+              <button class="chip" data-val="retail" onclick="selectClaimType(this)">Retail</button>
+            </div>
+          </div>
+          <div class="chip-row" id="source-chips" style="margin-top:10px">
+            <button class="chip active" data-val="Door Knock" onclick="selectSource(this)">Door Knock</button>
+            <button class="chip" data-val="Referral" onclick="selectSource(this)">Referral</button>
+            <button class="chip" data-val="Storm" onclick="selectSource(this)">Storm</button>
+            <button class="chip" data-val="Repeat" onclick="selectSource(this)">Repeat</button>
+          </div>
+          <textarea id="lead-notes" placeholder="Notes (optional)" rows="2" class="input-md"></textarea>
+          <button id="btn-add-lead" class="btn-add" onclick="addLead()">ADD LEAD</button>
         </div>
-        <div class="chip-row" id="source-chips" style="margin-top:10px">
-          <button class="chip active" data-val="Door Knock" onclick="selectSource(this)">Door Knock</button>
-          <button class="chip" data-val="Referral" onclick="selectSource(this)">Referral</button>
-          <button class="chip" data-val="Storm" onclick="selectSource(this)">Storm</button>
-          <button class="chip" data-val="Repeat" onclick="selectSource(this)">Repeat</button>
-        </div>
-        <textarea id="lead-notes" placeholder="Notes (optional)" rows="2" class="input-md"></textarea>
-        <button id="btn-add-lead" class="btn-add" onclick="addLead()">ADD LEAD</button>
+        <div id="lead-confirm" class="lead-confirm" style="display:none"></div>
+        <h3 class="section-title">Recent Leads</h3>
+        <div id="leads-list"></div>
       </div>
-      <div id="lead-confirm" class="lead-confirm" style="display:none"></div>
-      <h3 class="section-title">Recent Leads</h3>
-      <div id="leads-list"></div>
+      <div id="lead-detail" style="display:none"></div>
+    </div>
+
+    <!-- Door Knock Status Modal -->
+    <div id="knock-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--white);border-radius:16px;padding:24px;width:280px;text-align:center">
+        <h3 style="font-size:16px;margin-bottom:16px;color:var(--navy)">Door Result</h3>
+        <div style="display:flex;flex-direction:column;gap:8px" id="knock-options">
+          <button class="btn-add" onclick="completeKnock('not_home')" style="background:var(--amber)">Not Home</button>
+          <button class="btn-add" onclick="completeKnock('not_interested')" style="background:var(--red)">Not Interested</button>
+          <button class="btn-add" onclick="completeKnock('contacted')" style="background:var(--teal)">Interested</button>
+          <button class="btn-add" onclick="completeKnock('appointment')" style="background:var(--green)">Appointment Set</button>
+          <button onclick="closeKnockModal()" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <!-- MAP VIEW -->
@@ -201,7 +218,7 @@
   </div>
 
   <!-- Photo Modal -->
-  <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;display:none;align-items:center;justify-content:center">
+  <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;align-items:center;justify-content:center">
     <img id="photo-modal-img" style="max-width:95%;max-height:90vh;object-fit:contain">
     <button onclick="document.getElementById('photo-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:white;font-size:32px;cursor:pointer">&times;</button>
   </div>

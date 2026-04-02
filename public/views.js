@@ -1,3 +1,16 @@
+let pendingKnock = null;
+async function completeKnock(status) {
+  if (!pendingKnock) return;
+  const { lat, lng } = pendingKnock;
+  closeKnockModal();
+  try {
+    const addr = await reverseGeocode(lat, lng);
+    await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: addr, lat, lng, source: 'Door Knock', status, repCode }) });
+    loadMapPins();
+  } catch (e) { alert('Error saving knock: ' + e.message); }
+}
+function closeKnockModal() { document.getElementById('knock-modal').style.display = 'none'; pendingKnock = null; }
+
 // --- Map ---
 async function initMap() {
   mapInitialized = true;
@@ -12,7 +25,7 @@ async function initMap() {
       if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { gmap.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }); gmap.setZoom(13); }, () => {}, { timeout: 5000 });
       loadMapPins();
       gmap.addListener('click', async (e) => {
-        if (knockMode) { const status = prompt('Door result?\n\nnot_home, not_interested, interested, no_answer'); if (!status) return; const addr = await reverseGeocode(e.latLng.lat(), e.latLng.lng()); fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: addr, lat: e.latLng.lat(), lng: e.latLng.lng(), source: 'Door Knock', status: status.toLowerCase().replace(/ /g,'_'), repCode }) }).then(() => loadMapPins()); }
+        if (knockMode) { pendingKnock = { lat: e.latLng.lat(), lng: e.latLng.lng() }; document.getElementById('knock-modal').style.display = 'flex'; return; }
         if (dropPinMode) { const addr = await reverseGeocode(e.latLng.lat(), e.latLng.lng()); if (addr && confirm(`Add lead at:\n${addr}?`)) { document.getElementById('lead-address').value = addr; selectedAddress = addr; document.getElementById('lead-address').dataset.lat = e.latLng.lat(); document.getElementById('lead-address').dataset.lng = e.latLng.lng(); switchView('leads'); } dropPinMode = false; document.getElementById('btn-drop-pin').classList.remove('active'); }
       });
     };
@@ -22,7 +35,9 @@ async function initMap() {
 async function reverseGeocode(lat, lng) { try { const d = await fetch(`/api/maps/reverse-geocode?lat=${lat}&lng=${lng}`).then(r=>r.json()); return d.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`; } catch { return `${lat.toFixed(5)}, ${lng.toFixed(5)}`; } }
 async function loadMapPins() {
   if (!gmap) return; mapMarkers.forEach(m => m.setMap(null)); mapMarkers = [];
-  const leads = await fetch('/api/leads').then(r => r.json());
+  try {
+  const url = repRole === 'admin' ? '/api/leads' : `/api/leads?repCode=${repCode}`;
+  const leads = await fetch(url).then(r => r.json());
   const colors = { new:'#3B82F6', contacted:'#F59E0B', not_home:'#F59E0B', appointment:'#16A34A', claim_filed:'#16A34A', won:'#16A34A', not_interested:'#DC2626', lost:'#64748B' };
   leads.forEach(l => {
     if (!l.lat || !l.lng) return;
@@ -30,6 +45,7 @@ async function loadMapPins() {
     const info = new google.maps.InfoWindow({ content: `<div style="font-size:13px;max-width:200px"><strong>${l.address}</strong><br>${l.homeowner||''}<br><span style="color:${colors[l.status]}">${l.status}</span><br><a href="#" onclick="viewLead('${l.id}');return false" style="color:#00B5CC">View</a></div>` });
     m.addListener('click', () => info.open(gmap, m)); mapMarkers.push(m);
   });
+  } catch (e) { console.error('Map pins error:', e); }
 }
 function centerOnMe() { if (gmap && navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { gmap.setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }); gmap.setZoom(15); }); }
 function toggleKnockMode() { knockMode = !knockMode; dropPinMode = false; document.getElementById('btn-knock-mode').classList.toggle('active', knockMode); document.getElementById('btn-drop-pin').classList.remove('active'); }
@@ -99,19 +115,47 @@ async function loadAdmin() {
     document.getElementById('admin-leads').innerHTML = leads.slice(0,50).map(l => `<div style="display:flex;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);font-size:13px"><div>${l.address?.substring(0,30)} -- ${l.homeowner||''}</div><div style="color:var(--gray)">${l.repCode} / ${l.status}</div></div>`).join('');
   } catch (e) { console.error('Admin error:', e); }
 }
-async function addRepCode() { const code = document.getElementById('new-rep-code')?.value?.trim(); const name = document.getElementById('new-rep-name')?.value?.trim(); if (!code||!name) return alert('Code and name required'); await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { method:'POST', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({code,name,role:'rep'}) }); loadAdmin(); }
-async function toggleRepCode(code, active) { if (!active && !confirm('Deactivate '+code+'?')) return; await fetch(`/api/admin/rep-codes/${code}?repCode=${repCode}`, { method:'PATCH', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({active}) }); loadAdmin(); }
+async function addRepCode() {
+  const code = document.getElementById('new-rep-code')?.value?.trim(); const name = document.getElementById('new-rep-name')?.value?.trim();
+  if (!code||!name) return alert('Code and name required');
+  try { await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { method:'POST', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({code,name,role:'rep'}) }); loadAdmin(); }
+  catch(e) { alert('Failed to add rep code: ' + e.message); }
+}
+async function toggleRepCode(code, active) {
+  if (!active && !confirm('Deactivate '+code+'?')) return;
+  try { await fetch(`/api/admin/rep-codes/${code}?repCode=${repCode}`, { method:'PATCH', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({active}) }); loadAdmin(); }
+  catch(e) { alert('Failed to update rep code: ' + e.message); }
+}
 
 // --- Chat ---
 let chatThread = 'company', chatSSE = null;
 function initChat() { if (!chatSSE || chatSSE.readyState === 2) connectChat(chatThread); loadChatMessages(chatThread); }
 function switchChatThread(tid) { chatThread=tid; document.querySelectorAll('[id^="chat-tab-"]').forEach(c=>c.classList.remove('active')); const el=document.getElementById('chat-tab-'+tid); if(el)el.classList.add('active'); connectChat(tid); loadChatMessages(tid); }
-function connectChat(tid) { if(chatSSE)chatSSE.close(); chatSSE=new EventSource('/api/chat/stream/'+tid); chatSSE.onmessage=e=>{ try{ const d=JSON.parse(e.data); if(d.type==='message')appendChatMsg(d.message); }catch{} }; }
-async function loadChatMessages(tid) { const c=document.getElementById('chat-messages'); if(!c)return; const data=await fetch('/api/chat/messages/'+tid).then(r=>r.json()); c.innerHTML=(data.messages||[]).map(m=>chatBubble(m)).join(''); c.scrollTop=c.scrollHeight; }
+function connectChat(tid) {
+  if(chatSSE)chatSSE.close();
+  chatSSE=new EventSource('/api/chat/stream/'+tid);
+  chatSSE.onmessage=e=>{ try{ const d=JSON.parse(e.data); if(d.type==='message')appendChatMsg(d.message); }catch{} };
+  chatSSE.onerror=()=>{ chatSSE.close(); setTimeout(()=>{ if(document.getElementById('view-chat')?.classList.contains('active')) connectChat(tid); }, 3000); };
+}
+async function loadChatMessages(tid) {
+  const c=document.getElementById('chat-messages'); if(!c)return;
+  try { const data=await fetch('/api/chat/messages/'+tid).then(r=>r.json()); c.innerHTML=(data.messages||[]).map(m=>chatBubble(m)).join(''); c.scrollTop=c.scrollHeight; }
+  catch(e) { c.innerHTML='<p style="padding:16px;color:var(--red)">Failed to load messages</p>'; }
+}
 function chatBubble(m) { const mine=m.repCode===repCode; if(m.type==='system') return '<div style="text-align:center;padding:8px;font-size:12px;color:var(--gray);font-style:italic">'+m.text+'</div>'; const bg=mine?'var(--teal)':'var(--navy)'; const al=mine?'flex-end':'flex-start'; const t=m.timestamp?new Date(m.timestamp).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):''; return '<div style="display:flex;flex-direction:column;align-items:'+al+';margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--gray)">'+m.repCode+'</div><div style="background:'+bg+';color:white;padding:8px 14px;border-radius:16px;max-width:80%;font-size:14px;word-break:break-word">'+(m.photoUrl?'<img src="'+m.photoUrl+'" style="max-width:100%;border-radius:8px"><br>':'')+m.text+'</div><div style="font-size:10px;color:var(--gray)">'+t+'</div></div>'; }
 function appendChatMsg(m) { const c=document.getElementById('chat-messages'); if(!c)return; c.innerHTML+=chatBubble(m); c.scrollTop=c.scrollHeight; }
-async function sendChatMessage() { const i=document.getElementById('chat-input'); const t=i.value.trim(); if(!t)return; i.value=''; await fetch('/api/chat/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({threadId:chatThread,text:t,repCode})}); }
-async function sendChatPhoto(file) { if(!file)return; const r=new FileReader(); r.onload=async()=>{ await fetch('/api/chat/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({threadId:chatThread,text:'',photoUrl:r.result,repCode})}); }; r.readAsDataURL(file); }
+async function sendChatMessage() {
+  const i=document.getElementById('chat-input'); const t=i.value.trim(); if(!t)return; i.value='';
+  try { await fetch('/api/chat/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({threadId:chatThread,text:t,repCode})}); }
+  catch(e) { alert('Failed to send message'); i.value=t; }
+}
+async function sendChatPhoto(file) {
+  if(!file)return;
+  try {
+    const fd=new FormData(); fd.append('photo',file); fd.append('threadId',chatThread); fd.append('repCode',repCode);
+    await fetch('/api/chat/photo',{method:'POST',body:fd});
+  } catch(e) { alert('Failed to send photo'); }
+}
 function showDmList() { alert('Direct messages coming soon. Use CRC Team thread for now.'); }
 
 // --- Brain ---
@@ -127,6 +171,7 @@ async function sendBrainMessage() {
   c.scrollTop=c.scrollHeight;
   try {
     const resp=await fetch('/api/brain/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({repCode,message:t,jobContext:activeJobContext,conversationHistory:brainHistory.slice(-10)})});
+    if(!resp.ok){ const err=await resp.text().catch(()=>'Unknown error'); throw new Error(err); }
     const reader=resp.body.getReader(); const dec=new TextDecoder(); let full='',buf=''; const el=document.getElementById('brain-stream');
     while(true){ const{done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop()||'';
       for(const line of lines){ if(!line.startsWith('data: '))continue; try{const d=JSON.parse(line.slice(6)); if(d.type==='delta'){full+=d.text; if(el)el.textContent=full; c.scrollTop=c.scrollHeight;} if(d.type==='done')full=d.fullText||full;}catch{} }

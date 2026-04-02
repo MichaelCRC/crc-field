@@ -75,7 +75,7 @@ function switchView(name) {
   document.getElementById('view-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
-  if (name === 'leads') loadLeads();
+  if (name === 'leads') { document.getElementById('lead-detail').style.display = 'none'; document.getElementById('leads-main').style.display = ''; loadLeads(); }
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'storms' && !stormsLoaded) loadStorms();
   if (name === 'stats') loadStats();
@@ -132,7 +132,7 @@ async function loadLeads() {
   } catch (e) { c.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`; }
 }
 
-// --- Lead Detail (loaded dynamically into leads view) ---
+// --- Lead Detail (uses separate div to preserve leads DOM) ---
 async function viewLead(id) {
   try {
     const lead = await fetch(`/api/leads/${id}`).then(r => r.json());
@@ -143,12 +143,15 @@ async function viewLead(id) {
     const photoGrid = photos.length ? photos.map(p => `<div style="position:relative"><img src="${p.thumbnail || p.url}" style="width:100%;height:80px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="showPhotoModal('${p.url}')"></div>`).join('') : '';
     const measHtml = lead.measurements ? `<div style="padding:12px;background:var(--bg);border-radius:6px;margin-top:12px;font-size:13px">
       <strong>Hover Measurements</strong><br>${lead.measurements.totalSquares || '?'} SQ | Ridge: ${lead.measurements.ridgeLength || 0} LF | Pitch: ${lead.measurements.predominantPitch || '?'}</div>` : '';
-    document.getElementById('view-leads').innerHTML = `<div style="padding:16px;max-width:500px;margin:0 auto">
+    document.getElementById('leads-main').style.display = 'none';
+    const detail = document.getElementById('lead-detail');
+    detail.style.display = 'block';
+    detail.innerHTML = `<div style="padding:16px;max-width:500px;margin:0 auto">
       ${lead.streetViewUrl ? `<img src="${lead.streetViewUrl}" style="width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:16px">` : ''}
       <h2 style="font-size:18px;margin-bottom:4px">${lead.address}</h2>
       <p style="color:var(--gray);margin-bottom:16px">${lead.homeowner || 'No name'} ${lead.phone ? '- ' + lead.phone : ''}</p>
       <div style="margin-bottom:16px"><strong style="font-size:12px;color:var(--gray)">STATUS</strong><div class="chip-row">${sBtns}</div></div>
-      ${lead.status !== 'claim_filed' && lead.status !== 'won' ? `<button class="btn-add" onclick="fileClaim('${id}')" style="margin-bottom:16px">Mark as Claim Filed</button>` : ''}
+      ${lead.status !== 'claim_filed' && lead.status !== 'won' ? `<button class="btn-add" id="btn-file-claim" onclick="fileClaim('${id}',this)" style="margin-bottom:16px">Mark as Claim Filed</button>` : ''}
       <div style="font-size:14px;margin-bottom:16px"><strong>Job:</strong> ${(lead.jobTypes || [lead.jobType]).join(', ')} | <strong>Source:</strong> ${lead.source} | <strong>Type:</strong> ${lead.jobCategory || 'insurance'}</div>
       ${lead.notes ? `<div style="padding:12px;background:var(--bg);border-radius:6px;margin-bottom:16px;font-size:14px">${lead.notes}</div>` : ''}
       ${measHtml}
@@ -158,25 +161,35 @@ async function viewLead(id) {
           &#128247; Add Photos<input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="uploadPhotos('${id}',this.files)">
         </label>
       </div>
-      ${!lead.measurements ? `<button class="btn-add" style="background:var(--navy);margin-bottom:12px" onclick="orderHover('${id}')">Order Hover Measurement</button>` : ''}
+      ${!lead.measurements ? `<button class="btn-add" style="background:var(--navy);margin-bottom:12px" onclick="orderHover('${id}',this)">Order Hover Measurement</button>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         ${lead.phone ? `<a href="tel:${lead.phone}" class="chip" style="text-decoration:none">Call</a><a href="sms:${lead.phone}" class="chip" style="text-decoration:none">Text</a>` : ''}
         ${lead.portalJobId ? `<a href="https://crc-supplements-portal.onrender.com/#job-${lead.portalJobId}" target="_blank" class="chip" style="text-decoration:none;background:var(--navy);color:white">Open in Portal</a>` : ''}
         <button class="chip" style="background:var(--navy);color:white" onclick="switchView('brain')">&#129504; Ask Brain</button>
       </div>
-      <button onclick="switchView('leads')" style="padding:12px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer">Back to Leads</button>
+      <button onclick="backToLeads()" style="padding:12px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer">Back to Leads</button>
     </div>`;
   } catch (e) { alert('Error: ' + e.message); }
 }
-async function updateStatus(id, status) { await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); viewLead(id); }
-async function fileClaim(id) {
-  const lead = await fetch(`/api/leads/${id}`).then(r => r.json());
-  if (!confirm('File claim for ' + (lead.homeowner||'Unknown') + ' at ' + lead.address + '?\n\nSends to CRC Claims and builds the full report.')) return;
-  const btn = event?.target; if (btn) { btn.disabled = true; btn.textContent = 'Filing...'; }
-  await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'claim_filed' }) });
-  alert('Claim filed! Report building automatically.'); viewLead(id);
+function backToLeads() {
+  document.getElementById('lead-detail').style.display = 'none';
+  document.getElementById('leads-main').style.display = '';
+  loadLeads();
 }
-function showPhotoModal(url) { const m = document.getElementById('photo-modal'); m.style.display = 'flex'; document.getElementById('photo-modal-img').src = url; }
+async function updateStatus(id, status) {
+  try { await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); viewLead(id); }
+  catch (e) { alert('Failed to update status: ' + e.message); }
+}
+async function fileClaim(id, btn) {
+  try {
+    const lead = await fetch(`/api/leads/${id}`).then(r => r.json());
+    if (!confirm('File claim for ' + (lead.homeowner||'Unknown') + ' at ' + lead.address + '?\n\nSends to CRC Claims and builds the full report.')) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Filing...'; }
+    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'claim_filed' }) });
+    alert('Claim filed! Report building automatically.'); viewLead(id);
+  } catch (e) { alert('Error filing claim: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Mark as Claim Filed'; } }
+}
+function showPhotoModal(url) { const m = document.getElementById('photo-modal'); m.style.display = 'flex'; m.style.alignItems = 'center'; m.style.justifyContent = 'center'; document.getElementById('photo-modal-img').src = url; }
 async function uploadPhotos(leadId, files) {
   if (!files?.length) return;
   const fd = new FormData();
@@ -185,11 +198,11 @@ async function uploadPhotos(leadId, files) {
   await fetch(`/api/leads/${leadId}/photos`, { method: 'POST', body: fd });
   viewLead(leadId);
 }
-async function orderHover(leadId) {
-  const btn = event.target; btn.disabled = true; btn.textContent = 'Ordering Hover...';
+async function orderHover(leadId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Ordering Hover...'; }
   try {
     const data = await fetch(`/api/hover/order/${leadId}`, { method: 'POST' }).then(r => r.json());
     alert(data.message || 'Hover ordered'); viewLead(leadId);
-  } catch (e) { alert('Error: ' + e.message); btn.disabled = false; btn.textContent = 'Order Hover Measurement'; }
+  } catch (e) { alert('Error: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Order Hover Measurement'; } }
 }
 

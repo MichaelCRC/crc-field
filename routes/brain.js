@@ -34,6 +34,12 @@ router.post('/chat', async (req, res) => {
         messages: history,
       }),
     });
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => 'AI service error');
+      res.write(`data: ${JSON.stringify({ type: 'error', error: `AI error (${resp.status}): ${errText.substring(0, 200)}` })}\n\n`);
+      res.end();
+      return;
+    }
     let fullText = '';
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();

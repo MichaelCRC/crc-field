@@ -12,6 +12,20 @@ router.get('/', (req, res) => {
   res.json(leads);
 });
 
+// CSV export -- must be above /:id to avoid route conflict
+router.get('/export/csv', (req, res) => {
+  const leads = listLeads();
+  const header = 'Name,Address,City,State,Zip,Phone,Job Type,Status,Source,Rep,Date Added';
+  const rows = leads.map(l => [
+    l.homeowner, l.address, l.city, l.state, l.zip,
+    l.phone, l.jobType, l.status, l.source, l.repCode,
+    l.createdAt ? new Date(l.createdAt).toLocaleDateString() : ''
+  ].map(v => `"${(v || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`).join(','));
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="crc-leads.csv"');
+  res.send([header, ...rows].join('\n'));
+});
+
 // Single lead
 router.get('/:id', (req, res) => {
   const lead = getLead(req.params.id);
@@ -56,20 +70,6 @@ router.patch('/:id', async (req, res) => {
     autoPost('claim_filed', updated);
   }
   res.json(updated);
-});
-
-// CSV export
-router.get('/export/csv', (req, res) => {
-  const leads = listLeads();
-  const header = 'Name,Address,City,State,Zip,Phone,Job Type,Status,Source,Rep,Date Added';
-  const rows = leads.map(l => [
-    l.homeowner, l.address, l.city, l.state, l.zip,
-    l.phone, l.jobType, l.status, l.source, l.repCode,
-    l.createdAt ? new Date(l.createdAt).toLocaleDateString() : ''
-  ].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(','));
-  res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', 'attachment; filename="crc-leads.csv"');
-  res.send([header, ...rows].join('\n'));
 });
 
 module.exports = router;
