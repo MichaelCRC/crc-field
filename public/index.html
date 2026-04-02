@@ -171,12 +171,14 @@
         </div>
       </div>
       <div id="brain-suggestions" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px">
+        <button class="chip" onclick="askBrain(this.textContent)">Give me the full door script</button>
+        <button class="chip" onclick="askBrain(this.textContent)">What do I say when they say not interested?</button>
+        <button class="chip" onclick="askBrain(this.textContent)">How do I handle price objections?</button>
+        <button class="chip" onclick="askBrain(this.textContent)">What are the 6 qualifying ingredients?</button>
+        <button class="chip" onclick="askBrain(this.textContent)">What is my daily activity target?</button>
+        <button class="chip" onclick="askBrain(this.textContent)">Walk me through the money math</button>
         <button class="chip" onclick="askBrain(this.textContent)">What qualifies for steep slope?</button>
         <button class="chip" onclick="askBrain(this.textContent)">How to fight Grange partial scope?</button>
-        <button class="chip" onclick="askBrain(this.textContent)">What IRC code covers drip edge?</button>
-        <button class="chip" onclick="askBrain(this.textContent)">What is OAC 3901-1-54?</button>
-        <button class="chip" onclick="askBrain(this.textContent)">Walk me through DCSI step 3</button>
-        <button class="chip" onclick="askBrain(this.textContent)">How to calculate ice and water?</button>
       </div>
       <div id="brain-messages" style="overflow-y:auto;padding:16px;height:calc(100vh - 340px)"></div>
       <div style="display:flex;gap:8px;padding:12px 16px;background:var(--white);border-top:1px solid var(--border)">
@@ -219,7 +221,7 @@
       </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- Bottom Nav (4 primary tabs) -->
     <nav class="bottom-nav">
       <button class="nav-item active" onclick="switchView('leads')" id="nav-leads">
         <span class="nav-icon">&#127968;</span><span class="nav-label">Leads</span>
@@ -230,19 +232,42 @@
       <button class="nav-item" onclick="switchView('storms')" id="nav-storms">
         <span class="nav-icon">&#9928;</span><span class="nav-label">Storms</span>
       </button>
-      <button class="nav-item" onclick="switchView('chat')" id="nav-chat">
-        <span class="nav-icon">&#128172;</span><span class="nav-label">Chat</span>
-      </button>
-      <button class="nav-item" onclick="switchView('brain')" id="nav-brain">
-        <span class="nav-icon">&#129504;</span><span class="nav-label">Brain</span>
-      </button>
-      <button class="nav-item" onclick="switchView('stats')" id="nav-stats" style="display:none">
-        <span class="nav-icon">&#128202;</span><span class="nav-label">Stats</span>
-      </button>
-      <button class="nav-item" onclick="switchView('admin')" id="nav-admin" style="display:none">
-        <span class="nav-icon">&#128100;</span><span class="nav-label">Admin</span>
+      <button class="nav-item" onclick="toggleMoreMenu()" id="nav-more">
+        <span class="nav-icon">&#9776;</span><span class="nav-label">More</span>
       </button>
     </nav>
+
+    <!-- More Menu (slide-up) -->
+    <div id="more-menu" class="more-overlay" onclick="if(event.target===this)closeMoreMenu()">
+      <div class="more-panel">
+        <div class="more-header">More</div>
+        <button class="more-item" onclick="closeMoreMenu();switchView('chat')">
+          <span class="more-icon">&#128172;</span><span>Chat</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();switchView('brain')">
+          <span class="more-icon">&#129504;</span><span>CRC Brain</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();switchView('stats')" id="nav-stats" style="display:none">
+          <span class="more-icon">&#128202;</span><span>Stats</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();switchView('admin')" id="nav-admin" style="display:none">
+          <span class="more-icon">&#128100;</span><span>Admin</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <div class="more-header" style="margin-top:8px">Documents</div>
+        <button class="more-item" onclick="closeMoreMenu();window.open('/docs/buyers-guide','_blank')">
+          <span class="more-icon">&#128216;</span><span>Buyers Guide</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();window.open('/docs/career-guide','_blank')">
+          <span class="more-icon">&#128188;</span><span>Sales Career Guide</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();window.open('/rep-card/'+repCode,'_blank')">
+          <span class="more-icon">&#127183;</span><span>My Rep Card</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();switchView('referrals')" id="nav-referrals">
+          <span class="more-icon">&#129309;</span><span>Referrals</span><span class="more-arrow">&#8250;</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Photo Modal (viewer) -->

@@ -30,11 +30,22 @@ body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg);
 .app-view.active { display: block; }
 
 /* Bottom nav */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); height: 60px; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .nav-item.active { color: var(--teal); }
-.nav-icon { font-size: 20px; line-height: 1; }
-.nav-label { font-size: 10px; font-weight: 600; margin-top: 2px; }
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 600; margin-top: 3px; }
+
+/* More Menu overlay */
+.more-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+.more-overlay.open { display: block; }
+.more-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-radius: 16px 16px 0 0; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); max-height: 70vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.more-header { font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px 6px; }
+.more-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 20px; background: none; border: none; font-size: 15px; color: var(--black); cursor: pointer; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); }
+.more-item:active { background: var(--bg); }
+.more-icon { font-size: 20px; width: 28px; text-align: center; }
+.more-arrow { margin-left: auto; color: var(--gray); font-size: 18px; }
 
 /* Quick Add */
 .quick-add { padding: 16px; background: var(--white); border-bottom: 1px solid var(--border); }

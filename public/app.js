@@ -74,8 +74,13 @@ function getClaimType() { return document.querySelector('#claim-type-chips .chip
 function selectSource(el) { document.querySelectorAll('#source-chips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
 function getSource() { return document.querySelector('#source-chips .chip.active')?.dataset.val || 'Door Knock'; }
 
+// --- More Menu ---
+function toggleMoreMenu() { document.getElementById('more-menu').classList.toggle('open'); }
+function closeMoreMenu() { document.getElementById('more-menu').classList.remove('open'); }
+
 // --- View Switching ---
 function switchView(name) {
+  closeMoreMenu();
   document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
