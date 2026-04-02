@@ -377,6 +377,22 @@ async function loadAdmin() {
         <div><strong>${r.name}</strong> (${r.code})</div>
         <div style="font-size:13px;color:var(--gray)">${r.thisWeek} this week / ${r.totalLeads} total / ${r.conversionRate}% close</div>
       </div>`).join('');
+    // Rep codes management
+    const allCodes = await fetch(`/api/admin/rep-codes?repCode=${repCode}`).then(r => r.json());
+    document.getElementById('admin-rep-codes').innerHTML = `
+      <div id="add-rep-form" style="display:none;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="new-rep-code" placeholder="Code" style="width:100px;padding:8px;border:1px solid var(--border);border-radius:4px;text-transform:uppercase">
+          <input type="text" id="new-rep-name" placeholder="Full Name" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:4px">
+          <select id="new-rep-role" style="padding:8px;border:1px solid var(--border);border-radius:4px"><option value="rep">Rep</option><option value="admin">Admin</option></select>
+          <button class="chip active" onclick="addRepCode()">Add</button>
+          <button class="chip" onclick="document.getElementById('add-rep-form').style.display='none'">Cancel</button>
+        </div>
+      </div>` +
+      allCodes.map(c => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border)">
+        <div><strong>${c.code}</strong> -- ${c.name} <span style="font-size:11px;color:var(--gray)">(${c.role})</span></div>
+        <div>${c.active ? (c.role !== 'admin' ? `<button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',false)">Deactivate</button>` : '') : `<span style="color:var(--red);font-size:12px;margin-right:8px">Inactive</span><button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',true)">Reactivate</button>`}</div>
+      </div>`).join('');
     // Recent leads
     document.getElementById('admin-leads').innerHTML = leads.slice(0, 50).map(l => `
       <div style="display:flex;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);font-size:13px">
@@ -384,6 +400,20 @@ async function loadAdmin() {
         <div style="color:var(--gray)">${l.repCode} / ${l.status}</div>
       </div>`).join('');
   } catch (e) { console.error('Admin load error:', e); }
+}
+
+async function addRepCode() {
+  const code = document.getElementById('new-rep-code')?.value?.trim();
+  const name = document.getElementById('new-rep-name')?.value?.trim();
+  const role = document.getElementById('new-rep-role')?.value || 'rep';
+  if (!code || !name) return alert('Code and name required');
+  await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rep-code': repCode }, body: JSON.stringify({ code, name, role }) });
+  loadAdmin();
+}
+async function toggleRepCode(code, active) {
+  if (!active && !confirm('Deactivate ' + code + '? They will be locked out immediately.')) return;
+  await fetch(`/api/admin/rep-codes/${code}?repCode=${repCode}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-rep-code': repCode }, body: JSON.stringify({ active }) });
+  loadAdmin();
 }
 
 // Enter key on gate input

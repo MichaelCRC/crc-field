@@ -57,11 +57,33 @@ router.get('/export', requireAdmin, (req, res) => {
   res.send([header, ...rows].join('\n'));
 });
 
+// Rep code management
+router.get('/rep-codes', requireAdmin, (req, res) => res.json(listRepCodes()));
+router.post('/rep-codes', requireAdmin, (req, res) => {
+  const { code, name, role } = req.body;
+  if (!code || !name) return res.status(400).json({ error: 'Code and name required' });
+  const { write } = require('../lib/store');
+  const codes = listRepCodes();
+  const upper = code.toUpperCase();
+  if (codes.find(c => c.code === upper)) return res.status(400).json({ error: 'Code already exists' });
+  codes.push({ code: upper, name, role: role || 'rep', active: true, createdAt: new Date().toISOString() });
+  write('rep-codes.json', { codes });
+  res.status(201).json({ success: true, code: upper });
+});
+router.patch('/rep-codes/:code', requireAdmin, (req, res) => {
+  const { write } = require('../lib/store');
+  const codes = listRepCodes();
+  const idx = codes.findIndex(c => c.code === req.params.code.toUpperCase());
+  if (idx === -1) return res.status(404).json({ error: 'Code not found' });
+  if (req.body.active !== undefined) codes[idx].active = req.body.active;
+  if (req.body.name) codes[idx].name = req.body.name;
+  if (req.body.role) codes[idx].role = req.body.role;
+  write('rep-codes.json', { codes });
+  res.json({ success: true, code: codes[idx] });
+});
+
 // Zones
 router.get('/zones', (req, res) => res.json(listZones()));
-router.post('/zones', (req, res) => {
-  const zone = createZone(req.body);
-  res.status(201).json(zone);
-});
+router.post('/zones', (req, res) => { res.status(201).json(createZone(req.body)); });
 
 module.exports = router;

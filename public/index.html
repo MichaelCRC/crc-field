@@ -15,7 +15,7 @@
       <div class="gate-logo">CRC</div>
       <h2>Field Intel</h2>
       <p>Enter your rep code</p>
-      <input type="text" id="gate-code" maxlength="6" placeholder="REP CODE" autocapitalize="characters" autofocus>
+      <input type="text" id="gate-code" maxlength="12" placeholder="REP CODE" autocapitalize="characters" autofocus>
       <button onclick="submitRepCode()">Continue</button>
       <div id="gate-error" class="gate-error"></div>
     </div>
@@ -99,6 +99,11 @@
       <div id="admin-stats" class="admin-stats"></div>
       <h3 class="section-title">Rep Performance</h3>
       <div id="admin-reps"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 8px">
+        <h3 class="section-title" style="padding:0">Rep Codes</h3>
+        <button class="chip active" onclick="document.getElementById('add-rep-form').style.display=''">+ Add Rep Code</button>
+      </div>
+      <div id="admin-rep-codes"></div>
       <h3 class="section-title">Recent Leads (All Reps)</h3>
       <div id="admin-leads"></div>
       <div style="padding:16px">
