@@ -1,0 +1,53 @@
+{
+  "codes": [
+    {
+      "code": "MCG",
+      "name": "Michael McGovern",
+      "role": "admin",
+      "active": true,
+      "createdAt": "2026-04-01"
+    },
+    {
+      "code": "LANE",
+      "name": "Lane Campbell",
+      "role": "admin",
+      "active": true,
+      "createdAt": "2026-04-01"
+    },
+    {
+      "code": "TSHINGLE",
+      "name": "Tom Davidson",
+      "role": "rep",
+      "active": true,
+      "createdAt": "2026-04-01"
+    },
+    {
+      "code": "RHYSB",
+      "name": "Rhys Bennett",
+      "role": "rep",
+      "active": true,
+      "createdAt": "2026-04-01"
+    },
+    {
+      "code": "DCHRIS",
+      "name": "Donny Christiansen",
+      "role": "rep",
+      "active": true,
+      "createdAt": "2026-04-01"
+    },
+    {
+      "code": "RONDO",
+      "name": "Nick Rondon",
+      "role": "rep",
+      "active": true,
+      "createdAt": "2026-04-01"
+    },
+    {
+      "code": "DOMG",
+      "name": "Dom G",
+      "role": "rep",
+      "active": true,
+      "createdAt": "2026-04-01"
+    }
+  ]
+}
