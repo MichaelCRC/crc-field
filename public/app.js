@@ -144,10 +144,11 @@ async function viewLead(id) {
     activeJobContext = { address: lead.address, homeowner: lead.homeowner, jobType: lead.jobType, carrier: lead.jobCategory === 'retail' ? 'Retail' : '', status: lead.status };
     const statuses = ['new','contacted','not_home','not_interested','appointment','claim_filed','won','lost'];
     const sBtns = statuses.map(s => `<button class="chip ${lead.status===s?'active':''}" onclick="updateStatus('${id}','${s}')">${s.replace(/_/g,' ')}</button>`).join('');
-    const photos = lead.photos || [];
-    const photoGrid = photos.length ? photos.map(p => `<div style="position:relative"><img src="${p.thumbnail || p.url}" style="width:100%;height:80px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="showPhotoModal('${p.url}')"></div>`).join('') : '';
     const measHtml = lead.measurements ? `<div style="padding:12px;background:var(--bg);border-radius:6px;margin-top:12px;font-size:13px">
       <strong>Hover Measurements</strong><br>${lead.measurements.totalSquares || '?'} SQ | Ridge: ${lead.measurements.ridgeLength || 0} LF | Pitch: ${lead.measurements.predominantPitch || '?'}</div>` : '';
+    const syncHtml = lead.homeownerPortalSync?.lastSync
+      ? `Homeowner portal: Synced ${(lead.homeownerPortalSync.inspectionPhotosSynced || 0) + (lead.homeownerPortalSync.buildPhotosSynced || 0)} photos`
+      : 'Homeowner portal: Not synced';
     document.getElementById('leads-main').style.display = 'none';
     const detail = document.getElementById('lead-detail');
     detail.style.display = 'block';
@@ -160,12 +161,7 @@ async function viewLead(id) {
       <div style="font-size:14px;margin-bottom:16px"><strong>Job:</strong> ${(lead.jobTypes || [lead.jobType]).join(', ')} | <strong>Source:</strong> ${lead.source} | <strong>Type:</strong> ${lead.jobCategory || 'insurance'}</div>
       ${lead.notes ? `<div style="padding:12px;background:var(--bg);border-radius:6px;margin-bottom:16px;font-size:14px">${lead.notes}</div>` : ''}
       ${measHtml}
-      <div style="margin:16px 0"><strong style="font-size:12px;color:var(--gray)">PHOTOS (${photos.length})</strong>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px">${photoGrid}</div>
-        <label class="btn-add" style="margin-top:8px;display:block;text-align:center;cursor:pointer">
-          &#128247; Add Photos<input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="uploadPhotos('${id}',this.files)">
-        </label>
-      </div>
+      <div id="photo-section" style="margin:16px 0"></div>
       ${!lead.measurements ? `<button class="btn-add" style="background:var(--navy);margin-bottom:12px" onclick="orderHover('${id}',this)">Order Hover Measurement</button>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         ${lead.phone ? `<a href="tel:${lead.phone}" class="chip" style="text-decoration:none">Call</a><a href="sms:${lead.phone}" class="chip" style="text-decoration:none">Text</a>` : ''}
@@ -174,6 +170,8 @@ async function viewLead(id) {
       </div>
       <button onclick="backToLeads()" style="padding:12px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer">Back to Leads</button>
     </div>`;
+    // Load photo system
+    loadPhotos(id);
   } catch (e) { alert('Error: ' + e.message); }
 }
 function backToLeads() {
@@ -194,15 +192,7 @@ async function fileClaim(id, btn) {
     alert('Claim filed! Report building automatically.'); viewLead(id);
   } catch (e) { alert('Error filing claim: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Mark as Claim Filed'; } }
 }
-function showPhotoModal(url) { const m = document.getElementById('photo-modal'); m.style.display = 'flex'; m.style.alignItems = 'center'; m.style.justifyContent = 'center'; document.getElementById('photo-modal-img').src = url; }
-async function uploadPhotos(leadId, files) {
-  if (!files?.length) return;
-  const fd = new FormData();
-  for (const f of files) fd.append('photos', f);
-  fd.append('repCode', repCode); fd.append('tag', 'overview');
-  await fetch(`/api/leads/${leadId}/photos`, { method: 'POST', body: fd });
-  viewLead(leadId);
-}
+// Photo modal now handled by photos.js
 async function orderHover(leadId, btn) {
   if (btn) { btn.disabled = true; btn.textContent = 'Ordering Hover...'; }
   try {

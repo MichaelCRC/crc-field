@@ -4,6 +4,10 @@
       "code": "MCG",
       "name": "Michael McGovern",
       "role": "admin",
+      "title": "CEO",
+      "department": "Leadership",
+      "showOnLeaderboard": true,
+      "canFileClaims": true,
       "active": true,
       "createdAt": "2026-04-01"
     },
@@ -11,6 +15,10 @@
       "code": "LANE",
       "name": "Lane Campbell",
       "role": "admin",
+      "title": "Production Director",
+      "department": "Operations",
+      "showOnLeaderboard": false,
+      "canFileClaims": false,
       "active": true,
       "createdAt": "2026-04-01"
     },
@@ -18,20 +26,32 @@
       "code": "TSHINGLE",
       "name": "Tom Davidson",
       "role": "rep",
+      "title": "Sales Representative",
+      "department": "Sales",
+      "showOnLeaderboard": true,
+      "canFileClaims": true,
       "active": true,
       "createdAt": "2026-04-01"
     },
     {
       "code": "RHYSB",
       "name": "Rhys Bennett",
-      "role": "rep",
+      "role": "staff",
+      "title": "Marketing Manager",
+      "department": "Marketing",
+      "showOnLeaderboard": true,
+      "canFileClaims": false,
       "active": true,
       "createdAt": "2026-04-01"
     },
     {
       "code": "DCHRIS",
       "name": "Donny Christiansen",
-      "role": "rep",
+      "role": "staff",
+      "title": "COO",
+      "department": "Operations",
+      "showOnLeaderboard": true,
+      "canFileClaims": false,
       "active": true,
       "createdAt": "2026-04-01"
     },
@@ -39,6 +59,10 @@
       "code": "RONDO",
       "name": "Nick Rondon",
       "role": "rep",
+      "title": "Sales Representative",
+      "department": "Sales",
+      "showOnLeaderboard": true,
+      "canFileClaims": true,
       "active": true,
       "createdAt": "2026-04-01"
     },
@@ -46,6 +70,10 @@
       "code": "DOMG",
       "name": "Dom G",
       "role": "rep",
+      "title": "Sales Representative",
+      "department": "Sales",
+      "showOnLeaderboard": true,
+      "canFileClaims": true,
       "active": true,
       "createdAt": "2026-04-01"
     }

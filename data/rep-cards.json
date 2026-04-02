@@ -1,0 +1,79 @@
+{
+  "MCG": {
+    "name": "Michael McGovern",
+    "title": "CEO",
+    "phone": "614-824-7462",
+    "email": "michael@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  },
+  "LANE": {
+    "name": "Lane Campbell",
+    "title": "Production Director",
+    "phone": "(614) 743-1481",
+    "email": "claims@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  },
+  "TSHINGLE": {
+    "name": "Tom Davidson",
+    "title": "Sales Representative",
+    "phone": "(614) 743-1481",
+    "email": "claims@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  },
+  "RHYSB": {
+    "name": "Rhys Bennett",
+    "title": "Marketing Manager",
+    "phone": "(614) 743-1481",
+    "email": "claims@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  },
+  "DCHRIS": {
+    "name": "Donny Christiansen",
+    "title": "COO",
+    "phone": "(614) 743-1481",
+    "email": "claims@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  },
+  "RONDO": {
+    "name": "Nick Rondon",
+    "title": "Sales Representative",
+    "phone": "(614) 743-1481",
+    "email": "claims@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  },
+  "DOMG": {
+    "name": "Dom G",
+    "title": "Sales Representative",
+    "phone": "(614) 743-1481",
+    "email": "claims@columbusroofingco.com",
+    "bio": "",
+    "photo": "",
+    "linkedin": "",
+    "instagram": "",
+    "updatedAt": "2026-04-01"
+  }
+}
