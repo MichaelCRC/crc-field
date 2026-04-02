@@ -3,6 +3,7 @@ const router = express.Router();
 const { getDataCore, listLeads, listZones, createZone, read, write } = require('../lib/store');
 const { isAdmin, listRepCodes } = require('../lib/repCodes');
 const { defaultChat } = require('../lib/autoPost');
+const { analyze, formatReport } = require('../lib/systemIntelligence');
 
 function requireAdmin(req, res, next) {
   const code = (req.headers['x-rep-code'] || req.query.repCode || '').toUpperCase();
@@ -152,6 +153,19 @@ router.delete('/chat/threads/:threadId/members/:code', requireAdmin, (req, res) 
   thread.members = thread.members.filter(m => m !== req.params.code.toUpperCase());
   saveChat(chat);
   res.json({ success: true, members: thread.members });
+});
+
+// System Intelligence
+router.get('/intelligence', requireAdmin, (req, res) => {
+  const existing = read('intelligence-report.json', null);
+  if (existing) return res.json(existing);
+  res.json({ generatedAt: null, message: 'No report yet. POST to generate.' });
+});
+router.post('/intelligence', requireAdmin, (req, res) => {
+  try {
+    const report = analyze();
+    res.json({ success: true, report, formatted: formatReport(report) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Zones
