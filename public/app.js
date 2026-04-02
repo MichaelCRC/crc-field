@@ -206,3 +206,54 @@ async function orderHover(leadId, btn) {
   } catch (e) { alert('Error: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Order Hover Measurement'; } }
 }
 
+// --- Current Location for Address Entry ---
+async function useCurrentLocation() {
+  const btn = document.getElementById('btn-current-location');
+  const status = document.getElementById('location-status');
+  const input = document.getElementById('lead-address');
+  
+  if (!navigator.geolocation) {
+    status.textContent = 'Geolocation not supported';
+    status.style.display = 'block';
+    return;
+  }
+  
+  btn.style.opacity = '0.5';
+  btn.disabled = true;
+  status.textContent = 'Getting location...';
+  status.style.display = 'block';
+  
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const { latitude, longitude } = pos.coords;
+        const resp = await fetch(`/api/maps/reverse-geocode?lat=${latitude}&lng=${longitude}`);
+        const data = await resp.json();
+        if (data.address) {
+          input.value = data.address;
+          selectedAddress = data.address;
+          status.textContent = '📍 Location found';
+          // Trigger street view preview if function exists
+          if (typeof showStreetView === 'function') showStreetView(data.address);
+          if (typeof loadStreetView === 'function') loadStreetView(data.address);
+        } else {
+          status.textContent = 'Could not resolve address';
+        }
+      } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+      }
+      btn.style.opacity = '1';
+      btn.disabled = false;
+      setTimeout(() => { status.style.display = 'none'; }, 3000);
+    },
+    (err) => {
+      status.textContent = err.code === 1 ? 'Location access denied' : 'Could not get location';
+      status.style.display = 'block';
+      btn.style.opacity = '1';
+      btn.disabled = false;
+      setTimeout(() => { status.style.display = 'none'; }, 3000);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+

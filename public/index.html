@@ -45,7 +45,11 @@
     <div id="view-leads" class="app-view active">
       <div id="leads-main">
         <div class="quick-add">
-          <input type="text" id="lead-address" placeholder="Enter property address..." class="input-lg" autocomplete="off">
+          <div style="position:relative">
+            <input type="text" id="lead-address" placeholder="Enter property address..." class="input-lg" autocomplete="off" style="padding-right:44px">
+            <button id="btn-current-location" onclick="useCurrentLocation()" title="Use current location" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--teal);border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:18px;padding:0">📍</button>
+          </div>
+          <div id="location-status" style="display:none;font-size:11px;color:var(--teal);padding:4px 0"></div>
           <div id="address-suggestions" class="suggestions"></div>
           <div id="street-view-preview" class="sv-preview"></div>
           <div class="form-row">
