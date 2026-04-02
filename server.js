@@ -16,6 +16,7 @@ app.use('/api/stats', require('./routes/stats'));
 app.use('/api/hover', require('./routes/hover'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/brain', require('./routes/brain'));
+app.use('/api/claims-dashboard', require('./routes/claims-dashboard'));
 
 // Rep codes
 const { validateRepCode } = require('./lib/repCodes');
@@ -40,6 +41,9 @@ app.get('/api/maps/reverse-geocode', async (req, res) => {
 
 // Health
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'crc-field-intel' }));
+
+// Claims dashboard page
+app.get('/claims-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'claims-dashboard.html')));
 
 // SPA fallback
 app.get('/{*path}', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
