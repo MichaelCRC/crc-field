@@ -131,7 +131,7 @@ async function loadLeads() {
       <div class="lead-info"><h4>${l.address}</h4><p>${l.homeowner || 'No name'} ${l.phone ? '- ' + l.phone : ''}</p></div>
       <div class="lead-meta"><span class="status-dot status-${l.status}"></span>
         <div style="font-size:11px;color:var(--gray);margin-top:4px">${l.jobType || ''}</div>
-        ${l.photos?.length ? '<div style="font-size:10px;color:var(--gray)">&#128247; '+l.photos.length+'</div>' : ''}
+        ${(l.photos?.inspection?.length || l.photos?.length) ? '<div style="font-size:10px;color:var(--gray)">&#128247; '+((l.photos?.inspection?.length||0)+(l.photos?.build?.length||0)||(l.photos?.length||0))+'</div>' : ''}
         <div style="font-size:10px;color:var(--gray)">${new Date(l.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>
       </div></div>`).join('');
   } catch (e) { c.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`; }

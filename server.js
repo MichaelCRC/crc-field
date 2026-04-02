@@ -9,6 +9,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Routes
 app.use('/api/leads', require('./routes/leads'));
 app.use('/api/leads', require('./routes/photos'));
+app.use('/api/leads', require('./routes/reports'));
 app.use('/api/storms', require('./routes/storms'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/maps', require('./routes/maps'));

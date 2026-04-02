@@ -245,13 +245,15 @@
     </nav>
   </div>
 
-  <!-- Photo Modal -->
-  <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;align-items:center;justify-content:center">
-    <img id="photo-modal-img" style="max-width:95%;max-height:90vh;object-fit:contain">
-    <button onclick="document.getElementById('photo-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:white;font-size:32px;cursor:pointer">&times;</button>
-  </div>
+  <!-- Photo Modal (viewer) -->
+  <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;align-items:center;justify-content:center"></div>
+
+  <!-- Photo Capture/Tagging Modal -->
+  <div id="photo-capture-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center"></div>
 
   <script src="app.js"></script>
+  <script src="photos.js"></script>
+  <script src="photo-reports.js"></script>
   <script src="views.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
