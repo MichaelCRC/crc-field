@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1B2360">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.svg">
   <title>CRC Field Intel</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -38,18 +41,28 @@
           <input type="text" id="lead-name" placeholder="Homeowner name" class="input-md">
           <input type="tel" id="lead-phone" placeholder="Phone" class="input-md">
         </div>
-        <div class="chip-row" id="job-type-chips">
-          <button class="chip active" data-val="Roof">Roof</button>
-          <button class="chip" data-val="Siding">Siding</button>
-          <button class="chip" data-val="Full Ext">Full Ext</button>
-          <button class="chip" data-val="Gutters">Gutters</button>
-          <button class="chip" data-val="Retail">Retail</button>
+        <div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type (select all that apply)</div>
+          <div class="chip-row" id="job-type-chips">
+            <button class="chip active" data-val="Roof" onclick="toggleJobChip(this)">Roof</button>
+            <button class="chip" data-val="Siding" onclick="toggleJobChip(this)">Siding</button>
+            <button class="chip" data-val="Gutters" onclick="toggleJobChip(this)">Gutters</button>
+            <button class="chip" data-val="Full Exterior" onclick="toggleJobChip(this)">Full Ext</button>
+            <button class="chip" data-val="Retail" onclick="toggleJobChip(this)">Retail</button>
+          </div>
         </div>
-        <div class="chip-row" id="source-chips">
-          <button class="chip active" data-val="Door Knock">Door Knock</button>
-          <button class="chip" data-val="Referral">Referral</button>
-          <button class="chip" data-val="Storm">Storm</button>
-          <button class="chip" data-val="Repeat">Repeat</button>
+        <div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Claim Type</div>
+          <div class="chip-row" id="claim-type-chips">
+            <button class="chip active" data-val="insurance" onclick="selectClaimType(this)">Insurance Claim</button>
+            <button class="chip" data-val="retail" onclick="selectClaimType(this)">Retail</button>
+          </div>
+        </div>
+        <div class="chip-row" id="source-chips" style="margin-top:10px">
+          <button class="chip active" data-val="Door Knock" onclick="selectSource(this)">Door Knock</button>
+          <button class="chip" data-val="Referral" onclick="selectSource(this)">Referral</button>
+          <button class="chip" data-val="Storm" onclick="selectSource(this)">Storm</button>
+          <button class="chip" data-val="Repeat" onclick="selectSource(this)">Repeat</button>
         </div>
         <textarea id="lead-notes" placeholder="Notes (optional)" rows="2" class="input-md"></textarea>
         <button id="btn-add-lead" class="btn-add" onclick="addLead()">ADD LEAD</button>
@@ -63,11 +76,10 @@
     <div id="view-map" class="app-view">
       <div class="map-controls">
         <button class="map-btn" onclick="centerOnMe()">My Location</button>
-        <button class="map-btn" id="btn-knock-mode" onclick="toggleKnockMode()">Door Knock Mode</button>
+        <button class="map-btn" id="btn-knock-mode" onclick="toggleKnockMode()">Door Knock</button>
+        <button class="map-btn" id="btn-drop-pin" onclick="toggleDropPin()">Drop Pin</button>
       </div>
-      <div id="map-container" class="map-container">
-        <div class="map-placeholder">Map loads when you switch to this tab</div>
-      </div>
+      <div id="map-container" class="map-container"></div>
     </div>
 
     <!-- STORMS VIEW -->
@@ -83,17 +95,31 @@
         </div>
       </div>
       <div id="storm-alert" class="storm-alert" style="display:none"></div>
-      <div id="storm-map" class="map-container" style="height:300px">
-        <div class="map-placeholder">Storm map loads here</div>
-      </div>
-      <div class="zone-controls" style="display:none">
-        <button class="btn-zone" disabled>Select Zone -- Coming Soon: Direct Mail List</button>
-      </div>
+      <div id="storm-map" class="map-container" style="height:300px"></div>
+      <div class="zone-controls"><button class="btn-zone" disabled>Select Zone -- Coming Soon: Direct Mail List</button></div>
       <h3 class="section-title">Hail Events</h3>
       <div id="storm-list"></div>
     </div>
 
-    <!-- ADMIN VIEW (admins only) -->
+    <!-- STATS VIEW -->
+    <div id="view-stats" class="app-view">
+      <div style="padding:16px">
+        <div class="chip-row" id="stats-period" style="margin-bottom:16px">
+          <button class="chip active" data-val="week" onclick="loadStats(this.dataset.val)">This Week</button>
+          <button class="chip" data-val="month" onclick="loadStats(this.dataset.val)">This Month</button>
+          <button class="chip" data-val="alltime" onclick="loadStats(this.dataset.val)">All Time</button>
+        </div>
+      </div>
+      <h3 class="section-title">My Stats</h3>
+      <div id="my-stats" class="admin-stats" style="padding:0 16px 16px"></div>
+      <div id="status-breakdown" style="padding:0 16px 16px"></div>
+      <h3 class="section-title">Recent Activity</h3>
+      <div id="recent-activity"></div>
+      <h3 class="section-title">Leaderboard</h3>
+      <div id="leaderboard"></div>
+    </div>
+
+    <!-- ADMIN VIEW -->
     <div id="view-admin" class="app-view">
       <h3 class="section-title" style="color:var(--navy)">Admin Dashboard</h3>
       <div id="admin-stats" class="admin-stats"></div>
@@ -122,12 +148,23 @@
       <button class="nav-item" onclick="switchView('storms')" id="nav-storms">
         <span class="nav-icon">&#9928;</span><span class="nav-label">Storms</span>
       </button>
+      <button class="nav-item" onclick="switchView('stats')" id="nav-stats">
+        <span class="nav-icon">&#128202;</span><span class="nav-label">Stats</span>
+      </button>
       <button class="nav-item" onclick="switchView('admin')" id="nav-admin" style="display:none">
         <span class="nav-icon">&#128100;</span><span class="nav-label">Admin</span>
       </button>
     </nav>
   </div>
 
+  <!-- Photo Modal -->
+  <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;display:none;align-items:center;justify-content:center">
+    <img id="photo-modal-img" style="max-width:95%;max-height:90vh;object-fit:contain">
+    <button onclick="document.getElementById('photo-modal').style.display='none'" style="position:absolute;top:16px;right:16px;background:none;border:none;color:white;font-size:32px;cursor:pointer">&times;</button>
+  </div>
+
   <script src="app.js"></script>
+  <script src="views.js"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>

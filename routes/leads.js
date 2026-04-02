@@ -30,9 +30,16 @@ router.post('/', async (req, res) => {
 });
 
 // Update lead
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
+  const before = getLead(req.params.id);
   const updated = updateLead(req.params.id, req.body);
   if (!updated) return res.status(404).json({ error: 'Lead not found' });
+  // On claim_filed, sync to portal if not already synced
+  if (req.body.status === 'claim_filed' && !updated.portalJobId) {
+    syncToPortal(updated).then(jobId => {
+      if (jobId) updateLead(updated.id, { portalJobId: jobId });
+    }).catch(() => {});
+  }
   res.json(updated);
 });
 
