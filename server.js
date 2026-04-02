@@ -14,10 +14,8 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/maps', require('./routes/maps'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/hover', require('./routes/hover'));
-
-// Phase 2: Direct mail via Lob.com
-// POST https://api.lob.com/v1/postcards
-// Cost: ~$0.75 per postcard via Lob
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/brain', require('./routes/brain'));
 
 // Rep codes
 const { validateRepCode } = require('./lib/repCodes');
@@ -40,7 +38,7 @@ app.get('/api/maps/reverse-geocode', async (req, res) => {
   } catch (e) { res.json({ address: '', error: e.message }); }
 });
 
-// Health check
+// Health
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'crc-field-intel' }));
 
 // SPA fallback

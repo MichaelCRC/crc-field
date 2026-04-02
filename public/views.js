@@ -101,3 +101,37 @@ async function loadAdmin() {
 }
 async function addRepCode() { const code = document.getElementById('new-rep-code')?.value?.trim(); const name = document.getElementById('new-rep-name')?.value?.trim(); if (!code||!name) return alert('Code and name required'); await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { method:'POST', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({code,name,role:'rep'}) }); loadAdmin(); }
 async function toggleRepCode(code, active) { if (!active && !confirm('Deactivate '+code+'?')) return; await fetch(`/api/admin/rep-codes/${code}?repCode=${repCode}`, { method:'PATCH', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({active}) }); loadAdmin(); }
+
+// --- Chat ---
+let chatThread = 'company', chatSSE = null;
+function initChat() { if (!chatSSE || chatSSE.readyState === 2) connectChat(chatThread); loadChatMessages(chatThread); }
+function switchChatThread(tid) { chatThread=tid; document.querySelectorAll('[id^="chat-tab-"]').forEach(c=>c.classList.remove('active')); const el=document.getElementById('chat-tab-'+tid); if(el)el.classList.add('active'); connectChat(tid); loadChatMessages(tid); }
+function connectChat(tid) { if(chatSSE)chatSSE.close(); chatSSE=new EventSource('/api/chat/stream/'+tid); chatSSE.onmessage=e=>{ try{ const d=JSON.parse(e.data); if(d.type==='message')appendChatMsg(d.message); }catch{} }; }
+async function loadChatMessages(tid) { const c=document.getElementById('chat-messages'); if(!c)return; const data=await fetch('/api/chat/messages/'+tid).then(r=>r.json()); c.innerHTML=(data.messages||[]).map(m=>chatBubble(m)).join(''); c.scrollTop=c.scrollHeight; }
+function chatBubble(m) { const mine=m.repCode===repCode; if(m.type==='system') return '<div style="text-align:center;padding:8px;font-size:12px;color:var(--gray);font-style:italic">'+m.text+'</div>'; const bg=mine?'var(--teal)':'var(--navy)'; const al=mine?'flex-end':'flex-start'; const t=m.timestamp?new Date(m.timestamp).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):''; return '<div style="display:flex;flex-direction:column;align-items:'+al+';margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--gray)">'+m.repCode+'</div><div style="background:'+bg+';color:white;padding:8px 14px;border-radius:16px;max-width:80%;font-size:14px;word-break:break-word">'+(m.photoUrl?'<img src="'+m.photoUrl+'" style="max-width:100%;border-radius:8px"><br>':'')+m.text+'</div><div style="font-size:10px;color:var(--gray)">'+t+'</div></div>'; }
+function appendChatMsg(m) { const c=document.getElementById('chat-messages'); if(!c)return; c.innerHTML+=chatBubble(m); c.scrollTop=c.scrollHeight; }
+async function sendChatMessage() { const i=document.getElementById('chat-input'); const t=i.value.trim(); if(!t)return; i.value=''; await fetch('/api/chat/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({threadId:chatThread,text:t,repCode})}); }
+async function sendChatPhoto(file) { if(!file)return; const r=new FileReader(); r.onload=async()=>{ await fetch('/api/chat/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({threadId:chatThread,text:'',photoUrl:r.result,repCode})}); }; r.readAsDataURL(file); }
+function showDmList() { alert('Direct messages coming soon. Use CRC Team thread for now.'); }
+
+// --- Brain ---
+let brainHistory = [], brainStreaming = false;
+function initBrain() { const s=localStorage.getItem('crc-brain-'+repCode); if(s){try{brainHistory=JSON.parse(s);}catch{brainHistory=[];}} renderBrain(); }
+function renderBrain() { const c=document.getElementById('brain-messages'); if(!c)return; c.innerHTML=brainHistory.map(m=>{ const mine=m.role==='user'; const bg=mine?'var(--teal)':'var(--navy)'; const al=mine?'flex-end':'flex-start'; return '<div style="display:flex;flex-direction:column;align-items:'+al+';margin-bottom:12px">'+(mine?'':'<div style="font-size:10px">&#129504; CRC Brain</div>')+'<div style="background:'+bg+';color:white;padding:10px 16px;border-radius:16px;max-width:85%;font-size:14px;line-height:1.5;white-space:pre-wrap">'+m.content+'</div></div>'; }).join(''); c.scrollTop=c.scrollHeight; if(brainHistory.length)document.getElementById('brain-suggestions').style.display='none'; }
+function askBrain(t) { document.getElementById('brain-input').value=t; sendBrainMessage(); }
+async function sendBrainMessage() {
+  const i=document.getElementById('brain-input'); const t=i.value.trim(); if(!t||brainStreaming)return; i.value='';
+  brainHistory.push({role:'user',content:t}); renderBrain(); brainStreaming=true;
+  const c=document.getElementById('brain-messages');
+  c.innerHTML+='<div style="display:flex;flex-direction:column;align-items:flex-start;margin-bottom:12px"><div style="font-size:10px">&#129504; CRC Brain</div><div id="brain-stream" style="background:var(--navy);color:white;padding:10px 16px;border-radius:16px;max-width:85%;font-size:14px;line-height:1.5;white-space:pre-wrap">...</div></div>';
+  c.scrollTop=c.scrollHeight;
+  try {
+    const resp=await fetch('/api/brain/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({repCode,message:t,jobContext:activeJobContext,conversationHistory:brainHistory.slice(-10)})});
+    const reader=resp.body.getReader(); const dec=new TextDecoder(); let full='',buf=''; const el=document.getElementById('brain-stream');
+    while(true){ const{done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop()||'';
+      for(const line of lines){ if(!line.startsWith('data: '))continue; try{const d=JSON.parse(line.slice(6)); if(d.type==='delta'){full+=d.text; if(el)el.textContent=full; c.scrollTop=c.scrollHeight;} if(d.type==='done')full=d.fullText||full;}catch{} }
+    }
+    brainHistory.push({role:'assistant',content:full}); localStorage.setItem('crc-brain-'+repCode,JSON.stringify(brainHistory.slice(-50))); renderBrain();
+  } catch(e) { brainHistory.push({role:'assistant',content:'Error: '+e.message}); renderBrain(); }
+  brainStreaming=false;
+}

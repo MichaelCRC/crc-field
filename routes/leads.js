@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { listLeads, getLead, createLead, updateLead } = require('../lib/store');
 const { syncToPortal } = require('../lib/portalSync');
+const { autoPost } = require('../lib/autoPost');
 
-// List leads (optionally filter by repCode)
+// List leads
 router.get('/', (req, res) => {
   let leads = listLeads();
   if (req.query.repCode) leads = leads.filter(l => l.repCode === req.query.repCode);
@@ -18,27 +19,41 @@ router.get('/:id', (req, res) => {
   res.json(lead);
 });
 
-// Create lead
+// Create lead -- retail syncs immediately, insurance waits for claim_filed
 router.post('/', async (req, res) => {
   if (!req.body.address) return res.status(400).json({ error: 'Address required' });
   const lead = createLead(req.body);
-  // Async sync to portal (don't block the response)
-  syncToPortal(lead).then(jobId => {
-    if (jobId) updateLead(lead.id, { portalJobId: jobId });
-  }).catch(() => {});
+  // Only sync retail leads to portal immediately
+  if (lead.jobCategory === 'retail') {
+    syncToPortal(lead).then(jobId => {
+      if (jobId) updateLead(lead.id, { portalJobId: jobId });
+    }).catch(() => {});
+  }
   res.status(201).json(lead);
 });
 
-// Update lead
+// Update lead -- claim_filed triggers portal sync + orchestrator
 router.patch('/:id', async (req, res) => {
-  const before = getLead(req.params.id);
   const updated = updateLead(req.params.id, req.body);
   if (!updated) return res.status(404).json({ error: 'Lead not found' });
-  // On claim_filed, sync to portal if not already synced
-  if (req.body.status === 'claim_filed' && !updated.portalJobId) {
-    syncToPortal(updated).then(jobId => {
-      if (jobId) updateLead(updated.id, { portalJobId: jobId });
+  // On claim_filed for insurance: sync to portal + trigger orchestrator
+  if (req.body.status === 'claim_filed' && !updated.portalJobId && updated.jobCategory !== 'retail') {
+    syncToPortal(updated).then(async jobId => {
+      if (!jobId) return;
+      updateLead(updated.id, { portalJobId: jobId });
+      // Trigger orchestrator for full package build
+      const url = process.env.SUPPLEMENT_PORTAL_URL;
+      const secret = process.env.HERMES_API_SECRET;
+      if (url && secret) {
+        try {
+          await fetch(`${url}/api/hermes/job/${jobId}/orchestrate`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-hermes-secret': secret },
+          });
+          console.log(`[Sync] Orchestrator triggered for ${jobId}`);
+        } catch (e) { console.error('[Sync] Orchestrator trigger failed:', e.message); }
+      }
     }).catch(() => {});
+    autoPost('claim_filed', updated);
   }
   res.json(updated);
 });

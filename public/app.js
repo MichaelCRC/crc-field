@@ -6,6 +6,7 @@ let selectedAddress = '';
 let mapInitialized = false;
 let stormsLoaded = false;
 let gmap = null, mapMarkers = [], knockMode = false, dropPinMode = false;
+let activeJobContext = null; // For Brain context injection
 
 document.addEventListener('DOMContentLoaded', () => {
   if (repCode) validateAndEnter(repCode);
@@ -23,7 +24,7 @@ async function validateAndEnter(code) {
     localStorage.setItem('crc-rep-code', code); localStorage.setItem('crc-rep-name', data.name); localStorage.setItem('crc-rep-role', data.role);
     document.getElementById('gate').style.display = 'none'; document.getElementById('app').style.display = '';
     document.getElementById('rep-badge').textContent = `${code} - ${data.name}`;
-    if (data.role === 'admin') document.getElementById('nav-admin').style.display = '';
+    if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('nav-stats').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
     loadLeads();
   } catch { document.getElementById('gate-error').textContent = 'Connection error'; }
 }
@@ -58,17 +59,9 @@ async function selectAddress(placeId, desc) {
 
 // --- Job Type Multi-Select ---
 function toggleJobChip(el) {
-  const val = el.dataset.val;
-  if (val === 'Full Exterior') {
-    const isActive = el.classList.contains('active');
-    document.querySelectorAll('#job-type-chips .chip').forEach(c => { if (['Roof','Siding','Gutters','Full Exterior'].includes(c.dataset.val)) c.classList.toggle('active', !isActive); });
-  } else {
-    el.classList.toggle('active');
-    // Auto-highlight Full Exterior if all 3 selected
-    const row = document.getElementById('job-type-chips');
-    const allThree = ['Roof','Siding','Gutters'].every(v => row.querySelector(`[data-val="${v}"]`).classList.contains('active'));
-    row.querySelector('[data-val="Full Exterior"]').classList.toggle('active', allThree);
-  }
+  const val = el.dataset.val; const row = document.getElementById('job-type-chips');
+  if (val === 'Full Exterior') { const on = !el.classList.contains('active'); row.querySelectorAll('.chip').forEach(c => { if (['Roof','Siding','Gutters','Full Exterior'].includes(c.dataset.val)) c.classList.toggle('active', on); }); }
+  else { el.classList.toggle('active'); const all3 = ['Roof','Siding','Gutters'].every(v => row.querySelector('[data-val="'+v+'"]').classList.contains('active')); row.querySelector('[data-val="Full Exterior"]').classList.toggle('active', all3); }
 }
 function getJobTypes() { return [...document.querySelectorAll('#job-type-chips .chip.active')].map(c => c.dataset.val); }
 function selectClaimType(el) { document.querySelectorAll('#claim-type-chips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
@@ -86,6 +79,8 @@ function switchView(name) {
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'storms' && !stormsLoaded) loadStorms();
   if (name === 'stats') loadStats();
+  if (name === 'chat') initChat();
+  if (name === 'brain') initBrain();
   if (name === 'admin') loadAdmin();
 }
 
@@ -141,6 +136,7 @@ async function loadLeads() {
 async function viewLead(id) {
   try {
     const lead = await fetch(`/api/leads/${id}`).then(r => r.json());
+    activeJobContext = { address: lead.address, homeowner: lead.homeowner, jobType: lead.jobType, carrier: lead.jobCategory === 'retail' ? 'Retail' : '', status: lead.status };
     const statuses = ['new','contacted','not_home','not_interested','appointment','claim_filed','won','lost'];
     const sBtns = statuses.map(s => `<button class="chip ${lead.status===s?'active':''}" onclick="updateStatus('${id}','${s}')">${s.replace(/_/g,' ')}</button>`).join('');
     const photos = lead.photos || [];
@@ -166,13 +162,20 @@ async function viewLead(id) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         ${lead.phone ? `<a href="tel:${lead.phone}" class="chip" style="text-decoration:none">Call</a><a href="sms:${lead.phone}" class="chip" style="text-decoration:none">Text</a>` : ''}
         ${lead.portalJobId ? `<a href="https://crc-supplements-portal.onrender.com/#job-${lead.portalJobId}" target="_blank" class="chip" style="text-decoration:none;background:var(--navy);color:white">Open in Portal</a>` : ''}
+        <button class="chip" style="background:var(--navy);color:white" onclick="switchView('brain')">&#129504; Ask Brain</button>
       </div>
       <button onclick="switchView('leads')" style="padding:12px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer">Back to Leads</button>
     </div>`;
   } catch (e) { alert('Error: ' + e.message); }
 }
 async function updateStatus(id, status) { await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); viewLead(id); }
-async function fileClaim(id) { await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'claim_filed' }) }); viewLead(id); }
+async function fileClaim(id) {
+  const lead = await fetch(`/api/leads/${id}`).then(r => r.json());
+  if (!confirm('File claim for ' + (lead.homeowner||'Unknown') + ' at ' + lead.address + '?\n\nSends to CRC Claims and builds the full report.')) return;
+  const btn = event?.target; if (btn) { btn.disabled = true; btn.textContent = 'Filing...'; }
+  await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'claim_filed' }) });
+  alert('Claim filed! Report building automatically.'); viewLead(id);
+}
 function showPhotoModal(url) { const m = document.getElementById('photo-modal'); m.style.display = 'flex'; document.getElementById('photo-modal-img').src = url; }
 async function uploadPhotos(leadId, files) {
   if (!files?.length) return;
