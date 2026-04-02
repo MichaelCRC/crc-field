@@ -17,6 +17,9 @@ app.use('/api/hover', require('./routes/hover'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/brain', require('./routes/brain'));
 app.use('/api/claims-dashboard', require('./routes/claims-dashboard'));
+app.use('/api/referrals', require('./routes/referrals'));
+app.use('/', require('./routes/rep-card'));
+app.use('/', require('./routes/recruit'));
 
 // Rep codes
 const { validateRepCode } = require('./lib/repCodes');
