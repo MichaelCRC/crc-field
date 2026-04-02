@@ -326,17 +326,14 @@ router.get('/rep-card/:code', (req, res) => {
       position: relative;
     }
     .logo {
-      width: 60px;
-      height: 60px;
-      background: #00BCD4;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 70px;
+      height: 70px;
       margin: 0 auto 16px;
-      font-weight: 900;
-      color: #001A4D;
-      font-size: 18px;
+    }
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .avatar {
       width: 100px;
@@ -504,7 +501,7 @@ router.get('/rep-card/:code', (req, res) => {
 <body>
   <div class="card">
     <div class="card-header">
-      <div class="logo">CRC</div>
+      <div class="logo"><img src="/img/crc-logo-badge.jpg" alt="CRC"></div>
       <div class="avatar-photo">${avatarHtml}</div>
       <div class="rep-name">${merged.name}</div>
       <div class="rep-title">${merged.title}</div>
