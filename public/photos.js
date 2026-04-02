@@ -83,19 +83,71 @@ function renderPhotoGrid() {
 }
 
 // Photo capture flow
+let continuousPhotos = []; // Batch of photos in continuous mode
+
 function showPhotoCapture() {
+  continuousPhotos = [];
   const modal = document.getElementById('photo-capture-modal');
   modal.style.display = 'flex';
   modal.innerHTML = `
     <div class="capture-card">
-      <h3>Add Photo</h3>
+      <h3>Add Photos</h3>
       <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Adding to: <strong>${activePhotoTab === 'inspection' ? 'Inspection' : 'Build'}</strong></p>
-      <button class="capture-option" onclick="capturePhoto('camera')">&#128247; Take Photo</button>
+      <button class="capture-option" onclick="startContinuousCapture()" style="background:var(--teal);color:#fff;font-weight:700">&#128247; Continuous Capture</button>
+      <p style="font-size:11px;color:var(--gray);margin:-8px 0 12px;text-align:center">Take multiple photos — camera reopens after each shot</p>
+      <button class="capture-option" onclick="capturePhoto('camera')">&#128247; Single Photo</button>
       <button class="capture-option" onclick="capturePhoto('library')">&#128444;&#65039; Choose from Library</button>
       <button class="capture-cancel" onclick="closeCaptureModal()">Cancel</button>
       <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(this)">
+      <input type="file" id="photo-continuous-input" accept="image/*" capture="environment" style="display:none" onchange="handleContinuousPhoto(this)">
       <input type="file" id="photo-multi-input" accept="image/*" multiple style="display:none" onchange="handleMultiPhotos(this)">
     </div>`;
+}
+
+function startContinuousCapture() {
+  continuousPhotos = [];
+  document.getElementById('photo-continuous-input').click();
+}
+
+function handleContinuousPhoto(input) {
+  if (!input.files?.length) {
+    // User cancelled camera — show what we've captured so far
+    if (continuousPhotos.length > 0) {
+      showTaggingScreen(continuousPhotos);
+    }
+    return;
+  }
+  
+  // Add photo to batch
+  continuousPhotos.push(input.files[0]);
+  
+  // Show running count overlay
+  const modal = document.getElementById('photo-capture-modal');
+  modal.innerHTML = `
+    <div class="capture-card" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:12px">&#128247;</div>
+      <h3 style="color:var(--teal)">${continuousPhotos.length} photo${continuousPhotos.length > 1 ? 's' : ''} captured</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:16px 0;max-height:120px;overflow-y:auto">
+        ${continuousPhotos.map((f, i) => {
+          const url = URL.createObjectURL(f);
+          return `<img src="${url}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:2px solid var(--teal)">`;
+        }).join('')}
+      </div>
+      <button class="capture-option" onclick="continuousNext()" style="background:var(--teal);color:#fff;font-weight:700">&#128247; Take Another</button>
+      <button class="capture-option" onclick="finishContinuous()" style="background:var(--navy);color:#fff;font-weight:700">&#10003; Done — Tag & Upload (${continuousPhotos.length})</button>
+      <button class="capture-cancel" onclick="closeCaptureModal()">Cancel All</button>
+      <input type="file" id="photo-continuous-input" accept="image/*" capture="environment" style="display:none" onchange="handleContinuousPhoto(this)">
+    </div>`;
+}
+
+function continuousNext() {
+  document.getElementById('photo-continuous-input').click();
+}
+
+function finishContinuous() {
+  if (continuousPhotos.length > 0) {
+    showTaggingScreen(continuousPhotos);
+  }
 }
 
 function capturePhoto(mode) {
@@ -103,7 +155,10 @@ function capturePhoto(mode) {
   else document.getElementById('photo-multi-input').click();
 }
 
-function closeCaptureModal() { document.getElementById('photo-capture-modal').style.display = 'none'; }
+function closeCaptureModal() { 
+  continuousPhotos = [];
+  document.getElementById('photo-capture-modal').style.display = 'none'; 
+}
 function handlePhotoSelected(input) { if (input.files?.length) showTaggingScreen([input.files[0]]); }
 function handleMultiPhotos(input) { if (input.files?.length) showTaggingScreen(Array.from(input.files)); }
 
