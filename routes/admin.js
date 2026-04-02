@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getDataCore, listLeads, listZones, createZone, read } = require('../lib/store');
+const { getDataCore, listLeads, listZones, createZone, read, write } = require('../lib/store');
 const { isAdmin, listRepCodes } = require('../lib/repCodes');
+const { defaultChat } = require('../lib/autoPost');
 
 function requireAdmin(req, res, next) {
   const code = (req.headers['x-rep-code'] || req.query.repCode || '').toUpperCase();
@@ -80,6 +81,77 @@ router.patch('/rep-codes/:code', requireAdmin, (req, res) => {
   if (req.body.role) codes[idx].role = req.body.role;
   write('rep-codes.json', { codes });
   res.json({ success: true, code: codes[idx] });
+});
+
+// --- Chat Thread Management ---
+function getChat() { return read('chat.json', defaultChat()); }
+function saveChat(chat) { write('chat.json', chat); }
+
+// List all threads with member info
+router.get('/chat/threads', requireAdmin, (req, res) => {
+  const chat = getChat();
+  const threads = Object.entries(chat.threads).map(([id, t]) => ({
+    id, name: t.name || id, type: t.type || 'group',
+    adminOnly: t.adminOnly || false,
+    members: t.members || [],
+    messageCount: (t.messages || []).length,
+  }));
+  res.json(threads);
+});
+
+// Update thread (rename, change type, update members)
+router.patch('/chat/threads/:threadId', requireAdmin, (req, res) => {
+  const chat = getChat();
+  const thread = chat.threads[req.params.threadId];
+  if (!thread) return res.status(404).json({ error: 'Thread not found' });
+  if (req.body.name) thread.name = req.body.name;
+  if (req.body.type) thread.type = req.body.type;
+  if (req.body.adminOnly !== undefined) thread.adminOnly = req.body.adminOnly;
+  if (req.body.members) thread.members = req.body.members;
+  saveChat(chat);
+  res.json({ success: true, thread: { id: req.params.threadId, name: thread.name, members: thread.members } });
+});
+
+// Create new thread
+router.post('/chat/threads', requireAdmin, (req, res) => {
+  const { name, type, members, adminOnly } = req.body;
+  if (!name) return res.status(400).json({ error: 'Thread name required' });
+  const chat = getChat();
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-');
+  if (chat.threads[id]) return res.status(400).json({ error: 'Thread already exists' });
+  chat.threads[id] = {
+    id, name, type: type || 'group', adminOnly: adminOnly || false,
+    members: members || [], messages: [],
+    createdBy: (req.query.repCode || '').toUpperCase(),
+    createdAt: new Date().toISOString(),
+  };
+  saveChat(chat);
+  res.status(201).json({ success: true, threadId: id });
+});
+
+// Add member to thread
+router.post('/chat/threads/:threadId/members', requireAdmin, (req, res) => {
+  const { repCode: memberCode } = req.body;
+  if (!memberCode) return res.status(400).json({ error: 'repCode required' });
+  const chat = getChat();
+  const thread = chat.threads[req.params.threadId];
+  if (!thread) return res.status(404).json({ error: 'Thread not found' });
+  if (!thread.members) thread.members = [];
+  const code = memberCode.toUpperCase();
+  if (!thread.members.includes(code)) thread.members.push(code);
+  saveChat(chat);
+  res.json({ success: true, members: thread.members });
+});
+
+// Remove member from thread
+router.delete('/chat/threads/:threadId/members/:code', requireAdmin, (req, res) => {
+  const chat = getChat();
+  const thread = chat.threads[req.params.threadId];
+  if (!thread) return res.status(404).json({ error: 'Thread not found' });
+  if (!thread.members) thread.members = [];
+  thread.members = thread.members.filter(m => m !== req.params.code.toUpperCase());
+  saveChat(chat);
+  res.json({ success: true, members: thread.members });
 });
 
 // Zones

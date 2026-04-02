@@ -196,6 +196,22 @@
         <button class="chip active" onclick="document.getElementById('add-rep-form').style.display=''">+ Add Rep Code</button>
       </div>
       <div id="admin-rep-codes"></div>
+      <h3 class="section-title">Chat Management</h3>
+      <div id="admin-chat-threads"></div>
+      <div style="padding:8px 16px">
+        <button class="chip active" onclick="showCreateThreadForm()">+ Create Thread</button>
+      </div>
+      <div id="create-thread-form" style="display:none;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="new-thread-name" placeholder="Thread name" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:4px">
+          <select id="new-thread-type" style="padding:8px;border:1px solid var(--border);border-radius:4px">
+            <option value="group">Group</option>
+            <option value="announcement">Announcement Only</option>
+          </select>
+          <button class="chip active" onclick="createChatThread()">Create</button>
+        </div>
+      </div>
+
       <h3 class="section-title">Recent Leads (All Reps)</h3>
       <div id="admin-leads"></div>
       <div style="padding:16px">

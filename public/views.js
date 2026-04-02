@@ -113,7 +113,67 @@ async function loadAdmin() {
     const allCodes = await fetch(`/api/admin/rep-codes?repCode=${repCode}`).then(r=>r.json());
     document.getElementById('admin-rep-codes').innerHTML = `<div id="add-rep-form" style="display:none;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="text" id="new-rep-code" placeholder="Code" style="width:100px;padding:8px;border:1px solid var(--border);border-radius:4px;text-transform:uppercase"><input type="text" id="new-rep-name" placeholder="Name" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:4px"><button class="chip active" onclick="addRepCode()">Add</button></div></div>` + allCodes.map(c => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div><strong>${c.code}</strong> -- ${c.name} (${c.role})</div><div>${c.active ? (c.role!=='admin'?`<button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',false)">Deactivate</button>`:'') : `<span style="color:var(--red);font-size:12px">Inactive</span> <button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',true)">Reactivate</button>`}</div></div>`).join('');
     document.getElementById('admin-leads').innerHTML = leads.slice(0,50).map(l => `<div style="display:flex;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);font-size:13px"><div>${l.address?.substring(0,30)} -- ${l.homeowner||''}</div><div style="color:var(--gray)">${l.repCode} / ${l.status}</div></div>`).join('');
+    // Load chat threads
+    loadChatThreads();
   } catch (e) { console.error('Admin error:', e); }
+}
+async function loadChatThreads() {
+  const c = document.getElementById('admin-chat-threads'); if (!c) return;
+  try {
+    const threads = await fetch(`/api/admin/chat/threads?repCode=${repCode}`, { headers: { 'x-rep-code': repCode } }).then(r => r.json());
+    c.innerHTML = threads.map(t => `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)">
+      <div><strong>${t.name}</strong> <span style="font-size:11px;color:var(--gray)">(${t.type || 'group'})</span>
+        <div style="font-size:12px;color:var(--gray)">${(t.members || []).length} members | ${t.messageCount || 0} messages</div>
+      </div>
+      <button class="chip" style="font-size:11px;padding:4px 10px" onclick="manageChatThread('${t.id}','${t.name.replace(/'/g,"\\'")}')">Manage</button>
+    </div>`).join('');
+  } catch (e) { c.innerHTML = '<p style="padding:16px;color:var(--gray)">Could not load threads</p>'; }
+}
+async function manageChatThread(threadId, threadName) {
+  try {
+    const threads = await fetch(`/api/admin/chat/threads?repCode=${repCode}`, { headers: { 'x-rep-code': repCode } }).then(r => r.json());
+    const thread = threads.find(t => t.id === threadId);
+    const allReps = await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { headers: { 'x-rep-code': repCode } }).then(r => r.json());
+    const members = thread?.members || [];
+    const memberHtml = members.length ? members.map(m => {
+      const rep = allReps.find(r => r.code === m);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px"><span>${rep ? rep.name : m} (${m})</span><button class="chip" style="font-size:10px;padding:2px 8px;color:var(--red);border-color:var(--red)" onclick="removeChatMember('${threadId}','${m}')">Remove</button></div>`;
+    }).join('') : '<p style="font-size:12px;color:var(--gray)">No members set (all can access)</p>';
+    const nonMembers = allReps.filter(r => r.active && !members.includes(r.code));
+    const addOptions = nonMembers.map(r => `<option value="${r.code}">${r.name} (${r.code})</option>`).join('');
+    const c = document.getElementById('admin-chat-threads');
+    c.innerHTML = `<div style="padding:16px;background:var(--white)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h4 style="font-size:15px">${threadName}</h4>
+        <button class="chip" style="font-size:11px" onclick="loadChatThreads()">Back</button>
+      </div>
+      <div style="margin-bottom:12px"><strong style="font-size:12px;color:var(--gray)">MEMBERS</strong>${memberHtml}</div>
+      ${addOptions ? `<div style="display:flex;gap:8px;align-items:center"><select id="add-member-select" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:4px;font-size:13px"><option value="">Add member...</option>${addOptions}</select><button class="chip active" style="font-size:11px" onclick="addChatMember('${threadId}')">Add</button></div>` : ''}
+    </div>`;
+  } catch (e) { alert('Error loading thread: ' + e.message); }
+}
+async function addChatMember(threadId) {
+  const code = document.getElementById('add-member-select')?.value;
+  if (!code) return;
+  try { await fetch(`/api/admin/chat/threads/${threadId}/members?repCode=${repCode}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rep-code': repCode }, body: JSON.stringify({ repCode: code }) }); manageChatThread(threadId, threadId); }
+  catch (e) { alert('Failed: ' + e.message); }
+}
+async function removeChatMember(threadId, code) {
+  if (!confirm('Remove ' + code + ' from this thread?')) return;
+  try { await fetch(`/api/admin/chat/threads/${threadId}/members/${code}?repCode=${repCode}`, { method: 'DELETE', headers: { 'x-rep-code': repCode } }); manageChatThread(threadId, threadId); }
+  catch (e) { alert('Failed: ' + e.message); }
+}
+function showCreateThreadForm() { document.getElementById('create-thread-form').style.display = ''; }
+async function createChatThread() {
+  const name = document.getElementById('new-thread-name')?.value?.trim();
+  const type = document.getElementById('new-thread-type')?.value || 'group';
+  if (!name) return alert('Thread name required');
+  try {
+    await fetch(`/api/admin/chat/threads?repCode=${repCode}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-rep-code': repCode }, body: JSON.stringify({ name, type, adminOnly: type === 'announcement' }) });
+    document.getElementById('new-thread-name').value = '';
+    document.getElementById('create-thread-form').style.display = 'none';
+    loadChatThreads();
+  } catch (e) { alert('Failed: ' + e.message); }
 }
 async function addRepCode() {
   const code = document.getElementById('new-rep-code')?.value?.trim(); const name = document.getElementById('new-rep-name')?.value?.trim();
