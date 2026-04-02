@@ -1,0 +1,17 @@
+{
+  "contacts": [],
+  "properties": [],
+  "lists": {
+    "storm_zones": [],
+    "active_leads": [],
+    "past_customers": [],
+    "commercial_targets": [],
+    "direct_mail_campaigns": []
+  },
+  "metadata": {
+    "total_contacts": 0,
+    "total_properties": 0,
+    "last_updated": "",
+    "version": "1.0"
+  }
+}

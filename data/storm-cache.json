@@ -1,0 +1,106 @@
+{
+  "events": [
+    {
+      "date": "2026-03-14",
+      "location": "Westerville",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 1.75,
+      "lat": 40.126,
+      "lng": -82.929,
+      "source": "IHM verified"
+    },
+    {
+      "date": "2026-03-14",
+      "location": "Gahanna",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 1.5,
+      "lat": 40.019,
+      "lng": -82.879,
+      "source": "IHM verified"
+    },
+    {
+      "date": "2026-03-14",
+      "location": "New Albany",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 1.25,
+      "lat": 40.081,
+      "lng": -82.808,
+      "source": "IHM verified"
+    },
+    {
+      "date": "2026-03-22",
+      "location": "Dublin",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 1.5,
+      "lat": 40.099,
+      "lng": -83.114,
+      "source": "IHM verified"
+    },
+    {
+      "date": "2026-03-22",
+      "location": "Hilliard",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 1.25,
+      "lat": 40.033,
+      "lng": -83.158,
+      "source": "IHM verified"
+    },
+    {
+      "date": "2026-03-22",
+      "location": "Powell",
+      "county": "Delaware",
+      "state": "OH",
+      "hailSize": 1,
+      "lat": 40.158,
+      "lng": -83.075,
+      "source": "IHM verified"
+    },
+    {
+      "date": "2025-06-15",
+      "location": "Reynoldsburg",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 1,
+      "lat": 39.955,
+      "lng": -82.812,
+      "source": "NWS"
+    },
+    {
+      "date": "2025-08-22",
+      "location": "Grove City",
+      "county": "Franklin",
+      "state": "OH",
+      "hailSize": 0.88,
+      "lat": 39.881,
+      "lng": -83.093,
+      "source": "NWS"
+    },
+    {
+      "date": "2025-05-08",
+      "location": "Pickerington",
+      "county": "Fairfield",
+      "state": "OH",
+      "hailSize": 1.25,
+      "lat": 39.884,
+      "lng": -82.754,
+      "source": "NWS"
+    },
+    {
+      "date": "2025-04-10",
+      "location": "Delaware",
+      "county": "Delaware",
+      "state": "OH",
+      "hailSize": 1.75,
+      "lat": 40.299,
+      "lng": -83.068,
+      "source": "NWS"
+    }
+  ],
+  "lastUpdated": "2026-04-02T02:56:40.914Z",
+  "source": "NOAA Storm Events Database"
+}
