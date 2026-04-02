@@ -9,6 +9,11 @@ let gmap = null, mapMarkers = [], knockMode = false, dropPinMode = false;
 let activeJobContext = null; // For Brain context injection
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Dismiss loading screen after animation
+  setTimeout(() => {
+    const ls = document.getElementById('loading-screen');
+    if (ls) { ls.classList.add('fade-out'); setTimeout(() => ls.remove(), 400); }
+  }, 1400);
   if (repCode) validateAndEnter(repCode);
   else document.getElementById('gate').style.display = 'flex';
   initAddressAutocomplete();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crc-field-v2';
+const CACHE_NAME = 'crc-field-v3';
 const SHELL = ['/', '/style.css', '/app.js', '/views.js', '/manifest.json'];
 
 self.addEventListener('install', e => {

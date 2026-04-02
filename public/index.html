@@ -7,15 +7,22 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1B2360">
   <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icon-192.svg">
+  <link rel="apple-touch-icon" href="/images/icon-192.png">
   <title>CRC Field Intel</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <img src="/images/crc-logo.png" alt="CRC" style="width:120px;height:120px;border-radius:16px;margin-bottom:16px">
+    <div style="font-size:18px;font-weight:700;color:white;letter-spacing:1px">CRC Field Intel</div>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+  </div>
+
   <!-- Rep Code Gate -->
   <div id="gate" class="gate">
     <div class="gate-card">
-      <div class="gate-logo">CRC</div>
+      <img src="/images/crc-logo.png" alt="CRC" class="gate-logo-img">
       <h2>Field Intel</h2>
       <p>Enter your rep code</p>
       <input type="text" id="gate-code" maxlength="12" placeholder="REP CODE" autocapitalize="characters" autofocus>
@@ -27,7 +34,10 @@
   <!-- Main App -->
   <div id="app" style="display:none">
     <div id="app-header" class="app-header">
-      <span class="app-title">CRC Field Intel</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <img src="/images/icon-192.png" alt="CRC" style="width:28px;height:28px;border-radius:4px">
+        <span class="app-title">CRC Field Intel</span>
+      </div>
       <span id="rep-badge" class="rep-badge"></span>
     </div>
 
@@ -153,10 +163,12 @@
 
     <!-- BRAIN VIEW -->
     <div id="view-brain" class="app-view">
-      <div style="padding:16px;background:var(--navy);color:white;text-align:center">
-        <div style="font-size:24px">&#129504;</div>
-        <div style="font-size:16px;font-weight:700">CRC Brain</div>
-        <div style="font-size:12px;opacity:0.7">Your CRC expert -- always available</div>
+      <div style="padding:16px;background:var(--navy);color:white;display:flex;align-items:center;gap:12px">
+        <img src="/images/icon-192.png" alt="CRC" style="width:36px;height:36px;border-radius:6px">
+        <div>
+          <div style="font-size:16px;font-weight:700">CRC Brain</div>
+          <div style="font-size:12px;opacity:0.7">Powered by CRC Knowledge Base</div>
+        </div>
       </div>
       <div id="brain-suggestions" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px">
         <button class="chip" onclick="askBrain(this.textContent)">What qualifies for steep slope?</button>
