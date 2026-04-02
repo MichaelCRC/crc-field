@@ -57,28 +57,31 @@
             <input type="tel" id="lead-phone" placeholder="Phone" class="input-md">
           </div>
           <div style="margin-top:10px">
-            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type (select all that apply)</div>
+            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Trade Type (select all that apply)</div>
             <div class="chip-row" id="job-type-chips">
               <button class="chip active" data-val="Roof" onclick="toggleJobChip(this)">Roof</button>
               <button class="chip" data-val="Siding" onclick="toggleJobChip(this)">Siding</button>
               <button class="chip" data-val="Gutters" onclick="toggleJobChip(this)">Gutters</button>
               <button class="chip" data-val="Full Exterior" onclick="toggleJobChip(this)">Full Ext</button>
-              <button class="chip" data-val="Retail" onclick="toggleJobChip(this)">Retail</button>
             </div>
           </div>
           <div style="margin-top:10px">
-            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Claim Type</div>
+            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type</div>
             <div class="chip-row" id="claim-type-chips">
               <button class="chip active" data-val="insurance" onclick="selectClaimType(this)">Insurance</button>
               <button class="chip" data-val="retail" onclick="selectClaimType(this)">Retail</button>
               <button class="chip" data-val="repair" onclick="selectClaimType(this)">Repair</button>
             </div>
           </div>
-          <div class="chip-row" id="source-chips" style="margin-top:10px">
-            <button class="chip active" data-val="Door Knock" onclick="selectSource(this)">Door Knock</button>
-            <button class="chip" data-val="Referral" onclick="selectSource(this)">Referral</button>
-            <button class="chip" data-val="Storm" onclick="selectSource(this)">Storm</button>
-            <button class="chip" data-val="Repeat" onclick="selectSource(this)">Repeat</button>
+          <div style="margin-top:10px">
+            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Lead Type</div>
+            <div class="chip-row" id="source-chips">
+              <button class="chip active" data-val="Door Knock" onclick="selectSource(this)">Door Knock</button>
+              <button class="chip" data-val="Referral" onclick="selectSource(this)">Referral</button>
+              <button class="chip" data-val="Social Media" onclick="selectSource(this)">Social Media</button>
+              <button class="chip" data-val="Company" onclick="selectSource(this)">Company</button>
+              <button class="chip" data-val="Cold Call" onclick="selectSource(this)">Cold Call</button>
+            </div>
           </div>
           <textarea id="lead-notes" placeholder="Notes (optional)" rows="2" class="input-md"></textarea>
           <button id="btn-add-lead" class="btn-add" onclick="addLead()">ADD LEAD</button>
