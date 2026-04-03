@@ -47,7 +47,7 @@ function renderPhotoSection() {
     ${activePhotoTab === 'inspection' && iCount > 0 ? '<button class="btn-report" onclick="startReport(\'inspection\')">&#128196; Generate Inspection Report</button>' : ''}
     ${activePhotoTab === 'build' && bCount > 0 ? '<button class="btn-report" onclick="startReport(\'build\')">&#128196; Generate Build Report</button>' : ''}
     <button class="btn-camera" onclick="openCameraMode()">&#128247;</button>
-    <div class="sync-indicator" onclick="syncToHomeownerPortal()">Homeowner portal: Not synced</div>
+    <div id="homeowner-share-status" style="font-size:12px;color:var(--gray);padding:8px 0;text-align:center"></div>
   `;
   renderPhotoGrid();
 }

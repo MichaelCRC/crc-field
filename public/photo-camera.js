@@ -189,24 +189,29 @@ async function captureFrame() {
   }
 
   // Convert to JPEG blob
-  liveCanvas.toBlob((blob) => {
-    if (!blob) return;
+  try {
+    liveCanvas.toBlob((blob) => {
+      if (!blob) { console.error('[Camera] toBlob returned null'); return; }
+      if (blob.size < 1000) { console.error('[Camera] Blob too small:', blob.size); return; }
 
-    cameraSessionCount++;
+      cameraSessionCount++;
 
-    // Create thumbnail for strip
-    const thumbUrl = createThumbnailFromCanvas(liveCanvas);
-    liveThumbnails.push(thumbUrl);
-    updateThumbStrip();
+      // Create thumbnail for strip
+      try {
+        const thumbUrl = createThumbnailFromCanvas(liveCanvas);
+        liveThumbnails.push(thumbUrl);
+        updateThumbStrip();
+      } catch (e) { console.error('[Camera] Thumbnail failed:', e); }
 
-    // Queue for upload
-    const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-    queueUpload(file, cameraTag);
+      // Queue for upload
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      queueUpload(file, cameraTag);
 
-    // Update UI
-    updateLiveHUD();
+      // Update UI
+      updateLiveHUD();
 
-  }, 'image/jpeg', 0.85);
+    }, 'image/jpeg', 0.85);
+  } catch (e) { console.error('[Camera] Capture failed:', e); }
 }
 
 function createThumbnailFromCanvas(srcCanvas) {
@@ -366,12 +371,15 @@ function handleLibrarySelect(input) {
 }
 
 // ============================================================
-// Background upload queue -- 2 concurrent uploads max
+// Background upload queue -- 3 concurrent uploads, retry on fail
 // ============================================================
-function queueUpload(file, tag) { uploadQueue.push({ file, tag }); processQueue(); }
+function queueUpload(file, tag) { 
+  uploadQueue.push({ file, tag, retries: 0, leadId: currentLeadId }); 
+  processQueue(); 
+}
 
 async function processQueue() {
-  if (uploadsInFlight >= 2 || !uploadQueue.length) return;
+  if (uploadsInFlight >= 3 || !uploadQueue.length) return;
   const item = uploadQueue.shift();
   uploadsInFlight++;
   updateUploadStatus();
@@ -379,9 +387,38 @@ async function processQueue() {
   fd.append('photos', item.file); fd.append('repCode', repCode);
   fd.append('tag', item.tag); fd.append('category', activePhotoTab); fd.append('caption', '');
   try {
-    const data = await fetch(`/api/leads/${currentLeadId}/photos`, { method: 'POST', body: fd }).then(r => r.json());
+    const resp = await fetch(`/api/leads/${item.leadId}/photos`, { method: 'POST', body: fd });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
     if (data.success) { currentLeadPhotos = data.photos; uploadsDone++; }
-  } catch (e) { console.error('[Camera] Upload failed:', e.message); uploadQueue.push(item); }
+    else throw new Error('Upload response not success');
+  } catch (e) { 
+    console.error('[Camera] Upload failed (attempt ' + (item.retries + 1) + '):', e.message); 
+    item.retries++;
+    if (item.retries < 3) {
+      // Retry with delay
+      setTimeout(() => { uploadQueue.push(item); processQueue(); }, 1000 * item.retries);
+    } else {
+      console.error('[Camera] Upload permanently failed after 3 attempts:', item.file.name);
+      // Store locally as fallback
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const localPhoto = {
+            id: 'failed-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
+            url: reader.result, thumbnail: reader.result,
+            tag: item.tag, category: activePhotoTab,
+            caption: '', repCode, jobId: item.leadId,
+            source: 'local-fallback', uploadedBy: repCode,
+            uploadedAt: new Date().toISOString(), uploadFailed: true
+          };
+          if (!currentLeadPhotos[activePhotoTab]) currentLeadPhotos[activePhotoTab] = [];
+          currentLeadPhotos[activePhotoTab].push(localPhoto);
+        };
+        reader.readAsDataURL(item.file);
+      } catch (fe) { console.error('[Camera] Local fallback also failed:', fe); }
+    }
+  }
   uploadsInFlight--;
   updateUploadStatus();
   processQueue();

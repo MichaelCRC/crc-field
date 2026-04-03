@@ -157,8 +157,12 @@ async function viewLead(id) {
     document.getElementById('leads-main').style.display = 'none';
     const detail = document.getElementById('lead-detail');
     detail.style.display = 'block';
+    const sharedCount = (lead.homeownerSharedPhotos || []).length;
+    const totalPhotos = (lead.photos?.inspection?.length || 0) + (lead.photos?.build?.length || 0);
+    const shareLabel = sharedCount > 0 ? `Homeowner Photos (${sharedCount})` : 'Share Photos with Homeowner';
     detail.innerHTML = `<div style="padding:16px;max-width:500px;margin:0 auto">
-      ${lead.streetViewUrl ? `<img src="${lead.streetViewUrl}" style="width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:16px">` : ''}
+      ${lead.streetViewUrl ? `<img src="${lead.streetViewUrl}" style="width:100%;height:200px;object-fit:cover;border-radius:8px;margin-bottom:16px" onerror="this.outerHTML='<div class=\\'sv-fallback\\'><div class=\\'sv-fallback-icon\\'>&#127968;</div><div class=\\'sv-fallback-addr\\'>${lead.address.replace(/'/g,'&#39;')}</div></div>'">`
+        : `<div class="sv-fallback"><div class="sv-fallback-icon">&#127968;</div><div class="sv-fallback-addr">${lead.address}</div></div>`}
       <h2 style="font-size:18px;margin-bottom:4px">${lead.address}</h2>
       <p style="color:var(--gray);margin-bottom:16px">${lead.homeowner || 'No name'} ${lead.phone ? '- ' + lead.phone : ''}</p>
       <div style="margin-bottom:16px"><strong style="font-size:12px;color:var(--gray)">STATUS</strong><div class="chip-row">${sBtns}</div></div>
@@ -172,6 +176,12 @@ async function viewLead(id) {
         ${lead.phone ? `<a href="tel:${lead.phone}" class="chip" style="text-decoration:none">Call</a><a href="sms:${lead.phone}" class="chip" style="text-decoration:none">Text</a>` : ''}
         ${lead.portalJobId ? `<a href="https://crc-supplements-portal.onrender.com/#job-${lead.portalJobId}" target="_blank" class="chip" style="text-decoration:none;background:var(--navy);color:white">Open in Portal</a>` : ''}
         <button class="chip" style="background:var(--navy);color:white" onclick="switchView('brain')">&#129504; Ask Brain</button>
+      </div>
+      <div style="margin-bottom:16px">
+        <button class="btn-share-homeowner" onclick="openHomeownerShareModal('${id}')">
+          <span style="font-size:16px">&#128228;</span> ${shareLabel}
+        </button>
+        ${sharedCount > 0 ? `<div style="font-size:12px;color:var(--gray);text-align:center;margin-top:4px">${sharedCount} of ${totalPhotos} photos shared with homeowner</div>` : ''}
       </div>
       <button onclick="backToLeads()" style="padding:12px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer">Back to Leads</button>
     </div>`;
@@ -204,6 +214,68 @@ async function orderHover(leadId, btn) {
     const data = await fetch(`/api/hover/order/${leadId}`, { method: 'POST' }).then(r => r.json());
     alert(data.message || 'Hover ordered'); viewLead(leadId);
   } catch (e) { alert('Error: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Order Hover Measurement'; } }
+}
+
+// --- Homeowner Photo Share Modal ---
+async function openHomeownerShareModal(leadId) {
+  try {
+    const lead = await fetch(`/api/leads/${leadId}`).then(r => r.json());
+    const allPhotos = [...(lead.photos?.inspection || []), ...(lead.photos?.build || [])];
+    const shared = lead.homeownerSharedPhotos || [];
+    if (!allPhotos.length) { alert('No photos to share yet. Take some photos first.'); return; }
+
+    const modal = document.getElementById('photo-modal');
+    modal.style.display = 'flex';
+    modal.innerHTML = `<div class="homeowner-share-modal">
+      <div class="hsm-header">
+        <h3>Share with Homeowner</h3>
+        <button onclick="closeHomeownerShareModal()" style="background:none;border:none;color:var(--gray);font-size:24px;cursor:pointer">&times;</button>
+      </div>
+      <div class="hsm-actions">
+        <button class="chip" onclick="hsSelectAll(true)">Select All</button>
+        <button class="chip" onclick="hsSelectAll(false)">Deselect All</button>
+        <span id="hs-count" style="font-size:12px;color:var(--gray);margin-left:auto">${shared.length} of ${allPhotos.length} selected</span>
+      </div>
+      <div class="hsm-grid">
+        ${allPhotos.map((p, i) => {
+          const isShared = shared.includes(p.url || p.thumbnail);
+          return `<div class="hsm-thumb ${isShared ? 'selected' : ''}" onclick="hsToggle(this)" data-url="${p.url || p.thumbnail}">
+            <img src="${p.thumbnail || p.url}" loading="lazy">
+            <div class="hsm-check">${isShared ? '&#10003;' : ''}</div>
+            <span class="tag-badge">${(p.tag || 'photo').replace('-',' ')}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <button class="btn-add" onclick="saveHomeownerShare('${leadId}')" style="margin:12px 16px;width:calc(100% - 32px)">Share Selected</button>
+    </div>`;
+  } catch (e) { alert('Error loading photos: ' + e.message); }
+}
+function closeHomeownerShareModal() { const m = document.getElementById('photo-modal'); m.style.display = 'none'; m.innerHTML = ''; }
+function hsToggle(el) {
+  el.classList.toggle('selected');
+  el.querySelector('.hsm-check').innerHTML = el.classList.contains('selected') ? '&#10003;' : '';
+  updateHsCount();
+}
+function hsSelectAll(select) {
+  document.querySelectorAll('.hsm-thumb').forEach(el => {
+    el.classList.toggle('selected', select);
+    el.querySelector('.hsm-check').innerHTML = select ? '&#10003;' : '';
+  });
+  updateHsCount();
+}
+function updateHsCount() {
+  const total = document.querySelectorAll('.hsm-thumb').length;
+  const selected = document.querySelectorAll('.hsm-thumb.selected').length;
+  const el = document.getElementById('hs-count');
+  if (el) el.textContent = `${selected} of ${total} selected`;
+}
+async function saveHomeownerShare(leadId) {
+  const urls = [...document.querySelectorAll('.hsm-thumb.selected')].map(el => el.dataset.url);
+  try {
+    await fetch(`/api/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ homeownerSharedPhotos: urls }) });
+    closeHomeownerShareModal();
+    viewLead(leadId);
+  } catch (e) { alert('Error saving: ' + e.message); }
 }
 
 // --- Current Location for Address Entry ---

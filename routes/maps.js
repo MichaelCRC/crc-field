@@ -40,9 +40,11 @@ router.get('/place-details', async (req, res) => {
 router.get('/streetview', (req, res) => {
   if (!API_KEY) return res.json({ url: '' });
   const addr = req.query.address || '';
-  const size = req.query.size || '400x200';
-  const url = `${MAPS_BASE}/streetview?size=${size}&location=${encodeURIComponent(addr)}&key=${API_KEY}`;
-  res.json({ url });
+  const size = req.query.size || '600x400';
+  const fov = req.query.fov || '90';
+  const pitch = req.query.pitch || '10';
+  const url = `${MAPS_BASE}/streetview?size=${size}&location=${encodeURIComponent(addr)}&fov=${fov}&pitch=${pitch}&key=${API_KEY}`;
+  res.json({ url, address: addr });
 });
 
 // Maps JS API key (for embedding maps on frontend)

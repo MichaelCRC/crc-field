@@ -34,9 +34,12 @@
   <!-- Main App -->
   <div id="app" style="display:none">
     <div id="app-header" class="app-header">
-      <div style="display:flex;align-items:center;gap:8px">
-        <img src="/images/icon-192.png" alt="CRC" style="width:28px;height:28px;border-radius:4px">
-        <span class="app-title">CRC Field Intel</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="/img/crc-logo-monogram.jpg" alt="CRC" style="width:30px;height:30px;border-radius:4px;object-fit:cover">
+        <div style="display:flex;flex-direction:column;line-height:1.1">
+          <span style="font-size:15px;font-weight:800;letter-spacing:1.5px;color:#fff">COLUMBUS ROOFING</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--teal);text-transform:uppercase">OFFICIAL FIELD APP</span>
+        </div>
       </div>
       <span id="rep-badge" class="rep-badge"></span>
     </div>
@@ -239,8 +242,8 @@
       <button class="nav-item" onclick="switchView('map')" id="nav-map">
         <span class="nav-icon">&#128205;</span><span class="nav-label">Map</span>
       </button>
-      <button class="nav-item" onclick="switchView('storms')" id="nav-storms">
-        <span class="nav-icon">&#9928;</span><span class="nav-label">Storms</span>
+      <button class="nav-item" onclick="switchView('chat')" id="nav-chat">
+        <span class="nav-icon">&#128172;</span><span class="nav-label">Chat</span>
       </button>
       <button class="nav-item" onclick="toggleMoreMenu()" id="nav-more">
         <span class="nav-icon">&#9776;</span><span class="nav-label">More</span>
