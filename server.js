@@ -49,6 +49,9 @@ app.get('/health', (req, res) => res.json({ status: 'ok', service: 'crc-field-in
 // Claims dashboard page
 app.get('/claims-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'claims-dashboard.html')));
 
+// Team roster page
+app.get('/roster', (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
+
 // SPA fallback
 app.get('/{*path}', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 

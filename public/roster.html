@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Roster — Columbus Roofing Company</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0f1a;
+    min-height: 100vh;
+    color: #fff;
+  }
+  .page-header {
+    background: linear-gradient(135deg, #001A4D 0%, #002870 50%, #001A4D 100%);
+    padding: 40px 24px 32px;
+    text-align: center;
+    border-bottom: 3px solid #00BCD4;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(0,188,212,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .page-header h1 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #001A4D;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: #fff;
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .page-header h2 {
+    font-size: 48px;
+    font-weight: 800;
+    color: #00BCD4;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 20px rgba(0,188,212,0.3);
+  }
+  .page-header .subtitle {
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .roster-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+  .roster-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 28px 20px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: block;
+  }
+  .roster-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #00BCD4, transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .roster-card:hover {
+    transform: translateY(-4px);
+    border-color: #00BCD4;
+    box-shadow: 0 8px 30px rgba(0,188,212,0.15);
+  }
+  .roster-card:hover::before { opacity: 1; }
+  .roster-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #00BCD4, #0097A7);
+    border: 3px solid rgba(0,188,212,0.3);
+    overflow: hidden;
+  }
+  .roster-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .roster-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .roster-role {
+    font-size: 13px;
+    color: #00BCD4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .roster-code {
+    position: absolute;
+    bottom: 10px;
+    right: 14px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-family: 'Courier New', monospace;
+  }
+  .page-footer {
+    text-align: center;
+    padding: 32px 24px;
+    border-top: 1px solid #1e293b;
+    max-width: 1000px;
+    margin: 20px auto 0;
+  }
+  .page-footer .company {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+  }
+  .page-footer .address {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 6px;
+  }
+  .page-footer .address a {
+    color: #00BCD4;
+    text-decoration: none;
+  }
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: #8899bb;
+    font-size: 16px;
+  }
+  @media (max-width: 768px) {
+    .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 20px 16px; }
+    .page-header h2 { font-size: 32px; letter-spacing: 4px; }
+    .roster-avatar { width: 72px; height: 72px; font-size: 24px; }
+    .roster-name { font-size: 15px; }
+    .roster-role { font-size: 11px; }
+  }
+  @media (max-width: 400px) {
+    .roster-grid { gap: 10px; padding: 16px 12px; }
+    .roster-card { padding: 20px 12px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>Columbus Roofing Company</h1>
+  <h2>The Roster</h2>
+  <div class="subtitle">2026 Season</div>
+</div>
+<div class="roster-grid" id="roster">
+  <div class="loading">Loading roster...</div>
+</div>
+<div class="page-footer">
+  <div class="company">Columbus Roofing Company</div>
+  <div class="address">5131 Post Rd, Dublin, OH 43017 &nbsp;|&nbsp; <a href="https://columbusroofingco.com" target="_blank">columbusroofingco.com</a></div>
+</div>
+<script>
+function getInitials(name) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase();
+}
+
+function getRoleLabel(role) {
+  const labels = { admin: 'Management', rep: 'Sales Rep', production: 'Production' };
+  return labels[role] || role || 'Team Member';
+}
+
+async function loadRoster() {
+  try {
+    const [codesRes, cardsRes] = await Promise.all([
+      fetch('/api/rep-codes'),
+      Promise.all([]).then(() => ({})) // cards loaded per-rep
+    ]);
+    const codes = await codesRes.json();
+    const active = codes.filter(c => c.active);
+
+    // Fetch card data for photos
+    const cardPromises = active.map(c =>
+      fetch('/api/rep-card/' + c.code).then(r => r.json()).catch(() => ({}))
+    );
+    const cards = await Promise.all(cardPromises);
+
+    const grid = document.getElementById('roster');
+    grid.innerHTML = active.map((rep, i) => {
+      const card = cards[i] || {};
+      const initials = getInitials(rep.name);
+      const avatarHtml = card.photo
+        ? '<img src="' + card.photo + '" alt="' + rep.name + '">'
+        : initials;
+      const roleLabel = card.title || getRoleLabel(rep.role);
+
+      return '<a href="/rep-card/' + rep.code + '" class="roster-card">' +
+        '<div class="roster-avatar">' + avatarHtml + '</div>' +
+        '<div class="roster-name">' + rep.name + '</div>' +
+        '<div class="roster-role">' + roleLabel + '</div>' +
+        '<div class="roster-code">' + rep.code + '</div>' +
+      '</a>';
+    }).join('');
+  } catch (e) {
+    document.getElementById('roster').innerHTML = '<div class="loading">Error loading roster</div>';
+  }
+}
+
+loadRoster();
+</script>
+</body>
+</html>

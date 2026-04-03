@@ -36,10 +36,13 @@ function getMergedCard(code) {
     department: rep.department || '',
     phone: card.phone || '',
     email: card.email || '',
-    bio: card.bio || '',
+    bio: card.bio || rep.bio || '',
     photo: card.photo || '',
     linkedin: card.linkedin || '',
     instagram: card.instagram || '',
+    years_experience: rep.years_experience || null,
+    specialties: rep.specialties || [],
+    style: rep.style || null,
     company: 'Columbus Roofing Company',
     license: 'HIC-L00838',
     active: rep.active,
@@ -213,6 +216,7 @@ END:VCARD`;
 router.get('/rep-card/:code', (req, res) => {
   const code = req.params.code.toUpperCase();
   const auth = (req.query.auth || '').toUpperCase();
+  const isInternal = req.query.internal === 'true';
   const merged = getMergedCard(code);
   if (!merged) return res.status(404).send('Rep not found');
 
@@ -251,6 +255,38 @@ router.get('/rep-card/:code', (req, res) => {
   }
 
   const socialSection = socialHtml ? `<div class="social-links">${socialHtml}</div>` : '';
+
+  // ── ABOUT SECTION ──
+  let aboutHtml = '';
+  if (merged.bio || merged.years_experience || (merged.specialties && merged.specialties.length)) {
+    let aboutContent = '';
+    if (merged.years_experience) {
+      aboutContent += `<div class="about-years"><strong>${merged.years_experience}</strong> years in the industry</div>`;
+    }
+    if (merged.specialties && merged.specialties.length) {
+      aboutContent += `<div class="specialties">${merged.specialties.map(s => `<span class="specialty-badge">${s}</span>`).join('')}</div>`;
+    }
+    aboutHtml = `<div class="baseball-section">
+      <div class="section-title">About</div>
+      ${aboutContent}
+    </div>`;
+  }
+
+  // ── STYLE SECTION (internal only) ──
+  let styleHtml = '';
+  if (isInternal && merged.style && merged.style.traits && merged.style.traits.length) {
+    styleHtml = `<div class="baseball-section">
+      <div class="section-title">Work Style</div>
+      <div class="style-label">${merged.style.label}</div>
+      <div class="style-traits">${merged.style.traits.map(t => `<span class="style-badge">${t}</span>`).join('')}</div>
+    </div>`;
+  }
+
+  // ── STATS SECTION ──
+  const statsHtml = `<div class="baseball-section" id="stats-section" style="display:none;">
+    <div class="section-title">Stats</div>
+    <div class="stats-row" id="stats-row"></div>
+  </div>`;
 
   const editButtonHtml = canEdit ? `<button onclick="toggleEdit()" class="btn btn-edit" id="editBtn">✏️ Edit Card</button>` : '';
 
@@ -496,6 +532,85 @@ router.get('/rep-card/:code', (req, res) => {
       outline: none;
       border-color: #00BCD4;
     }
+    .baseball-section {
+      padding: 16px 24px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .section-title {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .about-years {
+      font-size: 14px;
+      color: #001A4D;
+      margin-bottom: 10px;
+    }
+    .about-years strong {
+      color: #00BCD4;
+      font-size: 18px;
+    }
+    .specialties {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .specialty-badge {
+      display: inline-block;
+      background: #E8F8F9;
+      color: #0097A7;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .style-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: #001A4D;
+      margin-bottom: 8px;
+    }
+    .style-traits {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .style-badge {
+      display: inline-block;
+      background: #001A4D;
+      color: #00BCD4;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .stats-row {
+      display: flex;
+      gap: 8px;
+    }
+    .stat-box {
+      flex: 1;
+      background: #001A4D;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .stat-box .stat-num {
+      font-size: 20px;
+      font-weight: 800;
+      color: #00BCD4;
+    }
+    .stat-box .stat-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -521,6 +636,9 @@ router.get('/rep-card/:code', (req, res) => {
       </div>
       ${socialSection}
     </div>
+    ${aboutHtml}
+    ${styleHtml}
+    ${statsHtml}
     <div class="buttons">
       <a href="/rep-card/${code}/vcard" class="btn btn-primary">💾 Save Contact</a>
       <a href="${merged.phone ? 'tel:' + merged.phone : '#'}" class="btn btn-secondary">🏠 Schedule Inspection</a>
@@ -532,6 +650,32 @@ router.get('/rep-card/:code', (req, res) => {
       <div class="license">License: HIC-L00838 | Columbus, OH</div>
     </div>
   </div>
+  <script>
+    // Load stats from claims dashboard
+    (async function() {
+      try {
+        const res = await fetch('/api/claims-dashboard');
+        const d = await res.json();
+        const repData = d.by_rep.find(r => r.rep_name === '${merged.name.replace(/'/g, "\\'")}');
+        if (repData) {
+          const section = document.getElementById('stats-section');
+          const row = document.getElementById('stats-row');
+          let boxes = '';
+          if (repData.mtd !== undefined) boxes += '<div class="stat-box"><div class="stat-num">' + repData.mtd + '</div><div class="stat-label">This Month</div></div>';
+          if (repData.total_jobs !== undefined) boxes += '<div class="stat-box"><div class="stat-num">' + repData.total_jobs + '</div><div class="stat-label">Total Jobs</div></div>';
+          if (repData.approved !== undefined && repData.claims_filed > 0) {
+            const rate = Math.round((repData.approved / repData.claims_filed) * 100);
+            boxes += '<div class="stat-box"><div class="stat-num">' + rate + '%</div><div class="stat-label">Close Rate</div></div>';
+          }
+          if (repData.total_value) boxes += '<div class="stat-box"><div class="stat-num">$' + (repData.total_value / 1000).toFixed(0) + 'k</div><div class="stat-label">Value</div></div>';
+          if (boxes) {
+            row.innerHTML = boxes;
+            section.style.display = 'block';
+          }
+        }
+      } catch(e) { /* silently fail if no dashboard data */ }
+    })();
+  </script>
   ${canEdit ? `<script>
     const CODE = '${code}';
     const AUTH = '${auth}';
