@@ -247,6 +247,37 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .action-delete { color: var(--red); }
 .action-cancel { display: block; width: 100%; padding: 14px 16px; font-size: 15px; font-weight: 600; background: none; border: none; border-top: 1px solid var(--border); text-align: center; color: var(--gray); cursor: pointer; }
 
+/* ============================================================
+   Live Camera Viewfinder (getUserMedia)
+   ============================================================ */
+.cam-viewfinder { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; flex-direction: column; }
+.cam-viewfinder video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.cam-viewfinder .cam-topbar { position: relative; z-index: 2; }
+.cam-viewfinder .cam-bottombar { position: relative; z-index: 2; }
+
+/* Flash overlay */
+.cam-flash { position: absolute; inset: 0; background: white; opacity: 0; pointer-events: none; z-index: 3; transition: opacity 0.05s ease-out; }
+.cam-flash.active { opacity: 0.7; }
+
+/* Center overlay — clickable area over video */
+.cam-center-overlay { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+
+/* Live shutter button — larger */
+.cam-shutter-live { width: 70px !important; height: 70px !important; border: 4px solid white !important; background: rgba(255,255,255,0.3) !important; transition: transform 0.1s ease; }
+.cam-shutter-live:active { transform: scale(0.88) !important; background: rgba(255,255,255,0.6) !important; }
+
+/* Flash toggle button */
+.cam-flash-toggle { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+
+/* Thumbnail strip */
+.cam-thumb-strip { position: relative; z-index: 2; height: 54px; display: flex; gap: 4px; padding: 2px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; background: rgba(0,0,0,0.5); flex-shrink: 0; align-items: center; }
+.cam-thumb-strip:empty { height: 0; padding: 0; }
+.cam-thumb-strip::-webkit-scrollbar { display: none; }
+.cam-thumb-img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+
+/* Viewfinder compass — slightly transparent background for readability */
+.cam-viewfinder .cam-compass { background: rgba(0,0,0,0.3); border-radius: 50%; padding: 8px; }
+
 @media (min-width: 600px) {
   .quick-add { max-width: 500px; margin: 0 auto; }
   .admin-stats { grid-template-columns: 1fr 1fr 1fr 1fr; }
