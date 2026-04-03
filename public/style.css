@@ -199,6 +199,49 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .report-check { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; background: var(--teal); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; }
 .report-thumb.selected .report-check { display: flex; }
 
+/* Camera HUD -- full screen continuous capture */
+.cam-hud { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; z-index: 300; }
+.cam-topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; padding-top: calc(8px + env(safe-area-inset-top)); background: var(--navy); color: white; gap: 8px; }
+.cam-close { background: none; border: none; color: white; font-size: 28px; padding: 4px 8px; cursor: pointer; line-height: 1; }
+.cam-tag-current { font-size: 14px; font-weight: 700; color: var(--teal); }
+.cam-status-area { display: flex; align-items: center; gap: 8px; }
+.cam-upload-status { font-size: 11px; color: rgba(255,255,255,0.7); }
+.cam-done { background: var(--teal); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.cam-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+.cam-tap-hint { color: rgba(255,255,255,0.5); font-size: 15px; font-weight: 600; text-align: center; }
+.cam-recent { display: flex; gap: 4px; position: absolute; bottom: 16px; left: 12px; right: 12px; justify-content: flex-start; overflow-x: auto; }
+.cam-recent-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+.cam-bottombar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); background: var(--navy); }
+.cam-tag-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 8px; cursor: pointer; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cam-shutter { width: 64px; height: 64px; border-radius: 50%; background: white; border: 4px solid var(--teal); cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.cam-shutter:active { transform: scale(0.9); background: var(--teal); }
+.cam-library-btn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 22px; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
+
+/* Camera tag picker sheet */
+.cam-tag-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 310; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+.cam-tag-sheet.open { pointer-events: auto; opacity: 1; }
+.cam-tag-sheet-inner { background: var(--navy); border-radius: 16px 16px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cam-tag-option { padding: 14px 12px; font-size: 15px; font-weight: 600; background: rgba(255,255,255,0.1); border: 2px solid transparent; border-radius: 10px; color: white; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+.cam-tag-option.active { background: var(--teal); border-color: white; }
+
+/* Camera summary */
+.cam-summary { background: white; border-radius: 16px; padding: 32px 24px; text-align: center; max-width: 300px; }
+.cam-summary h3 { font-size: 18px; color: var(--navy); margin-top: 8px; }
+.cam-summary-sub { font-size: 13px; color: var(--gray); margin-top: 4px; }
+
+/* Photo action sheet (long press) */
+.action-sheet { background: white; border-radius: 16px; width: 320px; max-width: 95vw; max-height: 85vh; overflow-y: auto; }
+.action-preview { height: 140px; overflow: hidden; border-radius: 16px 16px 0 0; }
+.action-preview img { width: 100%; height: 100%; object-fit: cover; }
+.action-section-label { font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase; padding: 12px 16px 4px; }
+.action-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 16px 12px; }
+.action-tag { padding: 6px 12px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); border-radius: 16px; background: white; color: var(--gray); cursor: pointer; }
+.action-tag.active { background: var(--teal); color: white; border-color: var(--teal); }
+.action-item { display: block; width: 100%; padding: 14px 16px; font-size: 15px; background: none; border: none; border-top: 1px solid var(--border); text-align: left; cursor: pointer; }
+.action-item:active { background: var(--bg); }
+.action-delete { color: var(--red); }
+.action-cancel { display: block; width: 100%; padding: 14px 16px; font-size: 15px; font-weight: 600; background: none; border: none; border-top: 1px solid var(--border); text-align: center; color: var(--gray); cursor: pointer; }
+
 @media (min-width: 600px) {
   .quick-add { max-width: 500px; margin: 0 auto; }
   .admin-stats { grid-template-columns: 1fr 1fr 1fr 1fr; }
