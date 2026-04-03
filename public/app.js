@@ -172,6 +172,7 @@ async function viewLead(id) {
       ${measHtml}
       <div id="photo-section" style="margin:16px 0"></div>
       ${!lead.measurements ? `<button class="btn-add" style="background:var(--navy);margin-bottom:12px" onclick="orderHover('${id}',this)">Order Hover Measurement</button>` : ''}
+      <div id="lead-documents-section" style="margin-bottom:16px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         ${lead.phone ? `<a href="tel:${lead.phone}" class="chip" style="text-decoration:none">Call</a><a href="sms:${lead.phone}" class="chip" style="text-decoration:none">Text</a>` : ''}
         ${lead.portalJobId ? `<a href="https://crc-supplements-portal.onrender.com/#job-${lead.portalJobId}" target="_blank" class="chip" style="text-decoration:none;background:var(--navy);color:white">Open in Portal</a>` : ''}
@@ -187,6 +188,8 @@ async function viewLead(id) {
     </div>`;
     // Load photo system
     loadPhotos(id);
+    // Load documents from portal
+    if (lead.portalJobId) loadLeadDocuments(lead.portalJobId);
   } catch (e) { alert('Error: ' + e.message); }
 }
 function backToLeads() {
@@ -327,5 +330,110 @@ async function useCurrentLocation() {
     },
     { enableHighAccuracy: true, timeout: 10000 }
   );
+}
+
+// ── LEAD DOCUMENTS + SIGNATURE ──────────────────
+const PORTAL_URL = 'https://crc-supplements-portal.onrender.com';
+
+async function loadLeadDocuments(portalJobId) {
+  const el = document.getElementById('lead-documents-section');
+  if (!el) return;
+  try {
+    const docs = await fetch(`${PORTAL_URL}/api/jobs/${portalJobId}/documents`).then(r => r.json());
+    if (!docs.length) { el.innerHTML = '<div style="padding:12px;background:var(--bg);border-radius:6px;font-size:13px;color:var(--gray)">No documents yet</div>'; return; }
+    let html = '<div style="padding:12px;background:var(--bg);border-radius:6px"><strong style="font-size:12px;color:var(--gray)">DOCUMENTS</strong>';
+    for (const d of docs) {
+      const sigBadge = d.signatureStatus === 'signed' ? '<span style="background:#16A34A;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700">Signed</span>'
+        : d.signatureStatus === 'sent' ? '<span style="background:#B8860B;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700">Sent</span>'
+        : '';
+      const isPdf = (d.filename || '').toLowerCase().endsWith('.pdf');
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.filename} ${sigBadge}</div>
+        ${isPdf && !d.signatureStatus ? `<button class="chip" style="font-size:11px" onclick="openSignatureModal('${portalJobId}','${d.id}')">Sign</button>` : ''}
+        <a href="${PORTAL_URL}/api/jobs/${portalJobId}/documents/${d.id}/download" target="_blank" class="chip" style="text-decoration:none;font-size:11px">View</a>
+      </div>`;
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div style="padding:12px;background:var(--bg);border-radius:6px;font-size:13px;color:var(--gray)">Could not load documents</div>';
+  }
+}
+
+function openSignatureModal(portalJobId, docId) {
+  const modal = document.createElement('div');
+  modal.id = 'sig-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;padding:16px';
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="font-size:14px">Sign Document</strong>
+      <button onclick="closeSignatureModal()" style="font-size:20px;background:none;border:none;cursor:pointer">&times;</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:8px">Sign below with your finger</p>
+    <canvas id="sig-canvas" style="flex:1;border:2px solid var(--border);border-radius:8px;touch-action:none;background:#fff"></canvas>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="clearSignature()" class="chip" style="flex:1;padding:12px;font-size:14px">Clear</button>
+      <button onclick="submitSignature('${portalJobId}','${docId}')" class="chip" style="flex:1;padding:12px;font-size:14px;background:var(--teal);color:#fff">Done</button>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => initSignatureCanvas(), 50);
+}
+
+function closeSignatureModal() {
+  const m = document.getElementById('sig-modal');
+  if (m) m.remove();
+}
+
+let sigCtx = null, sigDrawing = false;
+function initSignatureCanvas() {
+  const canvas = document.getElementById('sig-canvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = canvas.offsetHeight * 2;
+  sigCtx = canvas.getContext('2d');
+  sigCtx.scale(2, 2);
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round';
+  sigCtx.strokeStyle = '#000';
+  const getPos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  };
+  const start = (e) => { e.preventDefault(); sigDrawing = true; const p = getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); };
+  const move = (e) => { if (!sigDrawing) return; e.preventDefault(); const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); };
+  const end = () => { sigDrawing = false; };
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+}
+
+function clearSignature() {
+  const canvas = document.getElementById('sig-canvas');
+  if (canvas && sigCtx) sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+async function submitSignature(portalJobId, docId) {
+  try {
+    const res = await fetch(`${PORTAL_URL}/api/jobs/${portalJobId}/send-for-signature`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docId, mode: 'in-person' })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    closeSignatureModal();
+    if (data.signers?.[0]?.embedUrl) {
+      window.open(data.signers[0].embedUrl, '_blank');
+    } else {
+      alert('Signature request submitted');
+    }
+    loadLeadDocuments(portalJobId);
+  } catch (e) {
+    alert('Signature failed: ' + e.message);
+  }
 }
 
