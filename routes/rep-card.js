@@ -340,7 +340,7 @@ router.get('/rep-card/:code', (req, res) => {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #001A4D 0%, #002266 50%, #001A4D 100%);
+      background: #F5F7FA;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -356,7 +356,7 @@ router.get('/rep-card/:code', (req, res) => {
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     .card-header {
-      background: linear-gradient(135deg, #001A4D, #003380);
+      background: #1B2360;
       padding: 30px 24px 20px;
       text-align: center;
       position: relative;
@@ -375,7 +375,7 @@ router.get('/rep-card/:code', (req, res) => {
       width: 100px;
       height: 100px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #00BCD4, #0097A7);
+      background: #00B5CC;
       margin: 0 auto 16px;
       display: flex;
       align-items: center;
@@ -476,7 +476,7 @@ router.get('/rep-card/:code', (req, res) => {
       width: 100%;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #00BCD4, #0097A7);
+      background: #00B5CC;
       color: #fff;
     }
     .btn-secondary {
@@ -640,14 +640,15 @@ router.get('/rep-card/:code', (req, res) => {
     ${styleHtml}
     ${statsHtml}
     <div class="buttons">
-      <a href="/rep-card/${code}/vcard" class="btn btn-primary">💾 Save Contact</a>
-      <a href="${merged.phone ? 'tel:' + merged.phone : '#'}" class="btn btn-secondary">🏠 Schedule Inspection</a>
+      <a href="/rep-card/${code}/vcard" class="btn btn-primary">Save to Contacts</a>
+      <button onclick="shareCard()" class="btn btn-secondary">Share My Card</button>
       ${editButtonHtml}
     </div>
     ${editFormHtml}
     <div class="footer">
-      <div class="footer-text">Columbus Roofing Company</div>
-      <div class="license">License: HIC-L00838 | Columbus, OH</div>
+      <div style="font-size:13px;color:#1B2360;font-weight:600">Columbus Roofing Company</div>
+      <div style="font-size:11px;color:#999;margin-top:2px;font-style:italic">The Everyday Standard.</div>
+      <div class="license">columbusroofingco.com</div>
     </div>
   </div>
   <script>
@@ -675,6 +676,15 @@ router.get('/rep-card/:code', (req, res) => {
         }
       } catch(e) { /* silently fail if no dashboard data */ }
     })();
+    function shareCard() {
+      const url = window.location.href.split('?')[0];
+      const text = "Hi, I'm ${merged.name.replace(/'/g, "\\'")} from Columbus Roofing Company.\\nHere's my contact card:\\n" + url;
+      if (navigator.share) {
+        navigator.share({ title: '${merged.name.replace(/'/g, "\\'")} - CRC', text: text, url: url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard')).catch(() => alert(url));
+      }
+    }
   </script>
   ${canEdit ? `<script>
     const CODE = '${code}';
