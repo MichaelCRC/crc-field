@@ -26,7 +26,7 @@ async function initMap() {
       loadMapPins();
       gmap.addListener('click', async (e) => {
         if (knockMode) { pendingKnock = { lat: e.latLng.lat(), lng: e.latLng.lng() }; document.getElementById('knock-modal').style.display = 'flex'; return; }
-        if (dropPinMode) { const addr = await reverseGeocode(e.latLng.lat(), e.latLng.lng()); if (addr && confirm(`Add lead at:\n${addr}?`)) { document.getElementById('lead-address').value = addr; selectedAddress = addr; document.getElementById('lead-address').dataset.lat = e.latLng.lat(); document.getElementById('lead-address').dataset.lng = e.latLng.lng(); switchView('leads'); } dropPinMode = false; document.getElementById('btn-drop-pin').classList.remove('active'); }
+        if (dropPinMode) { showQuickMarkPopup(e.latLng.lat(), e.latLng.lng()); }
       });
     };
     document.head.appendChild(script);
@@ -133,6 +133,54 @@ function hideStormOverlay() {
 function toggleStormPanel() {
   const panel = document.getElementById('storm-panel');
   if (panel) panel.classList.toggle('collapsed');
+}
+
+// --- Quick Mark (drop pin without full lead form) ---
+let quickMarkPin = null;
+async function showQuickMarkPopup(lat, lng) {
+  const addr = await reverseGeocode(lat, lng);
+  // Drop a temporary marker
+  if (quickMarkPin) quickMarkPin.setMap(null);
+  quickMarkPin = new google.maps.Marker({ position: { lat, lng }, map: gmap, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#00B5CC', fillOpacity: 1, strokeColor: '#FFF', strokeWeight: 3 }, zIndex: 100 });
+  // Show popup
+  const modal = document.getElementById('knock-modal');
+  modal.style.display = 'flex';
+  modal.querySelector('#knock-options').innerHTML = `
+    <div style="font-size:13px;color:var(--gray);margin-bottom:8px;word-break:break-word">${addr}</div>
+    <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px">Quick Mark</div>
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','not_home')" style="background:var(--amber)">Not Home</button>
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','not_interested')" style="background:var(--red)">Not Interested</button>
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','contacted')" style="background:var(--teal)">Interested</button>
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','no_answer')" style="background:var(--gray)">No Answer</button>
+    <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px">
+      <button class="btn-add" onclick="quickMarkToFull(${lat},${lng},'${addr.replace(/'/g,"\\'")}')">Add Full Lead Instead</button>
+    </div>
+    <button onclick="cancelQuickMark()" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px;width:100%">Cancel</button>`;
+}
+async function quickMark(lat, lng, addr, status) {
+  document.getElementById('knock-modal').style.display = 'none';
+  if (quickMarkPin) { quickMarkPin.setMap(null); quickMarkPin = null; }
+  try {
+    await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: addr, lat, lng, source: 'Door Knock', status, repCode, type: 'door_knock' }) });
+    loadMapPins();
+  } catch (e) { alert('Error: ' + e.message); }
+  dropPinMode = false;
+  document.getElementById('btn-drop-pin').classList.remove('active');
+}
+function quickMarkToFull(lat, lng, addr) {
+  document.getElementById('knock-modal').style.display = 'none';
+  if (quickMarkPin) { quickMarkPin.setMap(null); quickMarkPin = null; }
+  document.getElementById('lead-address').value = addr;
+  selectedAddress = addr;
+  document.getElementById('lead-address').dataset.lat = lat;
+  document.getElementById('lead-address').dataset.lng = lng;
+  switchView('leads');
+  dropPinMode = false;
+  document.getElementById('btn-drop-pin').classList.remove('active');
+}
+function cancelQuickMark() {
+  document.getElementById('knock-modal').style.display = 'none';
+  if (quickMarkPin) { quickMarkPin.setMap(null); quickMarkPin = null; }
 }
 
 function zoomToStorm(lat, lng) {

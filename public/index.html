@@ -98,14 +98,14 @@
 
     <!-- Door Knock Status Modal -->
     <div id="knock-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--white);border-radius:16px;padding:24px;width:280px;text-align:center">
-        <h3 style="font-size:16px;margin-bottom:16px;color:var(--navy)">Door Result</h3>
+      <div style="background:var(--white);border-radius:16px;padding:24px;width:300px;text-align:center">
+        <h3 style="font-size:16px;margin-bottom:12px;color:var(--navy)">Mark This Door</h3>
         <div style="display:flex;flex-direction:column;gap:8px" id="knock-options">
           <button class="btn-add" onclick="completeKnock('not_home')" style="background:var(--amber)">Not Home</button>
           <button class="btn-add" onclick="completeKnock('not_interested')" style="background:var(--red)">Not Interested</button>
           <button class="btn-add" onclick="completeKnock('contacted')" style="background:var(--teal)">Interested</button>
           <button class="btn-add" onclick="completeKnock('appointment')" style="background:var(--green)">Appointment Set</button>
-          <button onclick="closeKnockModal()" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px">Cancel</button>
+          <button onclick="closeKnockModal()" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px;width:100%">Cancel</button>
         </div>
       </div>
     </div>
