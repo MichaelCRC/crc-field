@@ -131,14 +131,23 @@ async function loadLeads() {
     const today = new Date().toDateString();
     const recent = leads.filter(l => new Date(l.createdAt).toDateString() === today);
     if (!recent.length) { c.innerHTML = '<p style="padding:16px;color:var(--gray);font-size:14px">No leads added today.</p>'; return; }
-    c.innerHTML = recent.map(l => `<div class="lead-card" onclick="viewLead('${l.id}')">
-      ${l.streetViewUrl ? `<img class="lead-thumb" src="${l.streetViewUrl}">` : '<div class="lead-thumb"></div>'}
-      <div class="lead-info"><h4>${l.address}</h4><p>${l.homeowner || 'No name'} ${l.phone ? '- ' + l.phone : ''}</p></div>
-      <div class="lead-meta"><span class="status-dot status-${l.status}"></span>
-        <div style="font-size:11px;color:var(--gray);margin-top:4px">${l.jobType || ''}</div>
-        ${(l.photos?.inspection?.length || l.photos?.length) ? '<div style="font-size:10px;color:var(--gray)">&#128247; '+((l.photos?.inspection?.length||0)+(l.photos?.build?.length||0)||(l.photos?.length||0))+'</div>' : ''}
-        <div style="font-size:10px;color:var(--gray)">${new Date(l.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</div>
-      </div></div>`).join('');
+    c.innerHTML = recent.map(l => {
+      const photoCount = (l.photos?.inspection?.length||0)+(l.photos?.build?.length||0)||(l.photos?.length||0);
+      const jobChips = (l.jobTypes || [l.jobType]).filter(Boolean).map(t => `<span style="font-size:10px;padding:1px 6px;background:var(--bg);border-radius:8px;color:var(--gray)">${t}</span>`).join(' ');
+      const catBadge = l.jobCategory === 'retail' ? '<span style="font-size:10px;padding:1px 6px;background:var(--teal);color:#fff;border-radius:8px">Retail</span>' : l.jobCategory === 'repair' ? '<span style="font-size:10px;padding:1px 6px;background:var(--amber);color:#fff;border-radius:8px">Repair</span>' : '';
+      return `<div class="lead-card" onclick="viewLead('${l.id}')" style="border-left:3px solid var(--${l.status === 'won' || l.status === 'appointment' || l.status === 'claim_filed' ? 'green' : l.status === 'not_interested' || l.status === 'lost' ? 'red' : l.status === 'contacted' || l.status === 'not_home' ? 'amber' : 'teal'})">
+        <div class="lead-info" style="flex:1">
+          <h4>${l.address}</h4>
+          <p>${l.homeowner || 'No name'}</p>
+          <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${jobChips} ${catBadge}</div>
+        </div>
+        <div class="lead-meta">
+          <div style="font-size:11px;color:var(--gray)">${timeAgo(l.createdAt)}</div>
+          ${photoCount ? '<div style="font-size:10px;color:var(--gray)">&#128247; '+photoCount+'</div>' : ''}
+          <div style="font-size:16px;color:var(--border)">&#8250;</div>
+        </div>
+      </div>`;
+    }).join('');
   } catch (e) { c.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`; }
 }
 
@@ -280,6 +289,9 @@ async function saveHomeownerShare(leadId) {
     viewLead(leadId);
   } catch (e) { alert('Error saving: ' + e.message); }
 }
+
+// --- Utility ---
+function timeAgo(t) { if (!t) return ''; const d = Date.now() - new Date(t).getTime(); if (d < 3600000) return Math.round(d/60000) + 'm ago'; if (d < 86400000) return Math.round(d/3600000) + 'h ago'; return Math.round(d/86400000) + 'd ago'; }
 
 // --- Current Location for Address Entry ---
 async function useCurrentLocation() {
