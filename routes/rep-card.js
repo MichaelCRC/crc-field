@@ -501,7 +501,7 @@ router.get('/rep-card/:code', (req, res) => {
 <body>
   <div class="card">
     <div class="card-header">
-      <div class="logo"><img src="/img/crc-logo-badge.jpg" alt="CRC"></div>
+      <div class="logo"><img src="/img/crc-logo-monogram.jpg" alt="CRC"></div>
       <div class="avatar-photo">${avatarHtml}</div>
       <div class="rep-name">${merged.name}</div>
       <div class="rep-title">${merged.title}</div>
