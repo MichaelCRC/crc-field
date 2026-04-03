@@ -107,34 +107,34 @@
       </div>
     </div>
 
-    <!-- MAP VIEW -->
+    <!-- MAP VIEW (combined with Storms) -->
     <div id="view-map" class="app-view">
       <div class="map-controls">
         <button class="map-btn" onclick="centerOnMe()">My Location</button>
         <button class="map-btn" id="btn-knock-mode" onclick="toggleKnockMode()">Door Knock</button>
         <button class="map-btn" id="btn-drop-pin" onclick="toggleDropPin()">Drop Pin</button>
+        <button class="map-btn" id="btn-storm-overlay" onclick="toggleStormOverlay()">&#9928; Storms</button>
       </div>
-      <div id="map-container" class="map-container"></div>
-    </div>
-
-    <!-- STORMS VIEW -->
-    <div id="view-storms" class="app-view">
-      <div class="storm-header">
-        <h3>Storm Activity -- Central Ohio</h3>
-        <div class="chip-row" id="storm-filter">
-          <button class="chip active" data-val="all">All</button>
-          <button class="chip" data-val="30">30 Days</button>
-          <button class="chip" data-val="90">90 Days</button>
-          <button class="chip" data-val="1.0">1"+</button>
-          <button class="chip" data-val="1.5">1.5"+</button>
+      <div id="map-container" class="map-container" style="position:relative">
+        <div id="storm-panel" class="storm-panel collapsed" style="display:none">
+          <div class="storm-panel-handle" onclick="toggleStormPanel()"></div>
+          <div class="storm-panel-header">
+            <h4>&#9928; Hail Events</h4>
+            <div class="chip-row" id="storm-filter" style="margin:0;flex-wrap:nowrap">
+              <button class="chip active" data-val="all" style="font-size:11px;padding:4px 10px;min-height:28px">All</button>
+              <button class="chip" data-val="30" style="font-size:11px;padding:4px 10px;min-height:28px">30d</button>
+              <button class="chip" data-val="1.0" style="font-size:11px;padding:4px 10px;min-height:28px">1"+</button>
+              <button class="chip" data-val="1.5" style="font-size:11px;padding:4px 10px;min-height:28px">1.5"+</button>
+            </div>
+          </div>
+          <div id="storm-alert" class="storm-alert" style="display:none"></div>
+          <div id="storm-list"></div>
         </div>
       </div>
-      <div id="storm-alert" class="storm-alert" style="display:none"></div>
-      <div id="storm-map" class="map-container" style="height:300px"></div>
-      <div class="zone-controls"><button class="btn-zone" disabled>Select Zone -- Coming Soon: Direct Mail List</button></div>
-      <h3 class="section-title">Hail Events</h3>
-      <div id="storm-list"></div>
     </div>
+
+    <!-- STORMS VIEW (redirects to map) -->
+    <div id="view-storms" class="app-view"></div>
 
     <!-- STATS VIEW -->
     <div id="view-stats" class="app-view">

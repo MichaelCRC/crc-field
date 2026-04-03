@@ -86,8 +86,8 @@ function switchView(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
   if (name === 'leads') { document.getElementById('lead-detail').style.display = 'none'; document.getElementById('leads-main').style.display = ''; loadLeads(); }
+  if (name === 'storms') { /* Redirect storms to map view with overlay */ document.getElementById('view-storms').classList.remove('active'); document.getElementById('view-map').classList.add('active'); document.getElementById('nav-storms')?.classList.add('active'); document.getElementById('nav-map')?.classList.add('active'); if (!mapInitialized) initMap(); setTimeout(() => { if (!stormsLoaded) loadStorms(); showStormOverlay(); }, 300); return; }
   if (name === 'map' && !mapInitialized) initMap();
-  if (name === 'storms' && !stormsLoaded) loadStorms();
   if (name === 'stats') loadStats();
   if (name === 'chat') initChat();
   if (name === 'brain') initBrain();

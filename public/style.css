@@ -278,6 +278,22 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 /* Viewfinder compass — slightly transparent background for readability */
 .cam-viewfinder .cam-compass { background: rgba(0,0,0,0.3); border-radius: 50%; padding: 8px; }
 
+/* Camera tag pill strip */
+.cam-tag-strip { position: relative; z-index: 2; display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; background: rgba(0,0,0,0.4); flex-shrink: 0; }
+.cam-tag-strip::-webkit-scrollbar { display: none; }
+.cam-tag-pill { background: rgba(255,255,255,0.2); color: white; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 16px; border: none; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+.cam-tag-pill.active { background: var(--teal); color: white; }
+
+/* Storm overlay on map */
+.storm-overlay-toggle { position: absolute; top: 8px; right: 8px; z-index: 10; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.storm-overlay-toggle.active { background: var(--teal); color: white; border-color: var(--teal); }
+.storm-panel { position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; background: var(--white); border-radius: 16px 16px 0 0; max-height: 45vh; overflow-y: auto; box-shadow: 0 -2px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
+.storm-panel.collapsed { transform: translateY(calc(100% - 44px)); }
+.storm-panel-handle { display: flex; align-items: center; justify-content: center; padding: 12px; cursor: pointer; }
+.storm-panel-handle::before { content: ''; width: 40px; height: 4px; background: var(--border); border-radius: 2px; }
+.storm-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 0 16px 8px; }
+.storm-panel-header h4 { font-size: 14px; color: var(--navy); }
+
 @media (min-width: 600px) {
   .quick-add { max-width: 500px; margin: 0 auto; }
   .admin-stats { grid-template-columns: 1fr 1fr 1fr 1fr; }

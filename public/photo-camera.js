@@ -43,15 +43,17 @@ async function openLiveViewfinder() {
     <div class="cam-viewfinder" id="cam-viewfinder">
       <video id="cam-live-video" autoplay playsinline muted></video>
       <div class="cam-flash" id="cam-flash"></div>
-
       <div class="cam-topbar">
         <button class="cam-close" onclick="closeLiveCamera()">&times;</button>
-        <div class="cam-tag-current" id="cam-tag-label">${labels[cameraTag]}</div>
+        <div class="cam-tag-current" id="cam-tag-label" style="display:none">${labels[cameraTag]}</div>
         <div class="cam-status-area">
           <span class="cam-upload-status"></span>
           <button class="cam-flash-toggle" id="cam-flash-toggle" onclick="event.stopPropagation();toggleFlash()" style="display:none">&#x26A1; Off</button>
           <button class="cam-done" onclick="closeLiveCamera()">Done</button>
         </div>
+      </div>
+      <div class="cam-tag-strip" id="cam-tag-strip-top">
+        ${tags.map(t => `<button class="cam-tag-pill ${t === cameraTag ? 'active' : ''}" onclick="event.stopPropagation();pickTag('${t}')" data-tag="${t}">${labels[t]}</button>`).join('')}
       </div>
 
       <div class="cam-center-overlay" onclick="captureFrame()">
@@ -65,21 +67,13 @@ async function openLiveViewfinder() {
       </div>
 
       <div class="cam-thumb-strip" id="cam-thumb-strip"></div>
-
       <div class="cam-bottombar">
-        <button class="cam-tag-btn" id="cam-tag-btn" onclick="event.stopPropagation();showTagPicker()">&#128247; ${labels[cameraTag]}</button>
+        <div style="width:70px"></div>
         <button class="cam-shutter cam-shutter-live" onclick="event.stopPropagation();captureFrame()"></button>
         <button class="cam-library-btn" onclick="event.stopPropagation();triggerLibraryLive()">&#128444;&#65039;</button>
       </div>
-
       <canvas id="cam-live-canvas" style="display:none"></canvas>
       <input type="file" id="cam-lib-live" accept="image/*" multiple style="display:none">
-    </div>
-
-    <div id="cam-tag-sheet" class="cam-tag-sheet" onclick="hideTagPicker()">
-      <div class="cam-tag-sheet-inner" onclick="event.stopPropagation()">
-        ${tags.map(t => `<button class="cam-tag-option ${t === cameraTag ? 'active' : ''}" onclick="pickTag('${t}')">${icons[t] || ''} ${labels[t]}</button>`).join('')}
-      </div>
     </div>`;
 
   document.getElementById('cam-lib-live').onchange = function() { handleLibrarySelectLive(this); };
@@ -322,11 +316,14 @@ function renderCameraHUD() {
   modal.innerHTML = `<div class="cam-hud">
     <div class="cam-topbar">
       <button class="cam-close" onclick="closeCameraMode()">&times;</button>
-      <div class="cam-tag-current">${labels[cameraTag]}</div>
+      <div class="cam-tag-current" style="display:none">${labels[cameraTag]}</div>
       <div class="cam-status-area">
         <span class="cam-upload-status">${status}</span>
         <button class="cam-done" onclick="closeCameraMode()">Done${cameraSessionCount ? ' (' + cameraSessionCount + ')' : ''}</button>
       </div>
+    </div>
+    <div class="cam-tag-strip">
+      ${tags.map(t => `<button class="cam-tag-pill ${t === cameraTag ? 'active' : ''}" onclick="event.stopPropagation();pickTag('${t}')" data-tag="${t}">${labels[t]}</button>`).join('')}
     </div>
     <div class="cam-body" onclick="triggerCamera()">
       <div class="cam-compass" id="cam-compass">
@@ -340,17 +337,12 @@ function renderCameraHUD() {
       ${thumbs ? '<div class="cam-recent">' + thumbs + '</div>' : ''}
     </div>
     <div class="cam-bottombar">
-      <button class="cam-tag-btn" onclick="event.stopPropagation();showTagPicker()">&#128247; ${labels[cameraTag]}</button>
+      <div style="width:70px"></div>
       <button class="cam-shutter" onclick="event.stopPropagation();triggerCamera()"></button>
       <button class="cam-library-btn" onclick="event.stopPropagation();triggerLibrary()">&#128444;&#65039;</button>
     </div>
     <input type="file" id="cam-file" accept="image/*" capture="environment" style="display:none">
     <input type="file" id="cam-lib" accept="image/*" multiple style="display:none">
-  </div>
-  <div id="cam-tag-sheet" class="cam-tag-sheet" onclick="hideTagPicker()">
-    <div class="cam-tag-sheet-inner" onclick="event.stopPropagation()">
-      ${tags.map(t => `<button class="cam-tag-option ${t === cameraTag ? 'active' : ''}" onclick="pickTag('${t}')">${icons[t] || ''} ${labels[t]}</button>`).join('')}
-    </div>
   </div>`;
   document.getElementById('cam-file').onchange = function() { handleCameraCapture(this); };
   document.getElementById('cam-lib').onchange = function() { handleLibrarySelect(this); };
@@ -426,9 +418,8 @@ function pickTag(tag) {
   const labels = activePhotoTab === 'inspection' ? INSPECTION_TAG_LABELS : BUILD_TAG_LABELS;
   const el = document.querySelector('.cam-tag-current'); if (el) el.textContent = labels[tag] || tag;
   const el2 = document.getElementById('cam-tag-label'); if (el2) el2.textContent = labels[tag] || tag;
-  const btn = document.querySelector('.cam-tag-btn'); if (btn) btn.innerHTML = `&#128247; ${labels[tag] || tag}`;
-  const btn2 = document.getElementById('cam-tag-btn'); if (btn2) btn2.innerHTML = `&#128247; ${labels[tag] || tag}`;
-  document.querySelectorAll('.cam-tag-option').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase().includes(tag.replace('-', ' '))));
+  // Update pill strip
+  document.querySelectorAll('.cam-tag-pill').forEach(b => b.classList.toggle('active', b.dataset.tag === tag));
 }
 
 // ============================================================

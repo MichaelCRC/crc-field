@@ -51,32 +51,97 @@ function centerOnMe() { if (gmap && navigator.geolocation) navigator.geolocation
 function toggleKnockMode() { knockMode = !knockMode; dropPinMode = false; document.getElementById('btn-knock-mode').classList.toggle('active', knockMode); document.getElementById('btn-drop-pin').classList.remove('active'); }
 function toggleDropPin() { dropPinMode = !dropPinMode; knockMode = false; document.getElementById('btn-drop-pin').classList.toggle('active', dropPinMode); document.getElementById('btn-knock-mode').classList.remove('active'); }
 
-// --- Storms ---
+// --- Storms (integrated into Map view) ---
+let allStormEvents = [], stormMarkers = [], stormOverlayVisible = false;
+
 async function loadStorms() {
   stormsLoaded = true;
   const list = document.getElementById('storm-list');
   try {
     const data = await fetch('/api/storms').then(r => r.json());
     const events = data.events || [];
+    allStormEvents = events;
     const weekAgo = Date.now() - 7*86400000;
     const recent = events.filter(e => new Date(e.date).getTime() > weekAgo && e.hailSize >= 1.0);
     if (recent.length) { const n = recent[0]; document.getElementById('storm-alert').style.display = 'block'; document.getElementById('storm-alert').innerHTML = `&#9928; Storm -- ${n.date}<br>${n.hailSize}" hail near ${n.location}`; }
     renderStormList(events);
+    addStormMarkersToMap(events);
     document.querySelectorAll('#storm-filter .chip').forEach(chip => chip.addEventListener('click', () => { document.querySelectorAll('#storm-filter .chip').forEach(c => c.classList.remove('active')); chip.classList.add('active'); filterStormList(chip.dataset.val, events); }));
-  } catch (e) { list.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`; }
+  } catch (e) { if (list) list.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`; }
 }
+
 function renderStormList(events) {
-  document.getElementById('storm-list').innerHTML = events.sort((a,b) => new Date(b.date)-new Date(a.date)).map(e => {
+  const el = document.getElementById('storm-list');
+  if (!el) return;
+  el.innerHTML = events.sort((a,b) => new Date(b.date)-new Date(a.date)).map(e => {
     const sev = e.hailSize >= 2.0 ? 'severe' : e.hailSize >= 1.5 ? 'significant' : e.hailSize >= 1.0 ? 'moderate' : 'minor';
-    return `<div class="storm-card"><div class="storm-size hail-${sev}">${e.hailSize}"</div><div style="flex:1"><div style="font-weight:600">${e.location}, ${e.county} Co.</div><div style="font-size:12px;color:var(--gray)">${e.date}</div></div><div style="font-size:11px;font-weight:700;color:${sev==='minor'?'var(--amber)':'var(--red)'}">${sev}</div></div>`;
+    const hasCoords = e.lat && e.lng;
+    return `<div class="storm-card" style="cursor:${hasCoords?'pointer':'default'}" onclick="${hasCoords ? `zoomToStorm(${e.lat},${e.lng})` : ''}"><div class="storm-size hail-${sev}">${e.hailSize}"</div><div style="flex:1"><div style="font-weight:600">${e.location}, ${e.county} Co.</div><div style="font-size:12px;color:var(--gray)">${e.date}</div></div><div style="font-size:11px;font-weight:700;color:${sev==='minor'?'var(--amber)':'var(--red)'}">${sev}</div></div>`;
   }).join('');
 }
+
 function filterStormList(val, all) {
   let f = all;
   if (val === '30') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 30*86400000);
   else if (val === '90') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 90*86400000);
   else if (parseFloat(val) > 0) f = all.filter(e => e.hailSize >= parseFloat(val));
   renderStormList(f);
+  addStormMarkersToMap(f);
+}
+
+function addStormMarkersToMap(events) {
+  if (!gmap || typeof google === 'undefined') return;
+  // Clear existing storm markers
+  stormMarkers.forEach(m => m.setMap(null));
+  stormMarkers = [];
+  const sevColors = { severe: '#7F1D1D', significant: '#DC2626', moderate: '#EA580C', minor: '#F59E0B' };
+  events.forEach(e => {
+    if (!e.lat || !e.lng) return;
+    const sev = e.hailSize >= 2.0 ? 'severe' : e.hailSize >= 1.5 ? 'significant' : e.hailSize >= 1.0 ? 'moderate' : 'minor';
+    const m = new google.maps.Marker({
+      position: { lat: e.lat, lng: e.lng }, map: stormOverlayVisible ? gmap : null,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10 + (e.hailSize * 4), fillColor: sevColors[sev], fillOpacity: 0.6, strokeColor: '#FFF', strokeWeight: 1 },
+      zIndex: 1
+    });
+    const info = new google.maps.InfoWindow({ content: `<div style="font-size:13px"><strong>${e.hailSize}" Hail</strong><br>${e.location}, ${e.county} Co.<br>${e.date}<br><span style="color:${sevColors[sev]};font-weight:700">${sev}</span></div>` });
+    m.addListener('click', () => info.open(gmap, m));
+    stormMarkers.push(m);
+  });
+}
+
+function toggleStormOverlay() {
+  if (stormOverlayVisible) { hideStormOverlay(); } else { showStormOverlay(); }
+}
+
+function showStormOverlay() {
+  stormOverlayVisible = true;
+  document.getElementById('btn-storm-overlay')?.classList.add('active');
+  const panel = document.getElementById('storm-panel');
+  if (panel) panel.style.display = '';
+  stormMarkers.forEach(m => m.setMap(gmap));
+  if (!stormsLoaded) loadStorms();
+}
+
+function hideStormOverlay() {
+  stormOverlayVisible = false;
+  document.getElementById('btn-storm-overlay')?.classList.remove('active');
+  const panel = document.getElementById('storm-panel');
+  if (panel) panel.style.display = 'none';
+  stormMarkers.forEach(m => m.setMap(null));
+}
+
+function toggleStormPanel() {
+  const panel = document.getElementById('storm-panel');
+  if (panel) panel.classList.toggle('collapsed');
+}
+
+function zoomToStorm(lat, lng) {
+  if (!gmap) return;
+  gmap.panTo({ lat, lng });
+  gmap.setZoom(13);
+  // Collapse the panel so user can see the map
+  const panel = document.getElementById('storm-panel');
+  if (panel) panel.classList.add('collapsed');
 }
 
 // --- Stats + Leaderboard ---
