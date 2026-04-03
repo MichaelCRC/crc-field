@@ -4,17 +4,20 @@
 
 let cameraActive = false, cameraTag = 'overview';
 let cameraSessionCount = 0, uploadQueue = [], uploadsInFlight = 0, uploadsDone = 0;
+let compassHeading = null, compassWatchId = null;
 
 function openCameraMode() {
   cameraActive = true;
   cameraSessionCount = 0; uploadsDone = 0; uploadsInFlight = 0; uploadQueue = [];
   cameraTag = activePhotoTab === 'inspection' ? 'overview' : 'during';
+  startCompass();
   renderCameraHUD();
   triggerCamera();
 }
 
 function closeCameraMode() {
   cameraActive = false;
+  stopCompass();
   const modal = document.getElementById('photo-capture-modal');
   if (cameraSessionCount > 0) {
     const tab = activePhotoTab === 'inspection' ? 'Inspection' : 'Build';
@@ -47,6 +50,13 @@ function renderCameraHUD() {
       </div>
     </div>
     <div class="cam-body" onclick="triggerCamera()">
+      <div class="cam-compass" id="cam-compass">
+        <div class="compass-ring">
+          <div class="compass-n" id="compass-n">N</div>
+          <div class="compass-direction" id="compass-direction">--</div>
+          <div class="compass-degrees" id="compass-degrees">---°</div>
+        </div>
+      </div>
       <div class="cam-tap-hint">${cameraSessionCount === 0 ? 'Tap anywhere or use the shutter button' : cameraSessionCount + ' photo' + (cameraSessionCount > 1 ? 's' : '') + ' taken'}</div>
       ${thumbs ? '<div class="cam-recent">' + thumbs + '</div>' : ''}
     </div>
@@ -126,4 +136,56 @@ function pickTag(tag) {
   const el = document.querySelector('.cam-tag-current'); if (el) el.textContent = labels[tag] || tag;
   const btn = document.querySelector('.cam-tag-btn'); if (btn) btn.innerHTML = `&#128247; ${labels[tag] || tag}`;
   document.querySelectorAll('.cam-tag-option').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase().includes(tag.replace('-', ' '))));
+}
+
+// --- Compass ---
+function getCardinalDirection(deg) {
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+function startCompass() {
+  // iOS requires permission request
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(response => {
+      if (response === 'granted') {
+        window.addEventListener('deviceorientation', handleCompass, true);
+      }
+    }).catch(e => console.log('Compass permission denied'));
+  } else if ('DeviceOrientationEvent' in window) {
+    window.addEventListener('deviceorientation', handleCompass, true);
+  }
+}
+
+function stopCompass() {
+  window.removeEventListener('deviceorientation', handleCompass, true);
+  compassHeading = null;
+}
+
+function handleCompass(e) {
+  let heading = null;
+  
+  // iOS uses webkitCompassHeading
+  if (e.webkitCompassHeading !== undefined) {
+    heading = e.webkitCompassHeading;
+  } 
+  // Android uses alpha (but needs adjustment)
+  else if (e.alpha !== null) {
+    heading = (360 - e.alpha);
+  }
+  
+  if (heading === null) return;
+  
+  compassHeading = Math.round(heading) % 360;
+  
+  // Update compass display
+  const dirEl = document.getElementById('compass-direction');
+  const degEl = document.getElementById('compass-degrees');
+  const nEl = document.getElementById('compass-n');
+  const ringEl = document.querySelector('.compass-ring');
+  
+  if (dirEl) dirEl.textContent = getCardinalDirection(compassHeading);
+  if (degEl) degEl.textContent = compassHeading + '°';
+  if (ringEl) ringEl.style.transform = `rotate(${-compassHeading}deg)`;
+  if (nEl) nEl.style.transform = `rotate(${compassHeading}deg)`;
 }
