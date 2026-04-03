@@ -13,7 +13,7 @@ body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg);
 .gate { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 999; }
 .gate-card { background: var(--white); padding: 40px 32px; border-radius: 16px; text-align: center; width: 300px; }
 .gate-logo { font-size: 36px; font-weight: 900; color: var(--navy); letter-spacing: 3px; margin-bottom: 4px; }
-.gate-logo-img { width: 100px; height: 100px; border-radius: 12px; margin-bottom: 8px; }
+.gate-logo-img { max-width: 180px; width: 100%; height: auto; border-radius: 12px; margin: 40px auto 24px; display: block; }
 .gate-card h2 { color: var(--teal); font-size: 18px; margin-bottom: 16px; }
 .gate-card p { color: var(--gray); font-size: 14px; margin-bottom: 16px; }
 .gate-card input { width: 100%; padding: 14px; font-size: 20px; text-align: center; border: 2px solid var(--border); border-radius: 8px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 12px; }
