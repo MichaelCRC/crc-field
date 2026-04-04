@@ -231,6 +231,25 @@
       </div>
     </div>
 
+    <!-- RESOURCES VIEW -->
+    <div id="view-resources" class="app-view">
+      <div style="padding:16px">
+        <h3 style="font-size:18px;color:var(--navy);margin-bottom:16px">Resources</h3>
+        <div style="background:var(--white);border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+          <a href="/docs/buyers-guide" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit">
+            <span style="font-size:24px">&#128216;</span>
+            <div><div style="font-weight:600;font-size:15px">Buyers Guide</div><div style="font-size:12px;color:var(--gray)">Download or share</div></div>
+            <span style="margin-left:auto;color:var(--gray);font-size:18px">&#8250;</span>
+          </a>
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer" onclick="showRecruitOptions()">
+            <span style="font-size:24px">&#128279;</span>
+            <div><div style="font-weight:600;font-size:15px">Recruit</div><div style="font-size:12px;color:var(--gray)">Share the opportunity</div></div>
+            <span style="margin-left:auto;color:var(--gray);font-size:18px">&#8250;</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Bottom Nav (4 primary tabs) -->
     <nav class="bottom-nav">
       <button class="nav-item active" onclick="switchView('leads')" id="nav-leads">
@@ -263,14 +282,12 @@
         <button class="more-item" onclick="closeMoreMenu();switchView('referrals')" id="nav-referrals">
           <span class="more-icon">&#129309;</span><span>Referrals</span><span class="more-arrow">&#8250;</span>
         </button>
-        <div class="more-header" style="margin-top:4px">Resources</div>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/docs/buyers-guide','_blank')">
-          <span class="more-icon">&#128216;</span><span>Buyers Guide</span><span class="more-arrow">&#8250;</span>
+        <button class="more-item" onclick="closeMoreMenu();window.open('/roster','_blank')">
+          <span class="more-icon">&#128101;</span><span>Team Roster</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/recruit','_blank')">
-          <span class="more-icon">&#128188;</span><span>Recruiting</span><span class="more-arrow">&#8250;</span>
+        <button class="more-item" onclick="closeMoreMenu();switchView('resources')">
+          <span class="more-icon">&#128218;</span><span>Resources</span><span class="more-arrow">&#8250;</span>
         </button>
-        <div class="more-header" style="margin-top:4px">Settings</div>
         <button class="more-item" onclick="closeMoreMenu();alert('Settings coming soon')">
           <span class="more-icon">&#9881;</span><span>Settings</span><span class="more-arrow">&#8250;</span>
         </button>

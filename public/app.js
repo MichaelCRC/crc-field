@@ -343,6 +343,25 @@ async function useCurrentLocation() {
   );
 }
 
+// ── RECRUIT SHARING ──────────────────
+function showRecruitOptions() {
+  const url = 'https://crc-field.onrender.com/recruit';
+  const modal = document.getElementById('knock-modal');
+  modal.style.display = 'flex';
+  modal.querySelector('#knock-options').innerHTML = `
+    <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:8px">Share the Opportunity</div>
+    <button class="btn-add" onclick="shareRecruitLink()" style="background:var(--teal)">Share Recruit Link</button>
+    <button class="btn-add" onclick="document.getElementById('knock-modal').style.display='none';window.open('/docs/career-guide','_blank')" style="background:var(--navy)">View Career Guide</button>
+    <button onclick="document.getElementById('knock-modal').style.display='none'" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px;width:100%">Cancel</button>`;
+}
+function shareRecruitLink() {
+  document.getElementById('knock-modal').style.display = 'none';
+  const url = 'https://crc-field.onrender.com/recruit';
+  const text = 'Join the CRC team -- apply here: ' + url;
+  if (navigator.share) { navigator.share({ title: 'Join CRC', text: text, url: url }).catch(() => {}); }
+  else { navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard')).catch(() => alert(url)); }
+}
+
 // ── LEAD DOCUMENTS + SIGNATURE ──────────────────
 const PORTAL_URL = 'https://crc-supplements-portal.onrender.com';
 
