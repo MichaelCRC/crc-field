@@ -209,11 +209,23 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .cam-upload-status { font-size: 11px; color: rgba(255,255,255,0.7); }
 .cam-done { background: var(--teal); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .cam-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; }
-.cam-compass { margin-bottom: 16px; }
-.compass-ring { width: 80px; height: 80px; border: 2px solid rgba(0,188,212,0.6); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: transform 0.15s ease-out; }
-.compass-n { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 900; color: #ff4444; transition: transform 0.15s ease-out; }
-.compass-direction { font-size: 22px; font-weight: 900; color: #00BCD4; line-height: 1; margin-top: 6px; }
-.compass-degrees { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
+/* Minimal camera overlay elements */
+.cam-x { position: absolute; top: 12px; left: 12px; z-index: 10; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 24px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cam-count { position: absolute; top: 12px; right: 12px; z-index: 10; background: var(--teal); color: white; font-size: 14px; font-weight: 800; min-width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: pointer; }
+.cam-count:empty { display: none; }
+.cam-tag-strip-min { position: absolute; top: 54px; left: 0; right: 0; z-index: 10; display: flex; gap: 4px; padding: 4px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.cam-tag-strip-min::-webkit-scrollbar { display: none; }
+.cam-tag-pill-min { background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+.cam-tag-pill-min.active { background: var(--teal); color: white; border-color: var(--teal); }
+.cam-compass-float { position: absolute; bottom: 80px; right: 12px; z-index: 10; }
+.compass-ring-sm { width: 56px; height: 56px; border: 1.5px solid rgba(0,188,212,0.5); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: transform 0.15s ease-out; background: rgba(0,0,0,0.3); }
+.compass-n-sm { position: absolute; top: -1px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; color: #ff4444; transition: transform 0.15s ease-out; }
+.compass-dir-sm { font-size: 16px; font-weight: 900; color: #00BCD4; line-height: 1; margin-top: 4px; }
+.compass-deg-sm { font-size: 9px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.cam-upload-float { position: absolute; bottom: 80px; left: 12px; z-index: 10; }
+.cam-upload-float .cam-upload-status { font-size: 11px; color: var(--teal); background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 10px; }
+/* Landscape support */
+@media (orientation: landscape) { .cam-viewfinder video { object-fit: contain; } .cam-tag-strip-min { top: 8px; } .cam-x { top: 8px; left: 8px; } .cam-count { top: 8px; right: 8px; } .cam-compass-float { bottom: 12px; right: 12px; } .cam-thumb-strip { bottom: 4px; } }
 .cam-tap-hint { color: rgba(255,255,255,0.5); font-size: 15px; font-weight: 600; text-align: center; }
 .cam-recent { display: flex; gap: 4px; position: absolute; bottom: 16px; left: 12px; right: 12px; justify-content: flex-start; overflow-x: auto; }
 .cam-recent-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }

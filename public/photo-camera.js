@@ -39,39 +39,39 @@ async function openLiveViewfinder() {
   const icons = activePhotoTab === 'inspection' ? INSPECTION_TAG_ICONS : BUILD_TAG_ICONS;
   const tags = (activePhotoTab === 'inspection' ? INSPECTION_TAGS : BUILD_TAGS).filter(t => t !== 'all');
 
+  // HAAG report sections as tags for inspection, build tags for build
+  const haagTags = ['Overview', 'North Slope', 'South Slope', 'East Slope', 'West Slope', 'Soft Metals', 'Test Squares', 'Components', 'Interior'];
+  const haagKeys = ['overview', 'north-slope', 'south-slope', 'east-slope', 'west-slope', 'soft-metal', 'test-squares', 'components', 'interior'];
+  const camTags = activePhotoTab === 'inspection' ? haagKeys : tags;
+  const camLabels = activePhotoTab === 'inspection' 
+    ? Object.fromEntries(haagKeys.map((k, i) => [k, haagTags[i]]))
+    : labels;
+  if (!camLabels[cameraTag]) cameraTag = camTags[0];
+
   modal.innerHTML = `
-    <div class="cam-viewfinder" id="cam-viewfinder">
+    <div class="cam-viewfinder" id="cam-viewfinder" onclick="captureFrame()">
       <video id="cam-live-video" autoplay playsinline muted></video>
       <div class="cam-flash" id="cam-flash"></div>
-      <div class="cam-topbar">
-        <button class="cam-close" onclick="closeLiveCamera()">&times;</button>
-        <div class="cam-tag-current" id="cam-tag-label" style="display:none">${labels[cameraTag]}</div>
-        <div class="cam-status-area">
-          <span class="cam-upload-status"></span>
-          <button class="cam-flash-toggle" id="cam-flash-toggle" onclick="event.stopPropagation();toggleFlash()" style="display:none">&#x26A1; Off</button>
-          <button class="cam-done" onclick="closeLiveCamera()">Done</button>
-        </div>
-      </div>
-      <div class="cam-tag-strip" id="cam-tag-strip-top">
-        ${tags.map(t => `<button class="cam-tag-pill ${t === cameraTag ? 'active' : ''}" onclick="event.stopPropagation();pickTag('${t}')" data-tag="${t}">${labels[t]}</button>`).join('')}
+
+      <button class="cam-x" onclick="event.stopPropagation();closeLiveCamera()">&times;</button>
+      
+      <div class="cam-count" id="cam-count" onclick="event.stopPropagation();closeLiveCamera()">${cameraSessionCount || ''}</div>
+
+      <div class="cam-tag-strip-min" id="cam-tag-strip-top">
+        ${camTags.map(t => `<button class="cam-tag-pill-min ${t === cameraTag ? 'active' : ''}" onclick="event.stopPropagation();pickTag('${t}')" data-tag="${t}">${camLabels[t]}</button>`).join('')}
       </div>
 
-      <div class="cam-center-overlay" onclick="captureFrame()">
-        <div class="cam-compass" id="cam-compass">
-          <div class="compass-ring">
-            <div class="compass-n" id="compass-n">N</div>
-            <div class="compass-direction" id="compass-direction">--</div>
-            <div class="compass-degrees" id="compass-degrees">---&deg;</div>
-          </div>
+      <div class="cam-compass-float" id="cam-compass">
+        <div class="compass-ring-sm">
+          <div class="compass-n-sm" id="compass-n">N</div>
+          <div class="compass-dir-sm" id="compass-direction">--</div>
+          <div class="compass-deg-sm" id="compass-degrees">---&deg;</div>
         </div>
       </div>
+
+      <div class="cam-upload-float"><span class="cam-upload-status"></span></div>
 
       <div class="cam-thumb-strip" id="cam-thumb-strip"></div>
-      <div class="cam-bottombar">
-        <div style="width:70px"></div>
-        <button class="cam-shutter cam-shutter-live" onclick="event.stopPropagation();captureFrame()"></button>
-        <button class="cam-library-btn" onclick="event.stopPropagation();triggerLibraryLive()">&#128444;&#65039;</button>
-      </div>
       <canvas id="cam-live-canvas" style="display:none"></canvas>
       <input type="file" id="cam-lib-live" accept="image/*" multiple style="display:none">
     </div>`;
@@ -100,8 +100,9 @@ async function openLiveViewfinder() {
       console.log(`[Camera] Live feed: ${liveVideo.videoWidth}x${liveVideo.videoHeight}`);
     };
 
-    // Check for torch support
+    // Check for torch support and setup zoom
     checkTorchSupport();
+    setupPinchZoom();
 
   } catch (err) {
     console.warn('[Camera] getUserMedia failed:', err.message);
@@ -451,12 +452,48 @@ function updateUploadStatus() {
 function showTagPicker() { const s = document.getElementById('cam-tag-sheet'); if (s) s.classList.add('open'); }
 function hideTagPicker() { const s = document.getElementById('cam-tag-sheet'); if (s) s.classList.remove('open'); }
 function pickTag(tag) {
-  cameraTag = tag; hideTagPicker();
-  const labels = activePhotoTab === 'inspection' ? INSPECTION_TAG_LABELS : BUILD_TAG_LABELS;
-  const el = document.querySelector('.cam-tag-current'); if (el) el.textContent = labels[tag] || tag;
-  const el2 = document.getElementById('cam-tag-label'); if (el2) el2.textContent = labels[tag] || tag;
-  // Update pill strip
-  document.querySelectorAll('.cam-tag-pill').forEach(b => b.classList.toggle('active', b.dataset.tag === tag));
+  cameraTag = tag;
+  // Update pill buttons
+  document.querySelectorAll('.cam-tag-pill-min').forEach(b => b.classList.toggle('active', b.dataset.tag === tag));
+  // Fallback for old UI
+  const el = document.querySelector('.cam-tag-current'); if (el) el.textContent = tag;
+  document.querySelectorAll('.cam-tag-option').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase().includes(tag.replace('-', ' '))));
+}
+
+// --- Pinch to Zoom ---
+function setupPinchZoom() {
+  const video = document.getElementById('cam-live-video');
+  if (!video || !liveStream) return;
+  const track = liveStream.getVideoTracks()[0];
+  if (!track) return;
+  
+  let currentZoom = 1;
+  let startDist = 0;
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  const maxZoom = caps.zoom ? caps.zoom.max : 5;
+  const minZoom = caps.zoom ? caps.zoom.min : 1;
+  
+  if (!caps.zoom) return; // Zoom not supported on this device
+
+  video.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+    }
+  }, { passive: false });
+
+  video.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && startDist > 0) {
+      e.preventDefault();
+      const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+      const scale = dist / startDist;
+      currentZoom = Math.min(maxZoom, Math.max(minZoom, currentZoom * scale));
+      startDist = dist;
+      try { track.applyConstraints({ advanced: [{ zoom: currentZoom }] }); } catch (e) {}
+    }
+  }, { passive: false });
+
+  video.addEventListener('touchend', () => { startDist = 0; });
 }
 
 // ============================================================
