@@ -196,6 +196,33 @@ function zoomToStorm(lat, lng) {
 async function loadStats(period) {
   period = period || 'week';
   document.querySelectorAll('#stats-period .chip').forEach(c => c.classList.toggle('active', c.dataset.val === period));
+  
+  // Load company scoreboard from claims dashboard (real JN data)
+  try {
+    const dashboard = await fetch('/api/claims-dashboard').then(r => r.json());
+    const co = dashboard.company_totals || {};
+    const scoreEl = document.getElementById('company-scoreboard');
+    if (scoreEl) {
+      scoreEl.innerHTML = `
+        <div class="admin-stat"><div class="val" style="color:var(--teal)">$${((co.total_value||0)/1000).toFixed(0)}K</div><div class="label">Revenue YTD</div></div>
+        <div class="admin-stat"><div class="val">${co.total_jobs||0}</div><div class="label">Total Jobs</div></div>
+        <div class="admin-stat"><div class="val">${co.total_claims||0}</div><div class="label">Claims Filed</div></div>
+        <div class="admin-stat"><div class="val">${co.total_active||0}</div><div class="label">Active Pipeline</div></div>`;
+    }
+    // Also update leaderboard with real data
+    const repData = dashboard.by_rep || [];
+    if (repData.length > 0) {
+      const lbEl = document.getElementById('leaderboard');
+      if (lbEl) {
+        lbEl.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:8px;text-align:left">#</th><th style="text-align:left">Rep</th><th style="text-align:right">Jobs</th><th style="text-align:right">Claims</th><th style="text-align:right">Value</th></tr></thead><tbody>` +
+          repData.slice(0, 15).map((r, i) => {
+            const isMe = r.rep_name && r.rep_name.toLowerCase().includes(repName.split(' ')[0]?.toLowerCase());
+            return `<tr style="border-bottom:1px solid var(--border);${isMe?'background:#E0F7FA;font-weight:700':''}"><td style="padding:8px">${i === 0 ? '&#127942;' : i+1}</td><td><a href="/rep-card/${r.rep_code||''}" style="color:inherit;text-decoration:none">${r.rep_name}</a></td><td style="text-align:right">${r.total_jobs}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">$${((r.total_value||0)/1000).toFixed(0)}K</td></tr>`;
+          }).join('') + '</tbody></table>';
+      }
+    }
+  } catch (e) { console.error('Scoreboard error:', e); }
+
   try {
     const [stats, board] = await Promise.all([
       fetch(`/api/stats/${repCode}?period=${period}`).then(r => r.json()),
