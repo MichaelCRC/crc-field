@@ -148,7 +148,7 @@
           <button class="chip" data-val="alltime" onclick="loadStats(this.dataset.val)">All Time</button>
         </div>
       </div>
-      <h3 class="section-title">My Stats</h3>
+      <h3 class="section-title">My Numbers</h3>
       <div id="my-stats" class="admin-stats" style="padding:0 16px 16px"></div>
       <div id="status-breakdown" style="padding:0 16px 16px"></div>
       <h3 class="section-title">Recent Activity</h3>
@@ -234,13 +234,13 @@
     <!-- Bottom Nav (4 primary tabs) -->
     <nav class="bottom-nav">
       <button class="nav-item active" onclick="switchView('leads')" id="nav-leads">
-        <span class="nav-icon">&#127968;</span><span class="nav-label">Leads</span>
+        <span class="nav-icon">&#127968;</span><span class="nav-label">Home</span>
       </button>
       <button class="nav-item" onclick="switchView('map')" id="nav-map">
         <span class="nav-icon">&#128205;</span><span class="nav-label">Map</span>
       </button>
-      <button class="nav-item" onclick="switchView('storms')" id="nav-storms">
-        <span class="nav-icon">&#9928;</span><span class="nav-label">Storms</span>
+      <button class="nav-item" onclick="switchView('chat')" id="nav-chat">
+        <span class="nav-icon">&#128172;</span><span class="nav-label">Chat</span>
       </button>
       <button class="nav-item" onclick="toggleMoreMenu()" id="nav-more">
         <span class="nav-icon">&#9776;</span><span class="nav-label">More</span>
@@ -251,11 +251,8 @@
     <div id="more-menu" class="more-overlay" onclick="if(event.target===this)closeMoreMenu()">
       <div class="more-panel">
         <div class="more-handle"></div>
-        <button class="more-item" onclick="closeMoreMenu();switchView('stats')" id="nav-stats">
-          <span class="more-icon">&#128202;</span><span>Stats and Leaderboard</span><span class="more-arrow">&#8250;</span>
-        </button>
-        <button class="more-item" onclick="closeMoreMenu();switchView('chat')" id="nav-chat">
-          <span class="more-icon">&#128172;</span><span>Team Chat</span><span class="more-arrow">&#8250;</span>
+        <button class="more-item" onclick="closeMoreMenu();switchView('stats')">
+          <span class="more-icon">&#128202;</span><span>Dashboard</span><span class="more-arrow">&#8250;</span>
         </button>
         <button class="more-item" onclick="closeMoreMenu();switchView('brain')">
           <span class="more-icon">&#129504;</span><span>CRC Brain</span><span class="more-arrow">&#8250;</span>
@@ -266,18 +263,19 @@
         <button class="more-item" onclick="closeMoreMenu();switchView('referrals')" id="nav-referrals">
           <span class="more-icon">&#129309;</span><span>Referrals</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();switchView('admin')" id="nav-admin" style="display:none">
-          <span class="more-icon">&#128100;</span><span>Admin</span><span class="more-arrow">&#8250;</span>
-        </button>
         <div class="more-header" style="margin-top:4px">Resources</div>
         <button class="more-item" onclick="closeMoreMenu();window.open('/docs/buyers-guide','_blank')">
           <span class="more-icon">&#128216;</span><span>Buyers Guide</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/roster','_blank')">
-          <span class="more-icon">&#127942;</span><span>Team Roster</span><span class="more-arrow">&#8250;</span>
+        <button class="more-item" onclick="closeMoreMenu();window.open('/recruit','_blank')">
+          <span class="more-icon">&#128188;</span><span>Recruiting</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/claims-dashboard','_blank')">
-          <span class="more-icon">&#128200;</span><span>Claims Leaderboard</span><span class="more-arrow">&#8250;</span>
+        <div class="more-header" style="margin-top:4px">Settings</div>
+        <button class="more-item" onclick="closeMoreMenu();alert('Settings coming soon')">
+          <span class="more-icon">&#9881;</span><span>Settings</span><span class="more-arrow">&#8250;</span>
+        </button>
+        <button class="more-item" onclick="closeMoreMenu();switchView('admin')" id="nav-admin" style="display:none">
+          <span class="more-icon">&#128100;</span><span>Admin</span><span class="more-arrow">&#8250;</span>
         </button>
       </div>
     </div>

@@ -29,7 +29,7 @@ async function validateAndEnter(code) {
     localStorage.setItem('crc-rep-code', code); localStorage.setItem('crc-rep-name', data.name); localStorage.setItem('crc-rep-role', data.role);
     document.getElementById('gate').style.display = 'none'; document.getElementById('app').style.display = '';
     document.getElementById('rep-badge').textContent = `${code} - ${data.name}`;
-    if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('nav-stats').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
+    if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
     loadLeads();
   } catch { document.getElementById('gate-error').textContent = 'Connection error'; }
 }
@@ -86,7 +86,6 @@ function switchView(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
   if (name === 'leads') { document.getElementById('lead-detail').style.display = 'none'; document.getElementById('leads-main').style.display = ''; loadLeads(); }
-  if (name === 'storms') { /* Redirect storms to map view with overlay */ document.getElementById('view-storms').classList.remove('active'); document.getElementById('view-map').classList.add('active'); document.getElementById('nav-storms')?.classList.add('active'); document.getElementById('nav-map')?.classList.add('active'); if (!mapInitialized) initMap(); setTimeout(() => { if (!stormsLoaded) loadStorms(); showStormOverlay(); }, 300); return; }
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'stats') loadStats();
   if (name === 'chat') initChat();
