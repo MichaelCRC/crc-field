@@ -20,7 +20,7 @@
 | Leadership thread hidden from reps | PASS (server-side enforced) |
 | Leaderboard shows rankings | PASS |
 | Stats calculate correctly | PASS |
-| Phone number (614) 743-1481 | PASS |
+| Phone number PASS |
 | Loading screen shows CRC brand | PASS |
 | Door knock modal (not prompt) | PASS |
 | Error handling on all fetch calls | PASS |

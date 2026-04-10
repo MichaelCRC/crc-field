@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRC University — Training Portal</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1B2360;
+  --teal: #00B5CC;
+  --light-gray: #F5F5F5;
+  --dark-gray: #333;
+  --green: #27AE60;
+  --orange: #F39C12;
+  --red: #E74C3C;
+  --white: #fff;
+}
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--light-gray);
+  color: var(--dark-gray);
+  min-height: 100vh;
+}
+
+/* LOGIN OVERLAY */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 24px;
+}
+.login-overlay h1 { color: var(--white); font-size: 28px; }
+.login-overlay .subtitle { color: var(--teal); font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+.login-overlay input {
+  padding: 14px 20px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1); color: var(--white); font-size: 18px;
+  text-align: center; width: 220px; outline: none; text-transform: uppercase;
+}
+.login-overlay input::placeholder { color: rgba(255,255,255,0.4); }
+.login-overlay input:focus { border-color: var(--teal); }
+.login-overlay button {
+  padding: 12px 40px; border-radius: 8px; border: none;
+  background: var(--teal); color: var(--white); font-size: 16px; font-weight: 600;
+  cursor: pointer;
+}
+.login-overlay .error { color: var(--red); font-size: 14px; min-height: 20px; }
+
+/* TOP BAR */
+.topbar {
+  background: var(--navy); color: var(--white); padding: 16px 20px;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.topbar-brand { display: flex; align-items: center; gap: 12px; }
+.topbar-brand .logo {
+  width: 40px; height: 40px; background: var(--teal); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; color: var(--white);
+}
+.topbar-brand h1 { font-size: 20px; font-weight: 700; }
+.topbar-brand .tag { font-size: 11px; color: var(--teal); letter-spacing: 1.5px; text-transform: uppercase; }
+.topbar-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.topbar-right select {
+  padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1); color: var(--white); font-size: 14px;
+}
+.topbar-right select option { background: var(--navy); color: var(--white); }
+
+/* PROGRESS BAR */
+.progress-bar-wrap {
+  background: rgba(255,255,255,0.15); border-radius: 10px; height: 20px;
+  width: 200px; overflow: hidden; position: relative;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--teal); border-radius: 10px;
+  transition: width 0.4s ease;
+}
+.progress-bar-text {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--white);
+}
+
+/* CONTAINER */
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+/* MODULE GRID */
+.module-grid {
+  display: grid; gap: 20px;
+  grid-template-columns: 1fr;
+}
+@media(min-width:640px) { .module-grid { grid-template-columns: 1fr 1fr; } }
+@media(min-width:960px) { .module-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+/* MODULE CARD */
+.module-card {
+  background: var(--white); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: box-shadow 0.2s;
+}
+.module-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.module-card-header {
+  padding: 16px 18px; cursor: pointer; display: flex; align-items: flex-start; gap: 14px;
+}
+.module-badge {
+  width: 40px; height: 40px; min-width: 40px; border-radius: 50%; background: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 15px; color: var(--white);
+}
+.module-info { flex: 1; }
+.module-info h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.module-info p { font-size: 13px; color: #666; line-height: 1.4; }
+.module-status {
+  font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px;
+  white-space: nowrap; margin-top: 2px;
+}
+.status-not-started { background: #eee; color: #999; }
+.status-in-progress { background: #FFF3CD; color: #856404; }
+.status-complete { background: #D4EDDA; color: #155724; }
+.module-chevron { font-size: 18px; color: #999; transition: transform 0.2s; margin-top: 4px; }
+.module-card.expanded .module-chevron { transform: rotate(180deg); }
+
+/* MODULE BODY (expandable) */
+.module-body { display: none; padding: 0 18px 18px; }
+.module-card.expanded .module-body { display: block; }
+.resource-section { margin-bottom: 14px; }
+.resource-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--teal); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee;
+}
+.resource-item {
+  display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  font-size: 14px;
+}
+.resource-item input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; flex-shrink: 0;
+}
+.resource-item a { color: var(--navy); text-decoration: none; font-weight: 500; }
+.resource-item a:hover { color: var(--teal); }
+.resource-item .pending { color: #bbb; font-style: italic; font-weight: 400; }
+.resource-item .quiz-score { font-size: 12px; color: var(--teal); font-weight: 600; margin-left: 8px; }
+.week-label { font-size: 12px; color: #999; margin-top: 2px; }
+
+/* ONBOARDING TRACKER */
+.section-title {
+  font-size: 22px; font-weight: 700; color: var(--navy); margin: 32px 0 16px;
+}
+.onboarding-tracker {
+  background: var(--white); border-radius: 12px; padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.week-header {
+  font-size: 14px; font-weight: 700; color: var(--navy); margin: 16px 0 8px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.week-header:first-child { margin-top: 0; }
+.timeline {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.day-card {
+  flex: 1; min-width: 80px; max-width: 120px; padding: 12px 8px;
+  border-radius: 8px; text-align: center; border: 2px solid transparent;
+}
+.day-card.completed { background: #D4EDDA; border-color: var(--green); }
+.day-card.current { background: #E0F7FA; border-color: var(--teal); }
+.day-card.future { background: #eee; border-color: #ddd; }
+.day-card .day-num { font-weight: 700; font-size: 16px; color: var(--navy); }
+.day-card .day-label { font-size: 10px; color: #666; margin-top: 4px; line-height: 1.3; }
+.day-card.completed .day-num { color: var(--green); }
+.day-card.current .day-num { color: var(--teal); }
+
+/* ADMIN */
+.admin-section {
+  margin-top: 32px; background: var(--white); border-radius: 12px;
+  padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.admin-section h2 { color: var(--navy); margin-bottom: 16px; font-size: 20px; }
+.admin-table {
+  width: 100%; border-collapse: collapse; font-size: 13px; overflow-x: auto; display: block;
+}
+.admin-table th, .admin-table td {
+  padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; white-space: nowrap;
+}
+.admin-table th { background: var(--navy); color: var(--white); font-weight: 600; position: sticky; top: 0; }
+.admin-filter { margin-bottom: 12px; }
+.admin-filter input {
+  padding: 8px 14px; border-radius: 6px; border: 1px solid #ddd; font-size: 14px; width: 200px;
+}
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+.dot-green { background: var(--green); }
+.dot-yellow { background: var(--orange); }
+.dot-gray { background: #ccc; }
+
+/* MOBILE */
+@media(max-width:639px) {
+  .topbar-inner { flex-direction: column; align-items: flex-start; }
+  .progress-bar-wrap { width: 100%; }
+  .day-card { min-width: 60px; }
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="subtitle">CRC University</div>
+  <h1>Training Portal</h1>
+  <input type="text" id="loginInput" placeholder="Rep Code" maxlength="10" autocomplete="off">
+  <button onclick="doLogin()">Enter</button>
+  <div class="error" id="loginError"></div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar" id="topbar" style="display:none;">
+  <div class="topbar-inner">
+    <div class="topbar-brand">
+      <div class="logo">CU</div>
+      <div>
+        <h1>CRC University</h1>
+        <div class="tag">Training Portal</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <select id="repSelector" onchange="switchRep(this.value)" style="display:none;"></select>
+      <div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="overallBar" style="width:0%"></div>
+          <div class="progress-bar-text" id="overallText">0 / 9 modules</div>
+        </div>
+      </div>
+      <button onclick="logout()" style="background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container" id="mainContent" style="display:none;">
+  <div class="module-grid" id="moduleGrid"></div>
+
+  <!-- ONBOARDING TRACKER -->
+  <h2 class="section-title">14-Day Onboarding</h2>
+  <div class="onboarding-tracker" id="onboardingTracker"></div>
+
+  <!-- ADMIN SECTION -->
+  <div class="admin-section hidden" id="adminSection">
+    <h2>Admin — All Rep Progress</h2>
+    <div class="admin-filter">
+      <input type="text" id="adminFilter" placeholder="Filter by rep name..." oninput="renderAdminTable()">
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="admin-table" id="adminTable"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MODULE DATA
+   ============================================================ */
+const MODULES = [
+  {
+    id: 'mod-0', number: '0', title: 'DCSI Foundation',
+    description: 'The Decision Clarity System for Insurance — every rep starts here.',
+    week: 1, day: 1, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'debate', section: 'listen', label: 'Debate Audio', url: '' },
+      { id: 'video', section: 'watch', label: 'Video Overview', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'terminology', section: 'study', label: 'Terminology Handbook', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+    ]
+  },
+  {
+    id: 'mod-1', number: '1', title: 'HAAG Inspection',
+    description: 'Roof inspection protocol using HAAG Engineering standards.',
+    week: 1, day: 2, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'video', section: 'watch', label: 'Video Overview', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'terminology', section: 'study', label: 'Terminology Handbook', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'infographic', section: 'test', label: 'Infographic', url: '' },
+    ]
+  },
+  {
+    id: 'mod-2', number: '2', title: 'Hail Science',
+    description: 'Understanding hail damage identification and documentation.',
+    week: 1, day: 3, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'infographic', section: 'test', label: 'Infographic', url: '' },
+    ]
+  },
+  {
+    id: 'mod-3', number: '3', title: 'Wind Science',
+    description: 'Wind damage assessment and reporting techniques.',
+    week: 1, day: 3, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'infographic', section: 'test', label: 'Infographic', url: '' },
+    ]
+  },
+  {
+    id: 'mod-4-5', number: '4-5', title: 'Ohio Code & GAF',
+    description: 'Ohio building code requirements and GAF certification standards.',
+    week: 1, day: 4, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'video', section: 'watch', label: 'Video Overview', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'terminology', section: 'study', label: 'Terminology Handbook', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'infographic', section: 'test', label: 'Infographic', url: '' },
+    ]
+  },
+  {
+    id: 'mod-6-7', number: '6-7', title: 'Field Sales',
+    description: 'Door-to-door sales process, scripts, and objection handling.',
+    week: 1, day: 4, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'video', section: 'watch', label: 'Video Overview', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'process-overview', section: 'reports', label: 'Process Overview', url: '' },
+    ]
+  },
+  {
+    id: 'mod-8-9', number: '8-9', title: 'Carrier Intel & Supplementing',
+    description: 'Insurance carrier strategies and supplement negotiation.',
+    week: 2, day: 6, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'debate', section: 'listen', label: 'Debate Audio', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'terminology', section: 'study', label: 'Terminology Handbook', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'infographic', section: 'test', label: 'Infographic', url: '' },
+      { id: 'negotiation-framework', section: 'reports', label: 'Negotiation Framework', url: '' },
+    ]
+  },
+  {
+    id: 'mod-10-12', number: '10-12', title: 'Claims Workflow, Color & Packet',
+    description: 'End-to-end claims process, color selection, and job packet assembly.',
+    week: 2, day: 7, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'video', section: 'watch', label: 'Video Overview', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'study-guide', section: 'study', label: 'Study Guide', url: '' },
+      { id: 'flashcards', section: 'study', label: 'Flashcards', url: '' },
+      { id: 'quiz', section: 'test', label: 'Quiz', url: '' },
+      { id: 'mind-map', section: 'test', label: 'Mind Map', url: '' },
+      { id: 'process-overview', section: 'reports', label: 'Process Overview', url: '' },
+      { id: 'operations-manual', section: 'reports', label: 'Operations Manual', url: '' },
+    ]
+  },
+  {
+    id: 'mod-h', number: 'H', title: 'Homeowner Guide',
+    description: 'The homeowner-facing insurance claims guide — your leave-behind tool.',
+    week: 2, day: 8, notebookUrl: '',
+    resources: [
+      { id: 'deep-dive', section: 'listen', label: 'Deep Dive Audio', url: '' },
+      { id: 'brief', section: 'listen', label: 'Brief Trailer', url: '' },
+      { id: 'video', section: 'watch', label: 'Video Overview', url: '' },
+      { id: 'slides', section: 'watch', label: 'Slide Deck', url: '' },
+      { id: 'briefing-doc', section: 'study', label: 'Briefing Doc', url: '' },
+      { id: 'terminology', section: 'study', label: 'Terminology Handbook', url: '' },
+      { id: 'process-overview', section: 'reports', label: 'Process Overview', url: '' },
+    ]
+  }
+];
+
+/* Onboarding schedule */
+const ONBOARDING_DAYS = [
+  { day: 1, week: 1, label: 'DCSI Foundation', modules: ['mod-0'] },
+  { day: 2, week: 1, label: 'HAAG Inspection', modules: ['mod-1'] },
+  { day: 3, week: 1, label: 'Hail & Wind Science', modules: ['mod-2', 'mod-3'] },
+  { day: 4, week: 1, label: 'Ohio Code, GAF & Field Sales', modules: ['mod-4-5', 'mod-6-7'] },
+  { day: 5, week: 1, label: 'Review & Practice', modules: [] },
+  { day: 6, week: 2, label: 'Carrier Intel & Supplementing', modules: ['mod-8-9'] },
+  { day: 7, week: 2, label: 'Claims Workflow', modules: ['mod-10-12'] },
+  { day: 8, week: 2, label: 'Homeowner Guide', modules: ['mod-h'] },
+  { day: 9, week: 2, label: 'Field Shadow Day', modules: [] },
+  { day: 10, week: 2, label: 'Solo Knocking', modules: [] },
+  { day: 11, week: 3, label: 'Review & Quiz Retakes', modules: [] },
+  { day: 12, week: 3, label: 'Advanced Practice', modules: [] },
+  { day: 13, week: 3, label: 'Final Assessment', modules: [] },
+  { day: 14, week: 3, label: 'Certification', modules: [] },
+];
+
+const SECTION_ICONS = {
+  listen: '🎧', watch: '🎬', study: '📖', test: '✅', reports: '📋'
+};
+const SECTION_LABELS = {
+  listen: 'Listen', watch: 'Watch', study: 'Study', test: 'Test', reports: 'Reports'
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentRepCode = '';
+let currentRepName = '';
+let isAdminUser = false;
+let progress = {};
+let allProgress = {};
+let repList = [];
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+function doLogin() {
+  const code = document.getElementById('loginInput').value.trim().toUpperCase();
+  if (!code) return;
+  fetch('/api/rep-codes')
+    .then(r => r.json())
+    .then(reps => {
+      const rep = reps.find(r => r.code === code && r.active !== false);
+      if (!rep) {
+        document.getElementById('loginError').textContent = 'Invalid rep code';
+        return;
+      }
+      currentRepCode = code;
+      currentRepName = rep.name;
+      isAdminUser = (rep.role === 'admin');
+      repList = reps.filter(r => r.active !== false);
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('topbar').style.display = '';
+      document.getElementById('mainContent').style.display = '';
+      if (isAdminUser) {
+        document.getElementById('repSelector').style.display = '';
+        buildRepSelector();
+        document.getElementById('adminSection').classList.remove('hidden');
+      }
+      loadProgress();
+    })
+    .catch(() => {
+      document.getElementById('loginError').textContent = 'Connection error';
+    });
+}
+
+function logout() {
+  currentRepCode = '';
+  progress = {};
+  document.getElementById('loginOverlay').style.display = '';
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('loginInput').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+// Auto-login from query param
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const auth = params.get('auth');
+  if (auth) {
+    document.getElementById('loginInput').value = auth;
+    setTimeout(doLogin, 100);
+  }
+  document.getElementById('loginInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+})();
+
+function buildRepSelector() {
+  const sel = document.getElementById('repSelector');
+  sel.innerHTML = repList.map(r =>
+    `<option value="${r.code}" ${r.code === currentRepCode ? 'selected' : ''}>${r.name} (${r.code})</option>`
+  ).join('');
+}
+
+function switchRep(code) {
+  currentRepCode = code;
+  const rep = repList.find(r => r.code === code);
+  if (rep) currentRepName = rep.name;
+  loadProgress();
+}
+
+/* ============================================================
+   DATA LOADING
+   ============================================================ */
+function loadProgress() {
+  fetch(`/api/training/progress/${currentRepCode}`)
+    .then(r => r.json())
+    .then(data => {
+      progress = data;
+      renderAll();
+    })
+    .catch(() => {
+      progress = { modules: {}, onboardingDay: 1 };
+      renderAll();
+    });
+
+  if (isAdminUser) {
+    fetch(`/api/training/progress?auth=${currentRepCode}`)
+      .then(r => r.json())
+      .then(data => {
+        allProgress = data;
+        renderAdminTable();
+      })
+      .catch(() => {});
+  }
+}
+
+function saveResource(moduleId, resourceId, completed) {
+  fetch(`/api/training/progress/${currentRepCode}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ moduleId, resourceId, completed })
+  })
+  .then(r => r.json())
+  .then(data => {
+    progress = data;
+    updateOverallProgress();
+    updateModuleStatus(moduleId);
+  });
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function renderAll() {
+  renderModuleCards();
+  updateOverallProgress();
+  renderOnboarding();
+}
+
+function getModuleStatus(mod) {
+  const mp = progress.modules && progress.modules[mod.id];
+  if (!mp || !mp.resources) return 'not_started';
+  const vals = Object.values(mp.resources);
+  if (vals.length === 0) return 'not_started';
+  const done = vals.filter(Boolean).length;
+  if (done === 0) return 'not_started';
+  if (done >= mod.resources.length) return 'complete';
+  return 'in_progress';
+}
+
+function getStatusLabel(status) {
+  if (status === 'complete') return 'Complete';
+  if (status === 'in_progress') return 'In Progress';
+  return 'Not Started';
+}
+
+function updateOverallProgress() {
+  let completed = 0;
+  MODULES.forEach(mod => {
+    if (getModuleStatus(mod) === 'complete') completed++;
+  });
+  const pct = Math.round((completed / MODULES.length) * 100);
+  document.getElementById('overallBar').style.width = pct + '%';
+  document.getElementById('overallText').textContent = `${completed} / ${MODULES.length} modules`;
+}
+
+function updateModuleStatus(moduleId) {
+  const mod = MODULES.find(m => m.id === moduleId);
+  if (!mod) return;
+  const card = document.querySelector(`[data-module="${moduleId}"]`);
+  if (!card) return;
+  const status = getModuleStatus(mod);
+  const badge = card.querySelector('.module-status');
+  badge.className = 'module-status status-' + status.replace('_', '-');
+  badge.textContent = getStatusLabel(status);
+}
+
+function renderModuleCards() {
+  const grid = document.getElementById('moduleGrid');
+  grid.innerHTML = MODULES.map(mod => {
+    const status = getModuleStatus(mod);
+    const mp = (progress.modules && progress.modules[mod.id]) || { resources: {} };
+
+    // Group resources by section
+    const sections = {};
+    mod.resources.forEach(r => {
+      if (!sections[r.section]) sections[r.section] = [];
+      sections[r.section].push(r);
+    });
+
+    let bodyHTML = '';
+    for (const sec of ['listen', 'watch', 'study', 'test', 'reports']) {
+      if (!sections[sec]) continue;
+      bodyHTML += `<div class="resource-section">
+        <div class="resource-section-title">${SECTION_ICONS[sec]} ${SECTION_LABELS[sec]}</div>`;
+      sections[sec].forEach(r => {
+        const checked = mp.resources[r.id] ? 'checked' : '';
+        const quizScore = (r.id === 'quiz' && mp.quizScore != null) ? `<span class="quiz-score">${mp.quizScore}%</span>` : '';
+        const link = r.url
+          ? `<a href="${r.url}" target="_blank">${r.label}</a>`
+          : `<span class="pending">${r.label} — Link pending</span>`;
+        bodyHTML += `<div class="resource-item">
+          <input type="checkbox" ${checked} onchange="saveResource('${mod.id}','${r.id}',this.checked)">
+          ${link}${quizScore}
+        </div>`;
+      });
+      bodyHTML += '</div>';
+    }
+
+    return `<div class="module-card" data-module="${mod.id}">
+      <div class="module-card-header" onclick="toggleModule(this)">
+        <div class="module-badge">${mod.number}</div>
+        <div class="module-info">
+          <h3>${mod.title}</h3>
+          <p>${mod.description}</p>
+          <div class="week-label">Week ${mod.week} · Day ${mod.day}</div>
+        </div>
+        <span class="module-status status-${status.replace('_','-')}">${getStatusLabel(status)}</span>
+        <span class="module-chevron">▼</span>
+      </div>
+      <div class="module-body">${bodyHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleModule(header) {
+  header.parentElement.classList.toggle('expanded');
+}
+
+/* ============================================================
+   ONBOARDING TRACKER
+   ============================================================ */
+function renderOnboarding() {
+  const currentDay = progress.onboardingDay || 1;
+  const tracker = document.getElementById('onboardingTracker');
+
+  let html = '';
+  let lastWeek = 0;
+  ONBOARDING_DAYS.forEach(d => {
+    if (d.week !== lastWeek) {
+      if (lastWeek !== 0) html += '</div>';
+      html += `<div class="week-header">Week ${d.week}</div><div class="timeline">`;
+      lastWeek = d.week;
+    }
+    let cls = 'future';
+    if (d.day < currentDay) cls = 'completed';
+    else if (d.day === currentDay) cls = 'current';
+
+    const moduleNames = d.modules.map(mid => {
+      const m = MODULES.find(mm => mm.id === mid);
+      return m ? m.title : '';
+    }).filter(Boolean).join(', ');
+
+    html += `<div class="day-card ${cls}">
+      <div class="day-num">Day ${d.day}</div>
+      <div class="day-label">${d.label}</div>
+    </div>`;
+  });
+  html += '</div>';
+  tracker.innerHTML = html;
+}
+
+/* ============================================================
+   ADMIN TABLE
+   ============================================================ */
+function renderAdminTable() {
+  if (!isAdminUser) return;
+  const table = document.getElementById('adminTable');
+  const filter = (document.getElementById('adminFilter').value || '').toLowerCase();
+
+  let headerRow = '<tr><th>Rep</th>';
+  MODULES.forEach(m => { headerRow += `<th>M${m.number}</th>`; });
+  headerRow += '<th>Avg Quiz</th></tr>';
+
+  let bodyRows = '';
+  const reps = Object.keys(allProgress).filter(code => {
+    if (!filter) return true;
+    const rep = repList.find(r => r.code === code);
+    const name = rep ? rep.name.toLowerCase() : code.toLowerCase();
+    return name.includes(filter) || code.toLowerCase().includes(filter);
+  });
+
+  reps.forEach(code => {
+    const rp = allProgress[code];
+    const rep = repList.find(r => r.code === code);
+    const name = rep ? rep.name : code;
+    let row = `<tr><td><strong>${name}</strong><br><small>${code}</small></td>`;
+    let quizTotal = 0, quizCount = 0;
+
+    MODULES.forEach(mod => {
+      const mp = rp.modules && rp.modules[mod.id];
+      if (!mp || !mp.resources) {
+        row += '<td><span class="dot dot-gray"></span></td>';
+      } else {
+        const vals = Object.values(mp.resources);
+        const done = vals.filter(Boolean).length;
+        if (done >= mod.resources.length) {
+          row += '<td><span class="dot dot-green"></span></td>';
+        } else if (done > 0) {
+          row += '<td><span class="dot dot-yellow"></span></td>';
+        } else {
+          row += '<td><span class="dot dot-gray"></span></td>';
+        }
+        if (mp.quizScore != null) {
+          quizTotal += mp.quizScore;
+          quizCount++;
+        }
+      }
+    });
+
+    const avg = quizCount > 0 ? Math.round(quizTotal / quizCount) : '—';
+    row += `<td>${avg}${quizCount > 0 ? '%' : ''}</td></tr>`;
+    bodyRows += row;
+  });
+
+  if (reps.length === 0) {
+    bodyRows = `<tr><td colspan="${MODULES.length + 2}" style="text-align:center;padding:20px;color:#999;">No progress data yet</td></tr>`;
+  }
+
+  table.innerHTML = headerRow + bodyRows;
+}
+</script>
+</body>
+</html>

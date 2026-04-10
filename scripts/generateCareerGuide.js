@@ -222,7 +222,7 @@ doc.font('Helvetica-Bold').fontSize(13).fillColor(TEAL)
 doc.font('Helvetica-Bold').fontSize(16).fillColor(WHITE)
    .text('Apply: crc-field.onrender.com/recruit', M, 550, { width: W-M*2, align: 'center' });
 doc.font('Helvetica').fontSize(14).fillColor(TEAL)
-   .text('(614) 743-1481', M, 580, { width: W-M*2, align: 'center' });
+   .text('', M, 580, { width: W-M*2, align: 'center' });
 
 doc.font('Helvetica-Bold').fontSize(15).fillColor(WHITE)
    .text('"You Were Not Built for Average."', M, 640, { width: W-M*2, align: 'center' });

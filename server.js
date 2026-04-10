@@ -19,6 +19,7 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/brain', require('./routes/brain'));
 app.use('/api/claims-dashboard', require('./routes/claims-dashboard'));
 app.use('/api/referrals', require('./routes/referrals'));
+app.use('/api/training', require('./routes/training'));
 app.use('/', require('./routes/rep-card'));
 app.use('/', require('./routes/recruit'));
 
@@ -51,6 +52,9 @@ app.get('/claims-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'pu
 
 // Team roster page
 app.get('/roster', (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
+
+// Training portal
+app.get('/training', (req, res) => res.sendFile(path.join(__dirname, 'public', 'training.html')));
 
 // SPA fallback
 app.get('/{*path}', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));

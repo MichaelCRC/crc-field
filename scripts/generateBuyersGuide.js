@@ -348,7 +348,7 @@ doc.font('Helvetica-Bold').fontSize(24).fillColor(WHITE)
 doc.moveTo(W/2 - 60, 395).lineTo(W/2 + 60, 395).strokeColor(TEAL).lineWidth(3).stroke();
 
 doc.font('Helvetica-Bold').fontSize(18).fillColor(TEAL)
-   .text('(614) 743-1481', M, 420, { width: W - M*2, align: 'center' });
+   .text('', M, 420, { width: W - M*2, align: 'center' });
 
 doc.font('Helvetica').fontSize(13).fillColor(WHITE)
    .text('claims@columbusroofingco.com', M, 455, { width: W - M*2, align: 'center' })
