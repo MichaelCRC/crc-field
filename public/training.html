@@ -131,8 +131,17 @@ body {
   color: var(--teal); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee;
 }
 .resource-item {
-  display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  display: flex; align-items: flex-start; gap: 10px; padding: 6px 0;
   font-size: 14px;
+}
+.native-player {
+  flex: 1; display: flex; flex-direction: column;
+}
+.native-player .resource-label {
+  font-size: 14px; color: var(--navy); font-weight: 600;
+}
+.native-player audio, .native-player video {
+  border-radius: 8px; background: var(--light-gray);
 }
 .resource-item input[type="checkbox"] {
   width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; flex-shrink: 0;
@@ -452,6 +461,7 @@ let isAdminUser = false;
 let progress = {};
 let allProgress = {};
 let repList = [];
+let cloudinaryAssets = {};
 
 /* ============================================================
    AUTH
@@ -527,16 +537,18 @@ function switchRep(code) {
    DATA LOADING
    ============================================================ */
 function loadProgress() {
-  fetch(`/api/training/progress/${currentRepCode}`)
-    .then(r => r.json())
-    .then(data => {
-      progress = data;
-      renderAll();
-    })
-    .catch(() => {
-      progress = { modules: {}, onboardingDay: 1 };
-      renderAll();
-    });
+  // Load Cloudinary assets manifest + rep progress in parallel
+  Promise.all([
+    fetch('/api/training/assets').then(r => r.json()).catch(() => ({})),
+    fetch(`/api/training/progress/${currentRepCode}`).then(r => r.json()).catch(() => ({ modules: {}, onboardingDay: 1 }))
+  ]).then(([assets, data]) => {
+    cloudinaryAssets = assets;
+    progress = data;
+    renderAll();
+  }).catch(() => {
+    progress = { modules: {}, onboardingDay: 1 };
+    renderAll();
+  });
 
   if (isAdminUser) {
     fetch(`/api/training/progress?auth=${currentRepCode}`)
@@ -615,6 +627,7 @@ function renderModuleCards() {
   grid.innerHTML = MODULES.map(mod => {
     const status = getModuleStatus(mod);
     const mp = (progress.modules && progress.modules[mod.id]) || { resources: {} };
+    const modAssets = cloudinaryAssets[mod.id] || {};
 
     // Group resources by section
     const sections = {};
@@ -631,9 +644,29 @@ function renderModuleCards() {
       sections[sec].forEach(r => {
         const checked = mp.resources[r.id] ? 'checked' : '';
         const quizScore = (r.id === 'quiz' && mp.quizScore != null) ? `<span class="quiz-score">${mp.quizScore}%</span>` : '';
-        const link = r.url
-          ? `<a href="${r.url}" target="_blank">${r.label}</a>`
-          : `<span class="pending">${r.label} — Link pending</span>`;
+        const asset = modAssets[r.id];
+        let link;
+        if (asset && asset.mediaType === 'audio') {
+          link = `<div class="native-player">
+            <span class="resource-label">${r.label}</span>
+            <audio controls preload="none" style="width:100%;margin-top:6px;border-radius:8px">
+              <source src="${asset.url}" type="audio/mp4">
+            </audio>
+          </div>`;
+        } else if (asset && asset.mediaType === 'video') {
+          link = `<div class="native-player">
+            <span class="resource-label">${r.label}</span>
+            <video controls preload="none" style="width:100%;margin-top:6px;border-radius:8px;max-height:300px">
+              <source src="${asset.url}" type="video/mp4">
+            </video>
+          </div>`;
+        } else if (asset && (asset.mediaType === 'pdf' || asset.mediaType === 'image')) {
+          link = `<a href="${asset.url}" target="_blank">${r.label}</a>`;
+        } else if (r.url) {
+          link = `<a href="${r.url}" target="_blank">${r.label}</a>`;
+        } else {
+          link = `<span class="pending">${r.label} -- Link pending</span>`;
+        }
         bodyHTML += `<div class="resource-item">
           <input type="checkbox" ${checked} onchange="saveResource('${mod.id}','${r.id}',this.checked)">
           ${link}${quizScore}

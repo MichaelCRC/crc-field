@@ -1,0 +1,760 @@
+{
+  "mod-6-7": {
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842705/crc-university/mod-6-7-briefing-doc.pdf",
+      "publicId": "crc-university/mod-6-7-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 88503,
+      "duration": null,
+      "pages": null,
+      "originalFile": "CRC Field Sales and DCSI Doctrine_ Comprehensive Briefing.pdf"
+    },
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842709/crc-university/mod-6-7-study-guide.pdf",
+      "publicId": "crc-university/mod-6-7-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 101010,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Study Guide_ CRC Module 6-7 Field Sales.pdf"
+    },
+    "process-overview": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842721/crc-university/mod-6-7-process-overview.pdf",
+      "publicId": "crc-university/mod-6-7-process-overview.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 124731,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The Homeowner's Journey_ A Guide to Professional Insurance Restoration.pdf"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842735/crc-university/mod-6-7-brief.mp4",
+      "publicId": "crc-university/mod-6-7-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 2694888,
+      "duration": 83.707937,
+      "pages": 0,
+      "originalFile": "Evidence_driven_roofing_sales_and_door_scripts.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842756/crc-university/mod-6-7-slides.pdf",
+      "publicId": "crc-university/mod-6-7-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 10153905,
+      "duration": null,
+      "pages": null,
+      "originalFile": "DCSI_Master_Doctrine.pdf"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842769/crc-university/mod-6-7-deep-dive.mp4",
+      "publicId": "crc-university/mod-6-7-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 37079291,
+      "duration": 1152.08127,
+      "pages": 0,
+      "originalFile": "Tactical_DCSI_Training_for_Roofing_Reps.m4a"
+    },
+    "video": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842840/crc-university/mod-6-7-video.mp4",
+      "publicId": "crc-university/mod-6-7-video",
+      "format": "mp4",
+      "mediaType": "video",
+      "bytes": 54281891,
+      "duration": 384.452789,
+      "pages": 0,
+      "originalFile": "Securing_the_Perfect_Packet__The_DCSI_7-Step_Protocol.mp4"
+    }
+  },
+  "mod-3": {
+    "terminology": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842706/crc-university/mod-3-terminology.pdf",
+      "publicId": "crc-university/mod-3-terminology.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 92607,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Analysis of Wind Science and Damage Forensics for Asphalt Shingles.pdf"
+    },
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842707/crc-university/mod-3-study-guide.pdf",
+      "publicId": "crc-university/mod-3-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 97397,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Study Guide_ Wind Science and Asphalt Shingle Damage.pdf"
+    },
+    "infographic": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/image/upload/v1775842734/crc-university/mod-3-infographic.jpg",
+      "publicId": "crc-university/mod-3-infographic",
+      "format": "jpg",
+      "mediaType": "image",
+      "bytes": 703973,
+      "duration": null,
+      "pages": null,
+      "originalFile": "unnamed.jpg"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842740/crc-university/mod-3-brief.mp4",
+      "publicId": "crc-university/mod-3-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 2976638,
+      "duration": 92.461859,
+      "pages": 0,
+      "originalFile": "Proving_wind_damage_with_physics_and_photos.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842751/crc-university/mod-3-slides.pdf",
+      "publicId": "crc-university/mod-3-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 8297964,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Forensic_Wind_Science.pdf"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842820/crc-university/mod-3-deep-dive.mp4",
+      "publicId": "crc-university/mod-3-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 45168883,
+      "duration": 1403.437279,
+      "pages": 0,
+      "originalFile": "How_to_Prove_Shingle_Wind_Damage.m4a"
+    }
+  },
+  "mod-h": {
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842706/crc-university/mod-h-briefing-doc.pdf",
+      "publicId": "crc-university/mod-h-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 96176,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Columbus Roofing Company_ Homeowner Insurance Claim Process Briefing.pdf"
+    },
+    "briefing-doc-supplemental": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842713/crc-university/mod-h-briefing-doc-supplemental.pdf",
+      "publicId": "crc-university/mod-h-briefing-doc-supplemental.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 107623,
+      "duration": null,
+      "pages": null,
+      "originalFile": "7 Secrets Your Insurance Carrier Won\u2019t Tell You About Your Roof Claim.pdf"
+    },
+    "process-overview-2": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842716/crc-university/mod-h-process-overview-2.pdf",
+      "publicId": "crc-university/mod-h-process-overview-2.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 116511,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Navigating the Ohio Insurance Landscape_ A Technical Guide to Residential Roofing Restoration.pdf"
+    },
+    "process-overview": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842717/crc-university/mod-h-process-overview.pdf",
+      "publicId": "crc-university/mod-h-process-overview.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 117699,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Navigating Your Roofing Claim_ A Step-by-Step Guide to Success.pdf"
+    },
+    "study-guide-supplemental": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842722/crc-university/mod-h-study-guide-supplemental.pdf",
+      "publicId": "crc-university/mod-h-study-guide-supplemental.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 131023,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The Homeowner\u2019s Insurance-Funded Roofing Primer_ From Confusion to Clarity.pdf"
+    },
+    "ops-manual": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842728/crc-university/mod-h-ops-manual.pdf",
+      "publicId": "crc-university/mod-h-ops-manual.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 159969,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The Ohio Claims Supremacy Playbook_ Strategic Field Operations for Homeowner Restoration.pdf"
+    },
+    "infographic": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/image/upload/v1775842733/crc-university/mod-h-infographic.jpg",
+      "publicId": "crc-university/mod-h-infographic",
+      "format": "jpg",
+      "mediaType": "image",
+      "bytes": 684818,
+      "duration": null,
+      "pages": null,
+      "originalFile": "unnamed.jpg"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842737/crc-university/mod-h-brief.mp4",
+      "publicId": "crc-university/mod-h-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 2771833,
+      "duration": 86.099592,
+      "pages": 0,
+      "originalFile": "Call_CRC_Before_Your_Insurance_Company.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842748/crc-university/mod-h-slides.pdf",
+      "publicId": "crc-university/mod-h-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 7996366,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The_Ohio_Claims_Dossier.pdf"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842804/crc-university/mod-h-deep-dive.mp4",
+      "publicId": "crc-university/mod-h-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 42282030,
+      "duration": 1313.738594,
+      "pages": 0,
+      "originalFile": "Don_t_Call_Your_Insurance_Company_First.m4a"
+    },
+    "video": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842845/crc-university/mod-h-video.mp4",
+      "publicId": "crc-university/mod-h-video",
+      "format": "mp4",
+      "mediaType": "video",
+      "bytes": 59244505,
+      "duration": 374.305669,
+      "pages": 0,
+      "originalFile": "The_Insurance_Claim_Reality_Check__Why_Your_Initial_Roof_Estima.mp4"
+    }
+  },
+  "mod-4-5": {
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842708/crc-university/mod-4-5-study-guide.pdf",
+      "publicId": "crc-university/mod-4-5-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 97528,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Comprehensive Study Guide_ GAF Residential Roofing Systems and Warranties.pdf"
+    },
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842712/crc-university/mod-4-5-briefing-doc.pdf",
+      "publicId": "crc-university/mod-4-5-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 104413,
+      "duration": null,
+      "pages": null,
+      "originalFile": "GAF Residential Roofing Systems_ Comprehensive Technical and Warranty Briefing.pdf"
+    },
+    "study-guide-supplemental": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842715/crc-university/mod-4-5-study-guide-supplemental.pdf",
+      "publicId": "crc-university/mod-4-5-study-guide-supplemental.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 116329,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Modern Roofing Science_ A Homeowner\u2019s Primer on Resilience and Innovation.pdf"
+    },
+    "infographic": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/image/upload/v1775842731/crc-university/mod-4-5-infographic.jpg",
+      "publicId": "crc-university/mod-4-5-infographic",
+      "format": "jpg",
+      "mediaType": "image",
+      "bytes": 629959,
+      "duration": null,
+      "pages": null,
+      "originalFile": "unnamed.jpg"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842745/crc-university/mod-4-5-brief.mp4",
+      "publicId": "crc-university/mod-4-5-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 3554331,
+      "duration": 110.410884,
+      "pages": 0,
+      "originalFile": "Beat_insurance_denials_with_Ohio_roofing_codes.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842747/crc-university/mod-4-5-slides.pdf",
+      "publicId": "crc-university/mod-4-5-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 6315662,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The_Premium_Roofing_Blueprint.pdf"
+    },
+    "video": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842780/crc-university/mod-4-5-video.mp4",
+      "publicId": "crc-university/mod-4-5-video",
+      "format": "mp4",
+      "mediaType": "video",
+      "bytes": 39107448,
+      "duration": 393.949751,
+      "pages": 0,
+      "originalFile": "Demystifying_Your_GAF_Roof.mp4"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842824/crc-university/mod-4-5-deep-dive.mp4",
+      "publicId": "crc-university/mod-4-5-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 46459483,
+      "duration": 1443.538141,
+      "pages": 0,
+      "originalFile": "Win_roofing_supplements_with_building_codes.m4a"
+    }
+  },
+  "mod-2": {
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842708/crc-university/mod-2-study-guide.pdf",
+      "publicId": "crc-university/mod-2-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 98079,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Study Guide_ The Physics and Forensics of Hail Damage to Asphalt Shingles.pdf"
+    },
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842710/crc-university/mod-2-briefing-doc.pdf",
+      "publicId": "crc-university/mod-2-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 101334,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Briefing Document_ Hail Damage Assessment and Insurance Claim Methodology.pdf"
+    },
+    "infographic": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/image/upload/v1775842732/crc-university/mod-2-infographic.jpg",
+      "publicId": "crc-university/mod-2-infographic",
+      "format": "jpg",
+      "mediaType": "image",
+      "bytes": 660936,
+      "duration": null,
+      "pages": null,
+      "originalFile": "unnamed.jpg"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842743/crc-university/mod-2-brief.mp4",
+      "publicId": "crc-university/mod-2-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 3117828,
+      "duration": 96.850431,
+      "pages": 0,
+      "originalFile": "Verify_functional_hail_damage_to_stop_denials.m4a"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842816/crc-university/mod-2-deep-dive.mp4",
+      "publicId": "crc-university/mod-2-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 44774331,
+      "duration": 1391.177143,
+      "pages": 0,
+      "originalFile": "The_Forensic_Science_of_Hail_Damage.m4a"
+    }
+  },
+  "mod-8-9": {
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842710/crc-university/mod-8-9-study-guide.pdf",
+      "publicId": "crc-university/mod-8-9-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 101576,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Comprehensive Study Guide_ Carrier Intelligence and Supplement Doctrine.pdf"
+    },
+    "study-guide-supplemental-2": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842719/crc-university/mod-8-9-study-guide-supplemental-2.pdf",
+      "publicId": "crc-university/mod-8-9-study-guide-supplemental-2.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 119649,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The Path to Restoration_ A Fundamentals Guide to Property Insurance Claims.pdf"
+    },
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842720/crc-university/mod-8-9-briefing-doc.pdf",
+      "publicId": "crc-university/mod-8-9-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 124688,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Ohio Carrier Intelligence and Supplement Doctrine_ Comprehensive Training Brief.pdf"
+    },
+    "study-guide-supplemental": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842723/crc-university/mod-8-9-study-guide-supplemental.pdf",
+      "publicId": "crc-university/mod-8-9-study-guide-supplemental.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 132834,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The Ohio Roofing Regulatory Primer_ Mastering Your Legal Weapon Arsenal.pdf"
+    },
+    "ops-manual": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842726/crc-university/mod-8-9-ops-manual.pdf",
+      "publicId": "crc-university/mod-8-9-ops-manual.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 140538,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Mandatory Forensic Documentation & Restoration Standards Manual.pdf"
+    },
+    "negotiation-fw": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842726/crc-university/mod-8-9-negotiation-fw.pdf",
+      "publicId": "crc-university/mod-8-9-negotiation-fw.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 149349,
+      "duration": null,
+      "pages": null,
+      "originalFile": "CRC Negotiation Framework_ Master Carrier Intelligence & Supplementation Doctrine.pdf"
+    },
+    "terminology": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842729/crc-university/mod-8-9-terminology.pdf",
+      "publicId": "crc-university/mod-8-9-terminology.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 167979,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Strategy Handbook_ The Ohio Insurance Supplement Doctrine.pdf"
+    },
+    "infographic": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/image/upload/v1775842731/crc-university/mod-8-9-infographic.jpg",
+      "publicId": "crc-university/mod-8-9-infographic",
+      "format": "jpg",
+      "mediaType": "image",
+      "bytes": 650391,
+      "duration": null,
+      "pages": null,
+      "originalFile": "unnamed.jpg"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842742/crc-university/mod-8-9-brief.mp4",
+      "publicId": "crc-university/mod-8-9-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 2976638,
+      "duration": 92.461859,
+      "pages": 0,
+      "originalFile": "Beat_State_Farm_on_Drip_Edge_Supplements.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842755/crc-university/mod-8-9-slides.pdf",
+      "publicId": "crc-university/mod-8-9-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 9850874,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Ohio_Tactical_Playbook.pdf"
+    },
+    "debate": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842775/crc-university/mod-8-9-debate.mp4",
+      "publicId": "crc-university/mod-8-9-debate",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 37817597,
+      "duration": 1175.022585,
+      "pages": 0,
+      "originalFile": "How_Roofers_Fight_Insurance_Claim_Denials.m4a"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842795/crc-university/mod-8-9-deep-dive.mp4",
+      "publicId": "crc-university/mod-8-9-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 40318116,
+      "duration": 1252.716553,
+      "pages": 0,
+      "originalFile": "Beating_the_Ohio_insurance_carrier_casino.m4a"
+    }
+  },
+  "mod-10-12": {
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842711/crc-university/mod-10-12-study-guide.pdf",
+      "publicId": "crc-university/mod-10-12-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 103937,
+      "duration": null,
+      "pages": null,
+      "originalFile": "DCSI Workflow and Insurance Supplementing Study Guide.pdf"
+    },
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842719/crc-university/mod-10-12-briefing-doc.pdf",
+      "publicId": "crc-university/mod-10-12-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 124324,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Comprehensive Briefing_ DCSI Claims Workflow and Supplementation Excellence.pdf"
+    },
+    "study-guide-supplemental-2": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842722/crc-university/mod-10-12-study-guide-supplemental-2.pdf",
+      "publicId": "crc-university/mod-10-12-study-guide-supplemental-2.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 131930,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Mastering the Insurance Restoration Financial Landscape_ A Learner\u2019s Guide.pdf"
+    },
+    "negotiation-fw": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842724/crc-university/mod-10-12-negotiation-fw.pdf",
+      "publicId": "crc-university/mod-10-12-negotiation-fw.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 138165,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Strategic Negotiation Playbook_ The DCSI Method for Full Indemnification.pdf"
+    },
+    "study-guide-supplemental": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842725/crc-university/mod-10-12-study-guide-supplemental.pdf",
+      "publicId": "crc-university/mod-10-12-study-guide-supplemental.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 139114,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Field Technical Primer_ HAAG-Standard Inspection & The Science of Evidence-Based Documentation.pdf"
+    },
+    "ops-manual": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842727/crc-university/mod-10-12-ops-manual.pdf",
+      "publicId": "crc-university/mod-10-12-ops-manual.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 158031,
+      "duration": null,
+      "pages": null,
+      "originalFile": "DCSI Master Operational Standard_ The 12-Stage Insurance Restoration Lifecycle.pdf"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842739/crc-university/mod-10-12-brief.mp4",
+      "publicId": "crc-university/mod-10-12-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 2921357,
+      "duration": 90.743583,
+      "pages": 0,
+      "originalFile": "Collect_Every_Dollar_From_Approved_Claims.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842758/crc-university/mod-10-12-slides.pdf",
+      "publicId": "crc-university/mod-10-12-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 10199673,
+      "duration": null,
+      "pages": null,
+      "originalFile": "DCSI_Master_Doctrine.pdf"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842786/crc-university/mod-10-12-deep-dive.mp4",
+      "publicId": "crc-university/mod-10-12-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 39676178,
+      "duration": 1232.770612,
+      "pages": 0,
+      "originalFile": "Securing_Profit_After_Insurance_Approval.m4a"
+    }
+  },
+  "mod-0": {
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842712/crc-university/mod-0-study-guide.pdf",
+      "publicId": "crc-university/mod-0-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 104612,
+      "duration": null,
+      "pages": null,
+      "originalFile": "DCSI Foundation Study Guide_ The Decision Clarity System for Insurance.pdf"
+    },
+    "ops-manual": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842714/crc-university/mod-0-ops-manual.pdf",
+      "publicId": "crc-university/mod-0-ops-manual.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 110451,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Decision Clarity System for Insurance (DCSI)_ Foundation and Operational Doctrine.pdf"
+    },
+    "terminology": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842715/crc-university/mod-0-terminology.pdf",
+      "publicId": "crc-university/mod-0-terminology.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 116023,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The Advisor\u2019s Handbook_ Language and Standards of Insurance Restoration.pdf"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842744/crc-university/mod-0-brief.mp4",
+      "publicId": "crc-university/mod-0-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 3185062,
+      "duration": 98.940227,
+      "pages": 0,
+      "originalFile": "Evidence_drives_the_roofing_close.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842753/crc-university/mod-0-slides.pdf",
+      "publicId": "crc-university/mod-0-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 9013353,
+      "duration": null,
+      "pages": null,
+      "originalFile": "DCSI_Field_Doctrine.pdf"
+    },
+    "video": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842764/crc-university/mod-0-video.mp4",
+      "publicId": "crc-university/mod-0-video",
+      "format": "mp4",
+      "mediaType": "video",
+      "bytes": 36123248,
+      "duration": 384.522449,
+      "pages": 0,
+      "originalFile": "From_Chaos_to_Clarity.mp4"
+    },
+    "debate": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842789/crc-university/mod-0-debate.mp4",
+      "publicId": "crc-university/mod-0-debate",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 39727724,
+      "duration": 1234.372789,
+      "pages": 0,
+      "originalFile": "How_to_Master_DCSI_Roofing_Claims.m4a"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842808/crc-university/mod-0-deep-dive.mp4",
+      "publicId": "crc-university/mod-0-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 44642736,
+      "duration": 1387.090431,
+      "pages": 0,
+      "originalFile": "The_DCSI_Roofing_Negotiation_System.m4a"
+    }
+  },
+  "mod-1": {
+    "briefing-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842713/crc-university/mod-1-briefing-doc.pdf",
+      "publicId": "crc-university/mod-1-briefing-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 106374,
+      "duration": null,
+      "pages": null,
+      "originalFile": "Comprehensive Briefing_ Residential Roof Inspection and Storm Damage Methodology.pdf"
+    },
+    "study-guide": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842718/crc-university/mod-1-study-guide.pdf",
+      "publicId": "crc-university/mod-1-study-guide.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 118662,
+      "duration": null,
+      "pages": null,
+      "originalFile": "HAAG Inspection Methodology and Residential Roofing Assessment Study Guide.pdf"
+    },
+    "supplemental-doc": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842724/crc-university/mod-1-supplemental-doc.pdf",
+      "publicId": "crc-university/mod-1-supplemental-doc.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 134057,
+      "duration": null,
+      "pages": null,
+      "originalFile": "The HAAG Four-Step Method_ A Masterclass in Roof Inspection.pdf"
+    },
+    "infographic": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/image/upload/v1775842730/crc-university/mod-1-infographic.jpg",
+      "publicId": "crc-university/mod-1-infographic",
+      "format": "jpg",
+      "mediaType": "image",
+      "bytes": 628157,
+      "duration": null,
+      "pages": null,
+      "originalFile": "unnamed.jpg"
+    },
+    "brief": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842736/crc-university/mod-1-brief.mp4",
+      "publicId": "crc-university/mod-1-brief",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 2770339,
+      "duration": 86.053152,
+      "pages": 0,
+      "originalFile": "Winning_Your_First_CRC_HAAG_Inspection.m4a"
+    },
+    "slides": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/raw/upload/v1775842754/crc-university/mod-1-slides.pdf",
+      "publicId": "crc-university/mod-1-slides.pdf",
+      "format": "",
+      "mediaType": "pdf",
+      "bytes": 9533848,
+      "duration": null,
+      "pages": null,
+      "originalFile": "CRC_HAAG_Inspection_Protocol.pdf"
+    },
+    "video": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842799/crc-university/mod-1-video.mp4",
+      "publicId": "crc-university/mod-1-video",
+      "format": "mp4",
+      "mediaType": "video",
+      "bytes": 41207831,
+      "duration": 403.168073,
+      "pages": 0,
+      "originalFile": "Cracking_the_Code.mp4"
+    },
+    "deep-dive": {
+      "url": "https://res.cloudinary.com/dtrzdisoc/video/upload/v1775842831/crc-university/mod-1-deep-dive.mp4",
+      "publicId": "crc-university/mod-1-deep-dive",
+      "format": "mp4",
+      "mediaType": "audio",
+      "bytes": 51344614,
+      "duration": 1595.326984,
+      "pages": 0,
+      "originalFile": "Proving_Functional_Roof_Damage_with_HAAG.m4a"
+    }
+  }
+}

@@ -1,6 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { read, write } = require('../lib/store');
+
+// Serve training asset manifest (Cloudinary URLs)
+router.get('/assets', (req, res) => {
+  const assets = read('training-assets.json', {});
+  res.json(assets);
+});
 const { validateRepCode, isAdmin } = require('../lib/repCodes');
 
 const FILE = 'training-progress.json';
