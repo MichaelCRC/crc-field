@@ -317,7 +317,16 @@ function renderCameraHUD() {
   const pending = uploadsInFlight + uploadQueue.length;
   const status = pending > 0 ? `Uploading ${pending}...` : (uploadsDone > 0 ? 'Saved &#10003;' : '');
   const recent = (currentLeadPhotos[activePhotoTab] || []).slice(-6);
-  const thumbs = recent.map(p => `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb">`).join('');
+  const recentOffset = (currentLeadPhotos[activePhotoTab] || []).length - recent.length;
+  const thumbs = recent.map((p, i) => {
+    const idx = recentOffset + i;
+    const url = (p.url || p.thumbnail || '').replace(/'/g, "\\'");
+    return `<div style="position:relative;display:inline-block">` +
+      `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb">` +
+      `<button style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.65);color:#fff;border:none;width:20px;height:20px;border-radius:3px;font-size:11px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center" ` +
+      `onclick="event.stopPropagation();openFieldPhotoMarkup('${url}','${currentLeadId}',${idx},'${activePhotoTab}')">&#9998;</button>` +
+      `</div>`;
+  }).join('');
 
   modal.innerHTML = `<div class="cam-hud">
     <div class="cam-topbar">
@@ -441,8 +450,17 @@ function updateUploadStatus() {
   // Fallback mode: update recent thumbs
   const recentEl = document.querySelector('.cam-recent');
   if (recentEl) {
-    const recent = (currentLeadPhotos[activePhotoTab] || []).slice(-6);
-    recentEl.innerHTML = recent.map(p => `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb">`).join('');
+    const recentPhotos = (currentLeadPhotos[activePhotoTab] || []).slice(-6);
+    const rOffset = (currentLeadPhotos[activePhotoTab] || []).length - recentPhotos.length;
+    recentEl.innerHTML = recentPhotos.map((p, i) => {
+      const idx = rOffset + i;
+      const url = (p.url || p.thumbnail || '').replace(/'/g, "\\'");
+      return `<div style="position:relative;display:inline-block">` +
+        `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb">` +
+        `<button style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.65);color:#fff;border:none;width:20px;height:20px;border-radius:3px;font-size:11px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center" ` +
+        `onclick="event.stopPropagation();openFieldPhotoMarkup('${url}','${currentLeadId}',${idx},'${activePhotoTab}')">&#9998;</button>` +
+        `</div>`;
+    }).join('');
   }
 }
 

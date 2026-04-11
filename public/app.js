@@ -472,6 +472,63 @@ async function submitSignature(portalJobId, docId) {
   }
 }
 
+// ── PHOTO MARKUP ─────────────────────────────────────────────────────────────
+// openFieldPhotoMarkup — opens the drawing canvas from markup.js and overrides
+// the save button to POST to field-app endpoints (local lead store + portal sync).
+// category is 'inspection' or 'build' (defaults to activePhotoTab).
+function openFieldPhotoMarkup(photoUrl, leadId, photoIndex, category) {
+  // markup.js openMarkupCanvas sets up the drawing canvas
+  openMarkupCanvas(photoUrl, leadId, 'photo');
+  // After the canvas loads (image fetch + DOM build), swap the Save button's handler
+  setTimeout(() => {
+    const saveBtn = document.querySelector('#markup-modal .btn-primary');
+    if (saveBtn) {
+      const cat = category || (typeof activePhotoTab !== 'undefined' ? activePhotoTab : 'inspection');
+      saveBtn.setAttribute('onclick', 'saveFieldPhotoMarkup("' + leadId + '",' + photoIndex + ',"' + cat + '")');
+    }
+  }, 500);
+}
+
+async function saveFieldPhotoMarkup(leadId, photoIndex, category) {
+  const { overlayCanvas, canvas, strokes } = markupState; // markupState is from markup.js
+  if (!canvas || !overlayCanvas) return;
+
+  // Composite background + overlay into a single PNG
+  const composite = document.createElement('canvas');
+  composite.width = canvas.width;
+  composite.height = canvas.height;
+  const compCtx = composite.getContext('2d');
+  compCtx.drawImage(canvas, 0, 0);
+  compCtx.drawImage(overlayCanvas, 0, 0);
+  const markupData = composite.toDataURL('image/png');
+
+  try {
+    // Save markup locally on the lead
+    await fetch('/api/leads/' + leadId + '/photos/markup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoIndex, markupData, strokes, category: category || 'inspection' })
+    });
+
+    // If lead has a portalJobId, also sync markup to portal
+    const lead = await fetch('/api/leads/' + leadId).then(r => r.json());
+    if (lead.portalJobId) {
+      await fetch('/api/field/jobs/' + lead.portalJobId + '/photos/markup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ originalIndex: photoIndex, markupData, strokes })
+      }).catch(e => console.warn('[Markup] Portal sync failed (non-fatal):', e.message));
+    }
+
+    closeMarkupCanvas();
+    if (typeof showToast === 'function') showToast('Markup saved');
+    // Reload the photo section so the markup indicator appears
+    if (typeof loadPhotos === 'function' && leadId) loadPhotos(leadId);
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
 // ── AUTH AGREEMENT SIGNATURE SCREEN ─────────────────────────────────────────
 var _sigAuthCtx = null, _sigAuthDrawing = false, _sigAuthHasStrokes = false;
 

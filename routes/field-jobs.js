@@ -197,6 +197,22 @@ router.patch('/:id/tasks/:taskId', async (req, res) => {
   }
 });
 
+// POST /api/field/jobs/:id/photos/markup — proxy photo markup to portal
+router.post('/:id/photos/markup', async (req, res) => {
+  try {
+    const { originalIndex, markupData, strokes } = req.body;
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/photos/markup`, {
+      method: 'POST',
+      body: JSON.stringify({ originalIndex, markupData, strokes })
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json({ success: true, ...data });
+  } catch (e) {
+    console.error('[FieldJobs] POST photos markup error:', e.message);
+    res.status(500).json({ error: 'Failed to save photo markup to portal' });
+  }
+});
+
 // POST /api/field/jobs/:id/sign — capture authorization agreement signature
 router.post('/:id/sign', async (req, res) => {
   try {

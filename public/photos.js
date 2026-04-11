@@ -75,11 +75,18 @@ function renderPhotoGrid() {
   grid.innerHTML = photos.map((p, i) => {
     const sourceBadge = p.source === 'hover' ? '<span class="source-badge hover">Hover</span>' :
                         p.source === 'companycam' ? '<span class="source-badge cc">CC</span>' : '';
-    return `<div class="photo-thumb" onclick="openPhotoViewer(${i}, '${activePhotoTab}', '${activePhotoFilter}')" oncontextmenu="event.preventDefault();showPhotoActions(${i})" ontouchstart="startLongPress(event,${i})" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
+    // Resolve the real index within the unfiltered tab array (needed for markup save)
+    const allTabPhotos = currentLeadPhotos[activePhotoTab] || [];
+    const realIndex = activePhotoFilter === 'all' ? i : allTabPhotos.indexOf(p);
+    const photoUrl = (p.url || '').replace(/'/g, "\\'");
+    const markupIndicator = p.hasMarkup ? '<span style="position:absolute;top:2px;right:2px;background:rgba(0,181,204,0.85);color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;z-index:3">Markup</span>' : '';
+    return `<div class="photo-thumb" onclick="openPhotoViewer(${i}, '${activePhotoTab}', '${activePhotoFilter}')" oncontextmenu="event.preventDefault();showPhotoActions(${realIndex})" ontouchstart="startLongPress(event,${realIndex})" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
       <img src="${p.thumbnail || p.url}" alt="${p.tag}" loading="lazy">
       <span class="tag-badge">${(p.tag || 'overview').replace('-', ' ')}</span>
       ${sourceBadge}
       ${p.uploadedBy ? `<span class="rep-badge-small">${p.uploadedBy}</span>` : ''}
+      ${markupIndicator}
+      <button style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border:none;width:22px;height:22px;border-radius:4px;font-size:13px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center;z-index:4" onclick="event.stopPropagation();openFieldPhotoMarkup('${photoUrl}','${currentLeadId}',${realIndex},'${activePhotoTab}')">&#9998;</button>
     </div>`;
   }).join('');
 }
