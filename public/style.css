@@ -29,8 +29,26 @@ body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg);
 .app-view { display: none; padding-bottom: 80px; }
 .app-view.active { display: block; }
 
+/* Detail panels — fixed overlay, always above content, always below bottom nav.
+   Nav stays visible on all screens. Panel scrolls internally. */
+.detail-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px; /* stops at the nav bar */
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  z-index: 100;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 16px;
+  display: none;
+}
+.detail-panel.open { display: block; }
+
 /* Bottom nav */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; z-index: 50; padding-bottom: env(safe-area-inset-bottom); height: 60px; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; z-index: 200; padding-bottom: env(safe-area-inset-bottom); height: 60px; }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .nav-item.active { color: var(--teal); }
 .nav-icon { font-size: 22px; line-height: 1; }

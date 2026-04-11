@@ -85,8 +85,8 @@ function switchView(name) {
   document.getElementById('view-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
-  if (name === 'leads') { document.getElementById('lead-detail').style.display = 'none'; document.getElementById('leads-main').style.display = ''; loadLeads(); }
-  if (name === 'jobs') { document.getElementById('job-detail').style.display = 'none'; loadJobs(); }
+  if (name === 'leads') { document.getElementById('lead-detail').classList.remove('open'); document.getElementById('leads-main').style.display = ''; loadLeads(); }
+  if (name === 'jobs') { document.getElementById('job-detail').classList.remove('open'); loadJobs(); }
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'stats') loadStats();
   if (name === 'chat') initChat();
@@ -168,7 +168,8 @@ async function viewLead(id) {
       : 'Homeowner portal: Not synced';
     document.getElementById('leads-main').style.display = 'none';
     const detail = document.getElementById('lead-detail');
-    detail.style.display = 'block';
+    detail.classList.add('open');
+    detail.scrollTop = 0;
     const sharedCount = (lead.homeownerSharedPhotos || []).length;
     const totalPhotos = (lead.photos?.inspection?.length || 0) + (lead.photos?.build?.length || 0);
     const shareLabel = sharedCount > 0 ? `Homeowner Photos (${sharedCount})` : 'Share Photos with Homeowner';
@@ -205,7 +206,7 @@ async function viewLead(id) {
   } catch (e) { alert('Error: ' + e.message); }
 }
 function backToLeads() {
-  document.getElementById('lead-detail').style.display = 'none';
+  document.getElementById('lead-detail').classList.remove('open');
   document.getElementById('leads-main').style.display = '';
   loadLeads();
 }

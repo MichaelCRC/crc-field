@@ -102,7 +102,8 @@ let _currentJobDetail = null;
 async function openJobDetail(jobId) {
   var detail = document.getElementById('job-detail');
   var list = document.getElementById('view-jobs');
-  detail.style.display = 'block';
+  detail.classList.add('open');
+  detail.scrollTop = 0;
   list.style.display = 'none';
   detail.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray)">Loading...</div>';
 
@@ -223,7 +224,7 @@ function renderJobTasks(tasks, jobId) {
 }
 
 function closeJobDetail() {
-  document.getElementById('job-detail').style.display = 'none';
+  document.getElementById('job-detail').classList.remove('open');
   document.getElementById('view-jobs').style.display = '';
   loadJobs();
 }
