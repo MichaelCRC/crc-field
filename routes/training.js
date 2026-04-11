@@ -7,6 +7,18 @@ router.get('/assets', (req, res) => {
   const assets = read('training-assets.json', {});
   res.json(assets);
 });
+
+// Serve quiz data
+router.get('/quizzes', (req, res) => {
+  const quizzes = read('training-quizzes.json', {});
+  res.json(quizzes);
+});
+
+// Serve flashcard data
+router.get('/flashcards', (req, res) => {
+  const flashcards = read('training-flashcards.json', {});
+  res.json(flashcards);
+});
 const { validateRepCode, isAdmin } = require('../lib/repCodes');
 
 const FILE = 'training-progress.json';

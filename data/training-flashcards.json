@@ -1,0 +1,407 @@
+{
+  "mod-0": {
+    "title": "DCSI Foundation",
+    "cards": [
+      {
+        "front": "What does DCSI stand for?",
+        "back": "Decision Clarity System: Insurance \u2014 CRC's evidence-based framework for insurance-funded restoration."
+      },
+      {
+        "front": "What drives decisions in the DCSI framework?",
+        "back": "Evidence and documentation \u2014 never pressure, urgency, or emotion. The evidence speaks; the rep guides."
+      },
+      {
+        "front": "What is the rep's role under DCSI?",
+        "back": "Educator and evidence-based advisor. The homeowner decides. The rep never applies pressure."
+      },
+      {
+        "front": "Before calling the insurance company, a homeowner should first...",
+        "back": "Get a professional inspection documented so damage evidence is preserved before the carrier can minimize it."
+      },
+      {
+        "front": "What is the ultimate goal of DCSI?",
+        "back": "Full insurance-funded replacement based on documented, forensic evidence \u2014 homeowner exercises their right."
+      },
+      {
+        "front": "When do you discuss price under DCSI?",
+        "back": "Never before claim approval. Price is the carrier's determination based on approved scope \u2014 not a rep pitch at the door."
+      },
+      {
+        "front": "What is the rep's job at the adjuster meeting?",
+        "back": "Present documented evidence and let it lead. Adjusters respond to facts \u2014 not pitches. Evidence first, always."
+      },
+      {
+        "front": "How does DCSI handle partial approvals?",
+        "back": "Never accept a partial without a supplement fight. Every documented line of damage deserves full indemnification."
+      },
+      {
+        "front": "Why does DCSI documentation matter?",
+        "back": "It transforms a subjective claim into an objective, defensible case the carrier cannot responsibly dismiss."
+      },
+      {
+        "front": "What separates DCSI from traditional roofing sales?",
+        "back": "The homeowner decides based on facts they've seen themselves. No pressure, no urgency, no 'closing techniques.'"
+      }
+    ]
+  },
+  "mod-1": {
+    "title": "HAAG Inspection",
+    "cards": [
+      {
+        "front": "Who sets the gold standard for forensic roof inspection?",
+        "back": "HAAG Engineering \u2014 an independent, court-recognized authority used by carriers, attorneys, and the industry."
+      },
+      {
+        "front": "What is a 'test square'?",
+        "back": "A 10x10 foot (100 sq ft) area randomly selected on each slope to count and document storm hits per unit area."
+      },
+      {
+        "front": "HAAG definition of 'functional damage'",
+        "back": "Damage that shortens the useful life of the roofing material or compromises its waterproofing function."
+      },
+      {
+        "front": "HAAG definition of 'cosmetic damage'",
+        "back": "Damage that affects appearance only \u2014 no impact on function or lifespan. Carriers use this to deny claims."
+      },
+      {
+        "front": "How do you mark hail hits during inspection?",
+        "back": "Chalk circle around each impact point; count per test square. This quantifies density for the adjuster."
+      },
+      {
+        "front": "Why is soft metal documentation critical?",
+        "back": "Gutters, AC fins, and metal flashing hold permanent hail dents \u2014 irrefutable proof of impact size and frequency."
+      },
+      {
+        "front": "The HAAG 4-step inspection process",
+        "back": "1. Safety assessment 2. Document conditions 3. Identify storm damage 4. Determine causation"
+      },
+      {
+        "front": "Why do carriers accept HAAG findings?",
+        "back": "HAAG Engineering is court-recognized and forensically independent \u2014 carriers cannot easily challenge its methodology."
+      },
+      {
+        "front": "Minimum documentation in a HAAG-standard report",
+        "back": "Photos + test square hit counts + soft metal evidence + NOAA storm correlation + damage type classification."
+      },
+      {
+        "front": "What does a HAAG report do for a claim?",
+        "back": "Transforms a subjective roofing claim into objective, forensic evidence \u2014 forcing the carrier to respond to documented facts."
+      }
+    ]
+  },
+  "mod-2": {
+    "title": "Hail Science",
+    "cards": [
+      {
+        "front": "What is a hail 'bruise' on a shingle?",
+        "back": "A depression in the asphalt mat from hail impact that fractures the fiberglass beneath \u2014 creating future water infiltration risk."
+      },
+      {
+        "front": "Why does granule loss matter?",
+        "back": "Granules protect the asphalt mat from UV radiation. Their loss accelerates oxidation, making a 25-year shingle fail in 5 years."
+      },
+      {
+        "front": "What does exposed black mat mean?",
+        "back": "Asphalt mat exposed after hail stripped protective granules \u2014 functional damage, not cosmetic."
+      },
+      {
+        "front": "Why are soft metals so important in a hail claim?",
+        "back": "They provide irrefutable physical evidence of hail size and density. Permanent dents cannot be argued as 'cosmetic.'"
+      },
+      {
+        "front": "What hail size typically causes functional damage to standard shingles?",
+        "back": "1 inch or larger (quarter-size). Older shingles can sustain functional damage from smaller hail at high impact velocity."
+      },
+      {
+        "front": "A carrier says 'cosmetic only' on hail damage. Your move?",
+        "back": "Document granule loss to exposed mat and fractured asphalt \u2014 functional damage per HAAG definition. Supplement with evidence."
+      },
+      {
+        "front": "Three layers of hail damage photo documentation",
+        "back": "1. Close-up with scale reference 2. Test square with chalk circles 3. Soft metal evidence photos"
+      },
+      {
+        "front": "Multiple hailstorms require what additional documentation?",
+        "back": "NOAA event history for each storm date to attribute damage to the correct insured event \u2014 not prior storms."
+      },
+      {
+        "front": "How does a hail bruise affect a shingle long-term?",
+        "back": "The mat fracture becomes a crack under freeze-thaw cycles, eventually allowing water infiltration \u2014 accelerating failure."
+      },
+      {
+        "front": "What Ohio code supports full replacement over spot repair for hail?",
+        "back": "Shingles cannot be matched after weathering \u2014 spot repair fails aesthetic and code uniformity requirements for the affected plane."
+      }
+    ]
+  },
+  "mod-3": {
+    "title": "Wind Science",
+    "cards": [
+      {
+        "front": "What is wind 'creasing' damage to a shingle?",
+        "back": "Physical bending of the shingle past its flex tolerance \u2014 fractures the fiberglass mat and compromises waterproofing."
+      },
+      {
+        "front": "What is 'racking' damage?",
+        "back": "Wind forcibly displaces shingles laterally, breaking the factory adhesive bond and creating water infiltration risk."
+      },
+      {
+        "front": "When the adhesive seal breaks, what happens?",
+        "back": "Wind can lift the shingle's edge under rainfall, creating a water infiltration pathway \u2014 functional damage."
+      },
+      {
+        "front": "Does re-sealing fix wind crease damage? Why not?",
+        "back": "No. The fiberglass mat is physically fractured \u2014 adhesive fills the surface gap but cannot restore structural integrity."
+      },
+      {
+        "front": "The functional test for wind-creased shingles",
+        "back": "Flex the crease area. If the mat cracks or separates, the shingle cannot properly waterproof \u2014 functional damage confirmed."
+      },
+      {
+        "front": "How do you verify wind speed for a specific property and storm date?",
+        "back": "NOAA storm data by ZIP code and date \u2014 the authoritative record that correlates damage to a covered event."
+      },
+      {
+        "front": "What triggers full slope replacement vs spot repair in Ohio?",
+        "back": "More than 10% of shingles damaged on a slope. Spot repair cannot match aesthetically or meet code uniformity requirements."
+      },
+      {
+        "front": "Creasing vs missing shingles \u2014 which needs more documentation?",
+        "back": "Creasing \u2014 it is subtle and easy for adjusters to dismiss. Missing shingles are obvious. Crease damage requires HAAG-level documentation."
+      },
+      {
+        "front": "Evidence combination to prove wind damage causation",
+        "back": "Creased/lifted shingles + adhesion failure documentation + NOAA wind speed data for the specific storm date and ZIP."
+      },
+      {
+        "front": "Can a re-sealed shingle be classified as undamaged?",
+        "back": "No. A broken adhesive seal cannot fully re-bond to factory strength \u2014 the shingle remains a water infiltration risk."
+      }
+    ]
+  },
+  "mod-4-5": {
+    "title": "Ohio Code & GAF",
+    "cards": [
+      {
+        "front": "Where does Ohio code require drip edge?",
+        "back": "Both eaves (horizontal) AND rakes (sloped edges) \u2014 per IRC Section R905.2.8. Both locations, no exceptions."
+      },
+      {
+        "front": "Maximum shingle layers under Ohio code",
+        "back": "One layer only. All previous shingles must be removed before new installation \u2014 this is a code requirement, not an option."
+      },
+      {
+        "front": "Ice and water shield requirement in Ohio",
+        "back": "Must extend from the eave edge to at least 24 inches past the interior wall line \u2014 protecting the freeze zone."
+      },
+      {
+        "front": "What is a 'code upgrade'?",
+        "back": "A required improvement to bring replacement installation to current building code. Insurance must pay for code-mandated items."
+      },
+      {
+        "front": "GAF Lifetime Roofing System warranty requires:",
+        "back": "All qualifying GAF components + installation by a GAF Factory Certified Contractor + GAF registration within 45 days."
+      },
+      {
+        "front": "Required attic ventilation ratio under Ohio code",
+        "back": "1:150 \u2014 one square foot of net free ventilation per 150 square feet of attic floor space."
+      },
+      {
+        "front": "When you cite for missing drip edge in a supplement",
+        "back": "IRC Section R905.2.8 \u2014 mandatory drip edge at both eaves and rakes. Code makes it non-optional for insurance."
+      },
+      {
+        "front": "Starter strip at rakes is required by:",
+        "back": "Both IRC building code AND manufacturer installation specifications (including GAF). Cite both in every supplement."
+      },
+      {
+        "front": "Why can insurance not just match one slope?",
+        "back": "Code and manufacturer warranties require matching. Matching 10-year-old weathered shingles is typically impossible \u2014 full replacement required."
+      },
+      {
+        "front": "'Code upgrade' provision in most Ohio policies",
+        "back": "Insurance must restore the home to current code when a covered loss requires replacement \u2014 even if original install was non-code."
+      }
+    ]
+  },
+  "mod-6-7": {
+    "title": "Field Sales",
+    "cards": [
+      {
+        "front": "How does DCSI open at the door?",
+        "back": "'We've been inspecting roofs in your neighborhood after the storm and found significant damage. You have the right to a free inspection.' Lead with education."
+      },
+      {
+        "front": "Purpose of walking the roof WITH the homeowner",
+        "back": "Shared evidence creates shared conviction. They see the damage themselves \u2014 no selling required. Evidence does the work."
+      },
+      {
+        "front": "What does an Agreement to Inspect (ATI) do?",
+        "back": "Grants the rep permission to inspect under CRC's documented protocol. No financial obligation to the homeowner."
+      },
+      {
+        "front": "When do you first discuss price under DCSI?",
+        "back": "Never before carrier approval. Price is the carrier's determination from the approved scope \u2014 not a rep decision at the door."
+      },
+      {
+        "front": "Homeowner says 'I don't want to raise my rates.' DCSI response:",
+        "back": "In Ohio, a weather event claim cannot directly cause a rate increase. It is a non-fault, covered loss \u2014 educate them on this protection."
+      },
+      {
+        "front": "'I'll just call whoever the insurance company sends.' DCSI response:",
+        "back": "They have the legal right to choose any licensed contractor. Preferred contractor lists serve the carrier's cost interest \u2014 not theirs."
+      },
+      {
+        "front": "The biggest mistake reps make at the door",
+        "back": "Pitching the company, product, or price before establishing the problem and the homeowner's rights. Be an advisor first."
+      },
+      {
+        "front": "Why must you always attend the adjuster meeting?",
+        "back": "Adjusters settle for significantly less when the rep is absent. Your documented evidence changes outcomes \u2014 every time."
+      },
+      {
+        "front": "The strongest DCSI close is:",
+        "back": "Presenting the evidence, then silence. Let the homeowner reach their own conclusion \u2014 a self-decided homeowner never backs out."
+      },
+      {
+        "front": "Post-adjuster meeting: your first action",
+        "back": "Review the written scope line by line against your inspection. Identify every missing item before installation begins."
+      }
+    ]
+  },
+  "mod-8-9": {
+    "title": "Carrier Intel & Supplementing",
+    "cards": [
+      {
+        "front": "What is Xactimate?",
+        "back": "The industry-standard insurance estimating software. All supplements must match Xactimate format \u2014 carriers will not respond to anything else."
+      },
+      {
+        "front": "What does ACV mean?",
+        "back": "Actual Cash Value \u2014 the depreciated value of the roof. The initial carrier payment before recoverable depreciation is released."
+      },
+      {
+        "front": "When is recoverable depreciation released?",
+        "back": "When you submit proof of completion to the carrier: final invoice + completion photos (+ signed certificate if required)."
+      },
+      {
+        "front": "Most commonly missed line item in Ohio adjuster scopes",
+        "back": "Starter strip at rakes \u2014 almost universally omitted. Line-item it with code citation in every single supplement."
+      },
+      {
+        "front": "State Farm's standard pattern in Ohio claims",
+        "back": "Omit rake drip edge, undercount squares, apply aggressive depreciation. Pre-prepare your supplement for all three on every State Farm job."
+      },
+      {
+        "front": "How to structure a supplement",
+        "back": "Line-by-line: carrier scope vs corrected scope. Every delta needs: Xactimate code, code/spec citation, and photo backing."
+      },
+      {
+        "front": "When to submit a supplement",
+        "back": "As soon as you identify discrepancies \u2014 ideally before installation. Post-install supplements on denied items are much harder to win."
+      },
+      {
+        "front": "What is a partial approval?",
+        "back": "Carrier approves some items, denies others. Every denied item needs its own supplement response with evidence. Never just accept it."
+      },
+      {
+        "front": "Carrier's obligation after receiving a supplement in Ohio",
+        "back": "Review and respond in writing \u2014 standard is 15 business days. Document every submission with dated copies."
+      },
+      {
+        "front": "The supplement trifecta",
+        "back": "HAAG inspection report + NOAA storm data + code citations + supporting photos. This combination is extremely difficult for carriers to responsibly deny."
+      }
+    ]
+  },
+  "mod-10-12": {
+    "title": "Claims Workflow, Color & Packet",
+    "cards": [
+      {
+        "front": "When does color selection happen?",
+        "back": "After written claim approval and before material ordering. Never before approval \u2014 creates liability and sets false expectations."
+      },
+      {
+        "front": "What is a complete job packet?",
+        "back": "Contract + approved insurance scope + color selection + permit (if required) + COI + final invoice. All six, every time."
+      },
+      {
+        "front": "Three things required before installation begins",
+        "back": "1. Written claim approval 2. Signed contract 3. Color selection. Never start on verbal approval."
+      },
+      {
+        "front": "Two-party insurance check process",
+        "back": "Contact the mortgage servicer's loss draft department. Submit required docs (license, COI, contract, scope). Follow their disbursement process."
+      },
+      {
+        "front": "What triggers recoverable depreciation release?",
+        "back": "Final invoice + completion photos submitted to the carrier. Add a signed homeowner completion certificate if the carrier requires it."
+      },
+      {
+        "front": "Why verify permit requirements before every job?",
+        "back": "Permit requirements vary by Ohio municipality. No permit when required = code violation and contractor liability."
+      },
+      {
+        "front": "What does the final inspection verify?",
+        "back": "Installation quality, code compliance, scope match, and manufacturer installation standards \u2014 all documented with photos."
+      },
+      {
+        "front": "Xactimate pricing is ZIP code specific because:",
+        "back": "Labor and material costs vary by market. Always verify the correct ZIP is used \u2014 wrong ZIP = wrong pricing for your market."
+      },
+      {
+        "front": "The job packet protects you when:",
+        "back": "Disputes arise. It documents what was approved, signed, chosen, and completed. Disputes resolve in your favor with a complete packet."
+      },
+      {
+        "front": "Rep's role during installation",
+        "back": "Stay engaged \u2014 resource for the crew, communication with the homeowner, document the finished product for the carrier submission."
+      }
+    ]
+  },
+  "mod-h": {
+    "title": "Homeowner Guide",
+    "cards": [
+      {
+        "front": "Why call CRC before the insurance company?",
+        "back": "An independent inspection documents damage before the carrier can minimize or deny. You negotiate from strength, not weakness."
+      },
+      {
+        "front": "What is RCV?",
+        "back": "Replacement Cost Value \u2014 the cost to replace damaged materials with like-kind and quality at today's prices. No depreciation deducted."
+      },
+      {
+        "front": "What is ACV?",
+        "back": "Actual Cash Value \u2014 RCV minus depreciation. The initial carrier payment; recoverable depreciation is held until repairs are complete."
+      },
+      {
+        "front": "Can a homeowner choose their own contractor in Ohio?",
+        "back": "Yes \u2014 Ohio law protects free contractor choice. A carrier cannot mandate you use their preferred contractor."
+      },
+      {
+        "front": "Will a weather claim raise your homeowner insurance rates?",
+        "back": "Should not in Ohio. State law limits rate actions for non-fault weather events. This fear is common but usually unfounded."
+      },
+      {
+        "front": "What is recoverable depreciation?",
+        "back": "The difference between ACV (initial payment) and RCV (full cost). Released by the carrier after proof of completed repairs."
+      },
+      {
+        "front": "When a carrier sends their preferred contractor:",
+        "back": "You have the right to choose. Preferred contractors are trained to scope at the carrier's target cost \u2014 not your full entitlement."
+      },
+      {
+        "front": "How long to file a property claim in Ohio?",
+        "back": "Most policies allow 1-2 years; Ohio has a 2-year statute. File early \u2014 storm attribution and evidence quality weaken over time."
+      },
+      {
+        "front": "What is a public adjuster?",
+        "back": "A licensed professional who represents the homeowner in claim disputes \u2014 charges a percentage of settlement (typically 10-15%)."
+      },
+      {
+        "front": "A homeowner's strongest protection in a disputed claim:",
+        "back": "A fully documented, HAAG-standard inspection report with photos, measurements, and code citations. Objective evidence wins disputes."
+      }
+    ]
+  }
+}

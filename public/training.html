@@ -210,6 +210,119 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* ============================================================
+   QUIZ MODAL
+   ============================================================ */
+.quiz-overlay, .fc-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.88);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.quiz-box {
+  background: var(--white); border-radius: 16px; width: 100%; max-width: 580px;
+  padding: 28px; position: relative; max-height: 92vh; overflow-y: auto;
+}
+.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.quiz-progress-label { font-size: 13px; color: #999; font-weight: 600; }
+.quiz-close { background: none; border: none; font-size: 22px; color: #bbb; cursor: pointer; line-height: 1; padding: 0; }
+.quiz-close:hover { color: var(--dark-gray); }
+.quiz-pbar { height: 6px; background: #eee; border-radius: 3px; margin-bottom: 22px; }
+.quiz-pbar-fill { height: 100%; background: var(--teal); border-radius: 3px; transition: width 0.35s ease; }
+.quiz-question { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 20px; line-height: 1.45; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.quiz-opt {
+  padding: 13px 16px; border-radius: 10px; border: 2px solid #ddd;
+  background: var(--white); font-size: 14px; text-align: left;
+  cursor: pointer; transition: all 0.15s; font-family: inherit;
+  color: var(--dark-gray); line-height: 1.4;
+}
+.quiz-opt:hover:not(:disabled) { border-color: var(--teal); background: #f0fafb; }
+.quiz-opt.correct { border-color: var(--green) !important; background: #d4edda; color: #155724; font-weight: 600; }
+.quiz-opt.wrong { border-color: var(--red) !important; background: #f8d7da; color: #721c24; }
+.quiz-opt:disabled { cursor: default; }
+.quiz-explanation {
+  font-size: 13px; color: #555; background: #f7f7f7; border-left: 3px solid var(--teal);
+  border-radius: 0 8px 8px 0; padding: 12px 14px; margin-bottom: 16px; line-height: 1.55;
+}
+.quiz-next-btn {
+  width: 100%; padding: 14px; background: var(--teal); color: var(--white);
+  border: none; border-radius: 10px; font-size: 16px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.quiz-next-btn:hover { opacity: 0.88; }
+.quiz-score-screen { text-align: center; padding: 8px 0; }
+.quiz-score-big { font-size: 72px; font-weight: 800; color: var(--navy); line-height: 1; }
+.quiz-score-label { font-size: 15px; color: #777; margin: 8px 0 16px; }
+.quiz-pass-badge {
+  display: inline-block; padding: 6px 22px; border-radius: 20px;
+  font-weight: 700; font-size: 15px; margin-bottom: 24px;
+}
+.quiz-pass-badge.pass { background: #d4edda; color: #155724; }
+.quiz-pass-badge.fail { background: #f8d7da; color: #721c24; }
+.quiz-score-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.quiz-score-btns button {
+  padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: inherit; border: none;
+}
+.quiz-score-btns .btn-primary { background: var(--teal); color: var(--white); }
+.quiz-score-btns .btn-secondary { background: #eee; color: var(--dark-gray); }
+
+/* ============================================================
+   FLASHCARD MODAL
+   ============================================================ */
+.fc-box {
+  background: var(--white); border-radius: 16px; width: 100%; max-width: 540px;
+  padding: 28px; position: relative;
+}
+.fc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.fc-progress-label { font-size: 13px; color: #999; font-weight: 600; }
+.fc-close { background: none; border: none; font-size: 22px; color: #bbb; cursor: pointer; line-height: 1; padding: 0; }
+.fc-close:hover { color: var(--dark-gray); }
+.fc-pbar { height: 6px; background: #eee; border-radius: 3px; margin-bottom: 18px; }
+.fc-pbar-fill { height: 100%; background: var(--teal); border-radius: 3px; transition: width 0.35s ease; }
+.fc-module-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--teal); font-weight: 700; margin-bottom: 16px; }
+.fc-card-wrap { perspective: 1000px; height: 200px; cursor: pointer; margin-bottom: 14px; user-select: none; }
+.fc-card {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d; transition: transform 0.45s ease;
+}
+.fc-card.flipped { transform: rotateY(180deg); }
+.fc-face {
+  position: absolute; inset: 0; backface-visibility: hidden;
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; font-size: 16px; font-weight: 600; line-height: 1.45;
+}
+.fc-front { background: var(--navy); color: var(--white); }
+.fc-back { background: var(--teal); color: var(--white); transform: rotateY(180deg); font-weight: 400; font-size: 15px; }
+.fc-tap-hint { text-align: center; font-size: 12px; color: #bbb; margin-bottom: 18px; }
+.fc-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fc-nav-btn {
+  padding: 10px 18px; border-radius: 8px; border: 1px solid #ddd;
+  background: var(--white); font-size: 14px; cursor: pointer; font-family: inherit; color: var(--dark-gray);
+}
+.fc-nav-btn:hover:not(:disabled) { background: #f5f5f5; }
+.fc-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.fc-done-btn {
+  flex: 1; padding: 12px; background: var(--teal); color: var(--white);
+  border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.fc-done-btn:hover { opacity: 0.88; }
+
+/* ============================================================
+   QUIZ / FLASHCARD LAUNCH BUTTONS (in module cards)
+   ============================================================ */
+.quiz-launch-btn, .fc-launch-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.quiz-launch-btn { background: var(--navy); color: var(--white); }
+.quiz-launch-btn:hover { opacity: 0.85; }
+.fc-launch-btn { background: var(--teal); color: var(--white); }
+.fc-launch-btn:hover { opacity: 0.85; }
 </style>
 </head>
 <body>
@@ -462,6 +575,10 @@ let progress = {};
 let allProgress = {};
 let repList = [];
 let cloudinaryAssets = {};
+let quizData = {};
+let flashcardData = {};
+let currentQuiz = { modId: '', questions: [], current: 0, score: 0, answered: false };
+let currentFc = { modId: '', cards: [], current: 0, flipped: false };
 
 /* ============================================================
    AUTH
@@ -540,9 +657,13 @@ function loadProgress() {
   // Load Cloudinary assets manifest + rep progress in parallel
   Promise.all([
     fetch('/api/training/assets').then(r => r.json()).catch(() => ({})),
+    fetch('/api/training/quizzes').then(r => r.json()).catch(() => ({})),
+    fetch('/api/training/flashcards').then(r => r.json()).catch(() => ({})),
     fetch(`/api/training/progress/${currentRepCode}`).then(r => r.json()).catch(() => ({ modules: {}, onboardingDay: 1 }))
-  ]).then(([assets, data]) => {
+  ]).then(([assets, quizzes, flashcards, data]) => {
     cloudinaryAssets = assets;
+    quizData = quizzes;
+    flashcardData = flashcards;
     progress = data;
     renderAll();
   }).catch(() => {
@@ -646,7 +767,15 @@ function renderModuleCards() {
         const quizScore = (r.id === 'quiz' && mp.quizScore != null) ? `<span class="quiz-score">${mp.quizScore}%</span>` : '';
         const asset = modAssets[r.id];
         let link;
-        if (asset && asset.mediaType === 'audio') {
+        // Native quiz engine
+        if (r.id === 'quiz' && quizData[mod.id] && quizData[mod.id].questions) {
+          const prevScore = mp.quizScore != null ? ' <span class="quiz-score">' + mp.quizScore + '%</span>' : '';
+          const btnLabel = mp.quizScore != null ? '&#x1F4DD; Retake Quiz' : '&#x1F4DD; Take Quiz';
+          link = '<button class="quiz-launch-btn" onclick="openQuiz(\'' + mod.id + '\')">' + btnLabel + '</button>' + prevScore;
+        // Native flashcard engine
+        } else if (r.id === 'flashcards' && flashcardData[mod.id] && flashcardData[mod.id].cards) {
+          link = '<button class="fc-launch-btn" onclick="openFlashcards(\'' + mod.id + '\')">&#x1F0CF; Study Flashcards</button>';
+        } else if (asset && asset.mediaType === 'audio') {
           link = `<div class="native-player">
             <span class="resource-label">${r.label}</span>
             <audio controls preload="none" style="width:100%;margin-top:6px;border-radius:8px">
@@ -787,6 +916,226 @@ function renderAdminTable() {
 
   table.innerHTML = headerRow + bodyRows;
 }
+
+/* ============================================================
+   QUIZ ENGINE
+   ============================================================ */
+function openQuiz(modId) {
+  const qd = quizData[modId];
+  if (!qd || !qd.questions || qd.questions.length === 0) return;
+  currentQuiz = { modId, questions: qd.questions, current: 0, score: 0, answered: false };
+  document.getElementById('quizQScreen').classList.remove('hidden');
+  document.getElementById('quizSScreen').classList.add('hidden');
+  document.getElementById('quizOverlay').classList.remove('hidden');
+  renderQuizQ();
+}
+
+function renderQuizQ() {
+  const q = currentQuiz.questions[currentQuiz.current];
+  const total = currentQuiz.questions.length;
+  const idx = currentQuiz.current;
+  document.getElementById('quizProgressLabel').textContent = 'Q ' + (idx + 1) + ' of ' + total;
+  document.getElementById('quizPbarFill').style.width = ((idx / total) * 100) + '%';
+  document.getElementById('quizQText').textContent = q.q;
+  document.getElementById('quizExpl').classList.add('hidden');
+  document.getElementById('quizNextBtn').classList.add('hidden');
+  currentQuiz.answered = false;
+  const optContainer = document.getElementById('quizOpts');
+  optContainer.innerHTML = q.options.map((opt, i) =>
+    '<button class="quiz-opt" onclick="selectAnswer(' + i + ')">' + opt + '</button>'
+  ).join('');
+}
+
+function selectAnswer(selectedIdx) {
+  if (currentQuiz.answered) return;
+  currentQuiz.answered = true;
+  const q = currentQuiz.questions[currentQuiz.current];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(function(btn, i) {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === selectedIdx) btn.classList.add('wrong');
+  });
+  if (selectedIdx === q.correct) currentQuiz.score++;
+  const expl = document.getElementById('quizExpl');
+  expl.textContent = q.explanation;
+  expl.classList.remove('hidden');
+  const nextBtn = document.getElementById('quizNextBtn');
+  const isLast = currentQuiz.current === currentQuiz.questions.length - 1;
+  nextBtn.textContent = isLast ? 'See Results' : 'Next \u2192';
+  nextBtn.classList.remove('hidden');
+}
+
+function nextQuizQ() {
+  const isLast = currentQuiz.current === currentQuiz.questions.length - 1;
+  if (isLast) {
+    showQuizResults();
+  } else {
+    currentQuiz.current++;
+    renderQuizQ();
+  }
+}
+
+function showQuizResults() {
+  const total = currentQuiz.questions.length;
+  const score = currentQuiz.score;
+  const pct = Math.round((score / total) * 100);
+  const passed = pct >= 80;
+  document.getElementById('quizQScreen').classList.add('hidden');
+  document.getElementById('quizSScreen').classList.remove('hidden');
+  document.getElementById('quizProgressLabel').textContent = 'Results';
+  document.getElementById('quizPbarFill').style.width = '100%';
+  document.getElementById('quizScoreNum').textContent = score + '/' + total;
+  const badge = document.getElementById('quizPassBadge');
+  badge.textContent = passed ? '\u2713 Passed \u2014 ' + pct + '%' : '\u2717 ' + pct + '% \u2014 Study and Retry';
+  badge.className = 'quiz-pass-badge ' + (passed ? 'pass' : 'fail');
+  const modId = currentQuiz.modId;
+  fetch('/api/training/progress/' + currentRepCode, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ moduleId: modId, quizScore: pct })
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    progress = data;
+    if (passed) {
+      fetch('/api/training/progress/' + currentRepCode, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleId: modId, resourceId: 'quiz', completed: true })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        progress = d;
+        renderModuleCards();
+        updateOverallProgress();
+      });
+    } else {
+      updateOverallProgress();
+      updateModuleStatus(modId);
+    }
+  });
+}
+
+function retakeQuiz() {
+  const qd = quizData[currentQuiz.modId];
+  currentQuiz = { modId: currentQuiz.modId, questions: qd.questions, current: 0, score: 0, answered: false };
+  document.getElementById('quizQScreen').classList.remove('hidden');
+  document.getElementById('quizSScreen').classList.add('hidden');
+  renderQuizQ();
+}
+
+function closeQuiz() {
+  document.getElementById('quizOverlay').classList.add('hidden');
+  renderModuleCards();
+}
+
+/* ============================================================
+   FLASHCARD ENGINE
+   ============================================================ */
+function openFlashcards(modId) {
+  const fd = flashcardData[modId];
+  if (!fd || !fd.cards || fd.cards.length === 0) return;
+  currentFc = { modId: modId, cards: fd.cards, current: 0, flipped: false };
+  document.getElementById('fcModTitle').textContent = fd.title || 'Flashcards';
+  document.getElementById('fcOverlay').classList.remove('hidden');
+  renderFcCard();
+}
+
+function renderFcCard() {
+  const card = currentFc.cards[currentFc.current];
+  const total = currentFc.cards.length;
+  const idx = currentFc.current;
+  document.getElementById('fcProgressLabel').textContent = 'Card ' + (idx + 1) + ' of ' + total;
+  document.getElementById('fcPbarFill').style.width = (((idx + 1) / total) * 100) + '%';
+  document.getElementById('fcFront').textContent = card.front;
+  document.getElementById('fcBack').textContent = card.back;
+  currentFc.flipped = false;
+  document.getElementById('fcCard').classList.remove('flipped');
+  document.getElementById('fcPrevBtn').disabled = idx === 0;
+  document.getElementById('fcNextBtn').disabled = idx === total - 1;
+  if (idx === total - 1) {
+    setTimeout(function() {
+      fetch('/api/training/progress/' + currentRepCode, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleId: currentFc.modId, resourceId: 'flashcards', completed: true })
+      }).then(function(r) { return r.json(); }).then(function(d) { progress = d; });
+    }, 800);
+  }
+}
+
+function flipCard() {
+  currentFc.flipped = !currentFc.flipped;
+  if (currentFc.flipped) document.getElementById('fcCard').classList.add('flipped');
+  else document.getElementById('fcCard').classList.remove('flipped');
+}
+
+function nextFcCard() {
+  if (currentFc.current < currentFc.cards.length - 1) {
+    currentFc.current++;
+    renderFcCard();
+  }
+}
+
+function prevFcCard() {
+  if (currentFc.current > 0) {
+    currentFc.current--;
+    renderFcCard();
+  }
+}
+
+function closeFlashcards() {
+  document.getElementById('fcOverlay').classList.add('hidden');
+  renderModuleCards();
+}
 </script>
+
+<!-- QUIZ MODAL -->
+<div class="quiz-overlay hidden" id="quizOverlay">
+  <div class="quiz-box">
+    <div class="quiz-header">
+      <span class="quiz-progress-label" id="quizProgressLabel">Q 1 of 10</span>
+      <button class="quiz-close" onclick="closeQuiz()">&#x2715;</button>
+    </div>
+    <div class="quiz-pbar"><div class="quiz-pbar-fill" id="quizPbarFill" style="width:0%"></div></div>
+    <div id="quizQScreen">
+      <div class="quiz-question" id="quizQText"></div>
+      <div class="quiz-options" id="quizOpts"></div>
+      <div class="quiz-explanation hidden" id="quizExpl"></div>
+      <button class="quiz-next-btn hidden" id="quizNextBtn" onclick="nextQuizQ()">Next &#x2192;</button>
+    </div>
+    <div id="quizSScreen" class="quiz-score-screen hidden">
+      <div class="quiz-score-big" id="quizScoreNum"></div>
+      <div class="quiz-score-label">questions correct</div>
+      <div class="quiz-pass-badge" id="quizPassBadge"></div>
+      <div class="quiz-score-btns">
+        <button class="btn-secondary" onclick="retakeQuiz()">Retake</button>
+        <button class="btn-primary" onclick="closeQuiz()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLASHCARD MODAL -->
+<div class="fc-overlay hidden" id="fcOverlay">
+  <div class="fc-box">
+    <div class="fc-header">
+      <span class="fc-progress-label" id="fcProgressLabel">Card 1 of 10</span>
+      <button class="fc-close" onclick="closeFlashcards()">&#x2715;</button>
+    </div>
+    <div class="fc-pbar"><div class="fc-pbar-fill" id="fcPbarFill" style="width:10%"></div></div>
+    <div class="fc-module-title" id="fcModTitle"></div>
+    <div class="fc-card-wrap" onclick="flipCard()">
+      <div class="fc-card" id="fcCard">
+        <div class="fc-face fc-front" id="fcFront"></div>
+        <div class="fc-face fc-back" id="fcBack"></div>
+      </div>
+    </div>
+    <div class="fc-tap-hint">Tap card to flip</div>
+    <div class="fc-nav">
+      <button class="fc-nav-btn" id="fcPrevBtn" onclick="prevFcCard()" disabled>&#x2190; Prev</button>
+      <button class="fc-done-btn" onclick="closeFlashcards()">Done</button>
+      <button class="fc-nav-btn" id="fcNextBtn" onclick="nextFcCard()">Next &#x2192;</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
