@@ -197,4 +197,23 @@ router.patch('/:id/tasks/:taskId', async (req, res) => {
   }
 });
 
+// POST /api/field/jobs/:id/sign — capture authorization agreement signature
+router.post('/:id/sign', async (req, res) => {
+  try {
+    const { signatureDataUrl, signedAt, signerName, repName } = req.body;
+    if (!signatureDataUrl || !signerName) {
+      return res.status(400).json({ error: 'signatureDataUrl and signerName are required' });
+    }
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/authorization-agreement/sign`, {
+      method: 'POST',
+      body: JSON.stringify({ signatureDataUrl, signedAt, signerName, repName })
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json({ success: true, ...data });
+  } catch (e) {
+    console.error('[FieldJobs] POST sign error:', e.message);
+    res.status(500).json({ error: 'Failed to submit signature' });
+  }
+});
+
 module.exports = router;

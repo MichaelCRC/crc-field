@@ -472,3 +472,189 @@ async function submitSignature(portalJobId, docId) {
   }
 }
 
+// ── AUTH AGREEMENT SIGNATURE SCREEN ─────────────────────────────────────────
+var _sigAuthCtx = null, _sigAuthDrawing = false, _sigAuthHasStrokes = false;
+
+function openSignatureScreen(jobId, jobName, homeownerName) {
+  var existing = document.getElementById('sig-auth-overlay');
+  if (existing) existing.remove();
+
+  var escHtml = function(s) {
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
+  var today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  var overlay = document.createElement('div');
+  overlay.id = 'sig-auth-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;overflow:hidden';
+
+  overlay.innerHTML = `
+    <div style="background:#1B2360;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="font-weight:800;font-size:15px;letter-spacing:1.5px;color:#fff">CRC</div>
+      <div style="font-size:14px;font-weight:700;flex:1;text-align:center;letter-spacing:0.3px">Insurance Claim Authorization</div>
+      <button onclick="document.getElementById('sig-auth-overlay').remove()" style="background:none;border:none;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;flex-shrink:0">&times;</button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch" id="sig-auth-body">
+      <div style="font-size:13px;color:#1B2360;line-height:1.65;margin-bottom:20px;padding:14px 16px;background:#f0f4ff;border-radius:8px;border-left:4px solid #00B5CC">
+        <p style="margin:0 0 10px 0;font-weight:600">By signing below, I authorize Columbus Roofing Company (CRC) to:</p>
+        <ol style="margin:0 0 10px 0;padding-left:20px">
+          <li style="margin-bottom:7px">Review my insurance claim and communicate with my carrier regarding scope and supplements.</li>
+          <li style="margin-bottom:7px">Submit supplemental documentation on my behalf to recover costs for all covered damage.</li>
+          <li style="margin-bottom:7px">Inspect my property as needed to document damage.</li>
+        </ol>
+        <p style="margin:0 0 10px 0">This authorization does <strong>NOT</strong> obligate me to use CRC for repairs. I understand that CRC does not determine coverage or act as a public adjuster.</p>
+        <p style="margin:0 0 6px 0"><strong>Property Address:</strong> ${escHtml(jobName)}</p>
+        <p style="margin:0"><strong>Date:</strong> ${today}</p>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Full Name</label>
+        <input type="text" id="sig-auth-name" placeholder="Enter full name" value="${escHtml(homeownerName)}"
+          style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#1B2360">
+      </div>
+
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:11px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Signature</label>
+        <canvas id="sig-auth-canvas"
+          style="width:100%;height:200px;background:#fff;border:2px solid #1B2360;border-radius:8px;display:block;touch-action:none"></canvas>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;text-align:center">Draw your signature above with your finger</div>
+      </div>
+
+      <div id="sig-auth-error" style="display:none;color:#DC2626;font-size:13px;font-weight:600;padding:10px 14px;background:#fef2f2;border-radius:6px;margin-bottom:12px;border-left:3px solid #DC2626"></div>
+
+      <div style="display:flex;gap:10px;margin-bottom:24px">
+        <button onclick="sigAuthClear()"
+          style="flex:1;padding:13px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:#475569;font-family:inherit">
+          Clear
+        </button>
+        <button onclick="sigAuthSubmit('${jobId}')"
+          style="flex:2;padding:13px;background:#1B2360;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.3px;font-family:inherit">
+          Sign &amp; Submit
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  _sigAuthHasStrokes = false;
+  _sigAuthCtx = null;
+  _sigAuthDrawing = false;
+  setTimeout(function() { sigAuthInitCanvas(); }, 50);
+}
+
+function sigAuthInitCanvas() {
+  var canvas = document.getElementById('sig-auth-canvas');
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  _sigAuthCtx = canvas.getContext('2d');
+  _sigAuthCtx.scale(dpr, dpr);
+  _sigAuthCtx.lineWidth = 2;
+  _sigAuthCtx.lineCap = 'round';
+  _sigAuthCtx.lineJoin = 'round';
+  _sigAuthCtx.strokeStyle = '#000';
+  _sigAuthHasStrokes = false;
+
+  function getPos(e) {
+    var r = canvas.getBoundingClientRect();
+    var t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function onStart(e) {
+    e.preventDefault();
+    _sigAuthDrawing = true;
+    var p = getPos(e);
+    _sigAuthCtx.beginPath();
+    _sigAuthCtx.moveTo(p.x, p.y);
+  }
+  function onMove(e) {
+    if (!_sigAuthDrawing) return;
+    e.preventDefault();
+    var p = getPos(e);
+    _sigAuthCtx.lineTo(p.x, p.y);
+    _sigAuthCtx.stroke();
+    _sigAuthHasStrokes = true;
+  }
+  function onEnd() { _sigAuthDrawing = false; }
+
+  canvas.addEventListener('touchstart', onStart, { passive: false });
+  canvas.addEventListener('touchmove',  onMove,  { passive: false });
+  canvas.addEventListener('touchend',   onEnd);
+  canvas.addEventListener('mousedown',  onStart);
+  canvas.addEventListener('mousemove',  onMove);
+  canvas.addEventListener('mouseup',    onEnd);
+}
+
+function sigAuthClear() {
+  var canvas = document.getElementById('sig-auth-canvas');
+  if (canvas && _sigAuthCtx) {
+    _sigAuthCtx.clearRect(0, 0, canvas.width, canvas.height);
+    _sigAuthHasStrokes = false;
+  }
+}
+
+async function sigAuthSubmit(jobId) {
+  var nameEl  = document.getElementById('sig-auth-name');
+  var errEl   = document.getElementById('sig-auth-error');
+  var canvas  = document.getElementById('sig-auth-canvas');
+  var signerName = nameEl ? nameEl.value.trim() : '';
+
+  errEl.style.display = 'none';
+
+  if (!signerName) {
+    errEl.textContent = 'Please enter the homeowner\'s full name.';
+    errEl.style.display = 'block';
+    if (nameEl) nameEl.focus();
+    return;
+  }
+  if (!_sigAuthHasStrokes) {
+    errEl.textContent = 'Please sign in the box above before submitting.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var submitBtn = document.querySelector('#sig-auth-overlay button[onclick^="sigAuthSubmit"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting\u2026'; }
+
+  try {
+    var signatureDataUrl = canvas.toDataURL('image/png');
+    var res = await fetch('/api/field/jobs/' + jobId + '/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        signatureDataUrl: signatureDataUrl,
+        signedAt: new Date().toISOString(),
+        signerName: signerName,
+        repName: typeof repName !== 'undefined' ? repName : ''
+      })
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+    // Brief success screen
+    var body = document.getElementById('sig-auth-body');
+    if (body) {
+      body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center">'
+        + '<div style="font-size:72px;margin-bottom:16px">&#9989;</div>'
+        + '<div style="font-size:24px;font-weight:800;color:#1B2360;margin-bottom:8px">Signed!</div>'
+        + '<div style="font-size:14px;color:#64748b">Authorization captured successfully.</div>'
+        + '</div>';
+    }
+
+    setTimeout(function() {
+      var overlay = document.getElementById('sig-auth-overlay');
+      if (overlay) overlay.remove();
+      if (typeof showToast === 'function') showToast('Authorization saved');
+    }, 1500);
+
+  } catch (e) {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign & Submit'; }
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
