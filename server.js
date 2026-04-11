@@ -20,6 +20,7 @@ app.use('/api/brain', require('./routes/brain'));
 app.use('/api/claims-dashboard', require('./routes/claims-dashboard'));
 app.use('/api/referrals', require('./routes/referrals'));
 app.use('/api/training', require('./routes/training'));
+app.use('/api/field/jobs', require('./routes/field-jobs'));
 app.use('/', require('./routes/rep-card'));
 app.use('/', require('./routes/recruit'));
 

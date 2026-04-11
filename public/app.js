@@ -107,12 +107,15 @@ async function addLead() {
       homeowner: document.getElementById('lead-name').value.trim(), phone: document.getElementById('lead-phone').value.trim(),
       jobType: getJobTypes().join(', '), jobTypes: getJobTypes(), jobCategory: getClaimType(),
       source: getSource(), notes: document.getElementById('lead-notes').value.trim(), streetViewUrl: svRes.url || '', repCode,
+      pipeline: getClaimType() === 'retail' ? 'retail' : 'insurance',
     };
-    const lead = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    const result = await fetch('/api/field/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    const jobId = result.jobId || result.job?.id || '';
+    const homeownerName = result.job?.homeownerName || body.homeowner || 'Unknown';
     document.getElementById('lead-confirm').style.display = 'block';
-    document.getElementById('lead-confirm').innerHTML = `<div class="checkmark">&#10003;</div><p>Lead added -- ${lead.homeowner || 'Unknown'} at ${lead.address}</p>
+    document.getElementById('lead-confirm').innerHTML = `<div class="checkmark">&#10003;</div><p>Job created in portal &mdash; ${homeownerName} at ${body.address}</p>
       <button onclick="clearLeadForm()" style="background:var(--teal);color:white">Add Another</button>
-      <button onclick="switchView('map')" style="background:var(--navy);color:white">View on Map</button>`;
+      <button onclick="switchView('jobs')" style="background:var(--navy);color:white">My Jobs</button>`;
     ['lead-address','lead-name','lead-phone','lead-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     document.getElementById('street-view-preview').innerHTML = ''; selectedAddress = '';
     loadLeads();
