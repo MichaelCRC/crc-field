@@ -44,6 +44,10 @@
       <span id="rep-badge" class="rep-badge"></span>
     </div>
 
+    <!-- JOBS VIEW -->
+    <div id="view-jobs" class="app-view"></div>
+    <div id="job-detail" style="display:none"></div>
+
     <!-- LEADS VIEW -->
     <div id="view-leads" class="app-view active">
       <div id="leads-main">
@@ -257,6 +261,9 @@
       <button class="nav-item active" onclick="switchView('leads')" id="nav-leads">
         <span class="nav-icon">&#127968;</span><span class="nav-label">Home</span>
       </button>
+      <button class="nav-item" onclick="switchView('jobs')" id="nav-jobs">
+        <span class="nav-icon">&#128197;</span><span class="nav-label">My Jobs</span>
+      </button>
       <button class="nav-item" onclick="switchView('map')" id="nav-map">
         <span class="nav-icon">&#128205;</span><span class="nav-label">Map</span>
       </button>
@@ -315,6 +322,7 @@
   <script src="photo-actions.js"></script>
   <script src="photo-reports.js"></script>
   <script src="views.js"></script>
+  <script src="jobs.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>

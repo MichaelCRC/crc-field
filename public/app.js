@@ -86,6 +86,7 @@ function switchView(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
   if (name === 'leads') { document.getElementById('lead-detail').style.display = 'none'; document.getElementById('leads-main').style.display = ''; loadLeads(); }
+  if (name === 'jobs') { document.getElementById('job-detail').style.display = 'none'; loadJobs(); }
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'stats') loadStats();
   if (name === 'chat') initChat();
