@@ -129,6 +129,25 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PATCH /api/field/jobs/:id — update stage, pipeline, subStatus
+router.patch('/:id', async (req, res) => {
+  try {
+    const allowed = ['stage', 'pipeline', 'subStatus', 'carrier', 'claimNumber', 'estimateValue'];
+    const update = {};
+    for (const k of allowed) { if (req.body[k] !== undefined) update[k] = req.body[k]; }
+    if (!Object.keys(update).length) return res.status(400).json({ error: 'No valid fields to update' });
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/fields`, {
+      method: 'PATCH',
+      body: JSON.stringify(update)
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[FieldJobs] PATCH /:id error:', e.message);
+    res.status(500).json({ error: 'Failed to update job' });
+  }
+});
+
 // POST /api/field/jobs/:id/notes
 router.post('/:id/notes', async (req, res) => {
   try {
