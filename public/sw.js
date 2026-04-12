@@ -1,5 +1,5 @@
-const CACHE_NAME = 'crc-field-v4';
-const AUDIO_CACHE = 'crc-audio-v1';
+const CACHE_NAME = 'crc-field-v5';
+const AUDIO_CACHE = 'crc-audio-v2';
 const SHELL = ['/', '/style.css', '/app.js', '/views.js', '/manifest.json', '/training.html'];
 
 // Max audio entries to cache (prevents runaway storage on small devices)
@@ -24,16 +24,21 @@ self.addEventListener('fetch', e => {
 
   const url = e.request.url;
 
-  // --- Cloudinary media: cache-first (audio/video/image from crc-university) ---
+  // --- Cloudinary media: pass Range requests directly to network (required for desktop seeking)
+  // Cache only non-range requests. Range requests (206) cannot be cached and must go to network.
   if (url.includes('res.cloudinary.com') && url.includes('crc-university')) {
+    const isRangeRequest = e.request.headers.get('Range');
+    if (isRangeRequest) {
+      // Range requests must go straight to network — never cache, never intercept
+      return;
+    }
     e.respondWith(
       caches.open(AUDIO_CACHE).then(async cache => {
         const cached = await cache.match(e.request);
         if (cached) return cached;
         try {
           const resp = await fetch(e.request, { mode: 'cors' });
-          if (resp.ok) {
-            // Enforce max entry limit
+          if (resp.ok && resp.status === 200) {
             const keys = await cache.keys();
             if (keys.length >= AUDIO_MAX) {
               await cache.delete(keys[0]);
@@ -42,7 +47,7 @@ self.addEventListener('fetch', e => {
           }
           return resp;
         } catch (err) {
-          return cached || new Response('Offline — audio not cached yet', { status: 503 });
+          return new Response('Offline — audio not cached yet', { status: 503 });
         }
       })
     );
