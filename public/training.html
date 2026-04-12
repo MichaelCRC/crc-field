@@ -888,15 +888,15 @@ function renderModuleCards() {
           const offlineBadge = cachedAudioUrls.has(asset.url) ? '<span class="offline-badge"></span>' : '';
           link = `<div class="native-player" data-cloudinary-url="${asset.url}">
             <span class="resource-label">${r.label}${offlineBadge}</span>
-            <audio controls preload="none" style="width:100%;margin-top:6px;border-radius:8px" onplay="precacheAudio('${asset.url}')">
-              <source src="${asset.url}" type="audio/mp4">
+            <audio controls preload="metadata" style="width:100%;margin-top:6px;border-radius:8px" onplay="precacheAudio('${asset.url}')">
+              <source src="${asset.url}">
             </audio>
           </div>`;
         } else if (asset && asset.mediaType === 'video') {
           link = `<div class="native-player" data-cloudinary-url="${asset.url}">
             <span class="resource-label">${r.label}</span>
-            <video controls preload="none" style="width:100%;margin-top:6px;border-radius:8px;max-height:300px" onplay="precacheAudio('${asset.url}')">
-              <source src="${asset.url}" type="video/mp4">
+            <video controls preload="metadata" style="width:100%;margin-top:6px;border-radius:8px;max-height:300px" onplay="precacheAudio('${asset.url}')">
+              <source src="${asset.url}">
             </video>
           </div>`;
         } else if (asset && (asset.mediaType === 'pdf' || asset.mediaType === 'image')) {
