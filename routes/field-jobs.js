@@ -248,4 +248,19 @@ router.post('/:id/sign', async (req, res) => {
   }
 });
 
+// PATCH /api/field/jobs/:id/fieldnotes — save field observations to portal
+router.patch('/:id/fieldnotes', async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/fields`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fieldNotes: req.body })
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[FieldJobs] PATCH fieldnotes error:', e.message);
+    res.status(500).json({ error: 'Failed to save field notes' });
+  }
+});
+
 module.exports = router;

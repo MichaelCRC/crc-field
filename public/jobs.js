@@ -383,6 +383,10 @@ function renderJobDetail(job) {
   html += '<button onclick="markJobFollowUp(\'' + jid + '\')" style="flex:1;padding:9px;background:#0EA5E9;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Follow Up</button>';
   html += '<button onclick="markJobLost(\'' + jid + '\')" style="flex:1;padding:9px;background:none;color:#DC2626;border:1px solid #DC2626;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Mark Lost</button>';
   html += '</div>';
+  html += '<button onclick="openFieldObs(\'' + jid + '\', _currentJobDetail && _currentJobDetail.fieldNotes)" '
+    + 'style="width:100%;padding:9px;background:#10B981;color:#fff;border:none;border-radius:8px;'
+    + 'font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px">'
+    + '&#128203; Fill Field Observations</button>';
 
   // ── Job Info ──
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
