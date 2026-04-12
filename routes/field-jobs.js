@@ -182,6 +182,22 @@ router.post('/:id/tasks', async (req, res) => {
   }
 });
 
+// GET /api/field/jobs/:id/next-steps-pdf — proxy to portal
+router.get('/:id/next-steps-pdf', async (req, res) => {
+  try {
+    const response = await fetch(`${PORTAL_URL}/api/jobs/${req.params.id}/next-steps-pdf`, {
+      headers: portalHeaders
+    });
+    if (!response.ok) return res.status(response.status).json({ error: 'Failed to generate PDF' });
+    const buf = await response.arrayBuffer();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', response.headers.get('Content-Disposition') || 'inline');
+    res.send(Buffer.from(buf));
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch next steps PDF' });
+  }
+});
+
 // PATCH /api/field/jobs/:id/tasks/:taskId
 router.patch('/:id/tasks/:taskId', async (req, res) => {
   try {
