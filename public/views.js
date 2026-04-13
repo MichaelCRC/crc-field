@@ -359,34 +359,95 @@ async function sendBrainMessage() {
 // ── Builds overlay (ABC deliveries + manual adds) ─────────────────────────
 const BUILDS_COMMON_COLORS = ['Charcoal','Pewter Gray','Weathered Wood','Driftwood','Barkwood','Hunter Green','Shakewood','Hickory','Slate'];
 
+let _buildsCacheAt = 0;
+const BUILDS_CACHE_TTL = 5 * 60 * 1000;
+
 async function toggleBuildsOverlay() {
   buildsOverlayVisible = !buildsOverlayVisible;
   const btn = document.getElementById('btn-builds');
   const chips = document.getElementById('builds-color-filters');
   if (btn) btn.classList.toggle('active', buildsOverlayVisible);
+
   if (!buildsOverlayVisible) {
+    // Toggle OFF: clear markers, hide UI; keep cache for instant re-enable.
     buildMarkers.forEach(m => m.setMap(null));
     buildMarkers = [];
     if (chips) chips.style.display = 'none';
     hideBuildsStatus();
+    setBuildsBtnLoading(false);
     return;
   }
-  await loadBuildsPins();
-  // If any pins still need geocoding, nudge one batch along and re-plot
-  // (the server also auto-geocodes in the background on boot).
-  const ungeocoded = (_buildsCache || []).filter(p => !p.lat || !p.lng).length;
-  if (ungeocoded > 0) {
-    try {
-      await fetch('/api/builds-map/geocode', { method: 'POST' });
-      await loadBuildsPins();
-    } catch { /* server is auto-geocoding; next toggle picks it up */ }
+
+  // Toggle ON: instant render from cache if fresh (< 5 min old).
+  const cacheFresh = _buildsCache && (Date.now() - _buildsCacheAt < BUILDS_CACHE_TTL);
+  if (cacheFresh) {
+    renderBuildsChips();
+    plotBuildsPins();
+    updateBuildsStatus();
+    // Still progress geocoding if there's unfinished work.
+    if ((_buildsCache || []).some(p => !p.lat || !p.lng)) nudgeBuildsGeocode();
+    return;
   }
+
+  setBuildsBtnLoading(true);
+  await loadBuildsPins();
+
+  if (!(_buildsCache || []).length) {
+    setBuildsBtnLoading(false);
+    showBuildsToast('No builds data. Import ABC deliveries first.');
+    return;
+  }
+  // Plot any geocoded pins immediately; then nudge the backlog.
+  setBuildsBtnLoading(false);
+  await nudgeBuildsGeocode();
+}
+
+// Loop up to 3 quick batches to pull the first ~30 pins in on first open.
+async function nudgeBuildsGeocode() {
+  const maxRounds = 3;
+  for (let i = 0; i < maxRounds; i++) {
+    const remaining = (_buildsCache || []).filter(p => !p.lat || !p.lng).length;
+    if (!remaining) return;
+    try {
+      const r = await fetch('/api/builds-map/geocode', { method: 'POST' });
+      const data = await r.json().catch(() => ({}));
+      await loadBuildsPins();
+      if (!data || data.geocoded === 0) return;  // no progress; back off
+    } catch { return; }
+  }
+}
+
+function setBuildsBtnLoading(loading) {
+  const btn = document.getElementById('btn-builds');
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.origLabel = btn.dataset.origLabel || btn.innerHTML;
+    btn.innerHTML = 'Loading...';
+    btn.disabled = true;
+  } else if (btn.dataset.origLabel) {
+    btn.innerHTML = btn.dataset.origLabel;
+    btn.disabled = false;
+  }
+}
+
+function showBuildsToast(msg) {
+  let t = document.getElementById('builds-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'builds-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B2360;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;box-shadow:0 4px 14px rgba(0,0,0,0.25)';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  clearTimeout(showBuildsToast._t);
+  showBuildsToast._t = setTimeout(() => { t && t.remove(); }, 3500);
 }
 
 async function loadBuildsPins() {
   try {
     const data = await fetch('/api/builds-map/pins').then(r => r.json());
     _buildsCache = data.pins || [];
+    _buildsCacheAt = Date.now();
     renderBuildsChips();
     plotBuildsPins();
     updateBuildsStatus();

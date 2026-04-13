@@ -397,3 +397,77 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .feed-comment-input-row { margin-top: 6px; }
 .feed-comment-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: #1E293B; border-radius: 8px; padding: 8px 12px; font-size: 13px; min-height: 36px; }
 .feed-comment-input:focus { outline: none; border-color: var(--teal); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   TABLET (768-1199): roomier centered content
+   ══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .app-view { max-width: 820px; margin: 0 auto; padding-left: 8px; padding-right: 8px; }
+  .quick-add, .quick-add form { max-width: 640px; margin-left: auto; margin-right: auto; }
+  .feed-list { max-width: 640px; margin: 0 auto; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   DESKTOP (≥1200): left sidebar nav, full-width views, multi-column layouts
+   ══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1200px) {
+  /* Sidebar nav replaces bottom nav */
+  .bottom-nav {
+    position: fixed; top: 56px; bottom: 0; left: 0; right: auto;
+    width: 92px; height: auto; flex-direction: column;
+    background: var(--navy); padding: 16px 0; z-index: 60;
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+  .bottom-nav .nav-item {
+    flex: 0 0 auto; flex-direction: column; gap: 4px; padding: 14px 0;
+    border-left: 3px solid transparent;
+  }
+  .bottom-nav .nav-item.active {
+    border-left-color: var(--teal); background: rgba(0,181,204,0.08);
+  }
+  .bottom-nav .nav-icon { font-size: 20px; }
+  .bottom-nav .nav-label { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
+
+  /* Content area leaves room for sidebar */
+  .app-view { padding-bottom: 24px; min-height: calc(100vh - 56px); }
+  #app > .app-view, #app > #job-detail, #app > #field-obs-panel { margin-left: 92px; }
+
+  /* Home (Leads) view: two-column form + recent via grid areas on #leads-main */
+  #view-leads { display: none; }
+  #view-leads.active { display: block; padding: 24px 32px; }
+  #leads-main {
+    display: grid;
+    grid-template-columns: minmax(380px, 600px) minmax(320px, 1fr);
+    grid-template-areas:
+      "form  recent-title"
+      "form  recent-list"
+      "confirm recent-list";
+    gap: 16px 32px;
+    align-items: start;
+  }
+  #leads-main > .quick-add { grid-area: form; max-width: none; margin: 0; }
+  #leads-main > #lead-confirm { grid-area: confirm; }
+  #leads-main > .section-title { grid-area: recent-title; margin: 0 0 4px; }
+  #leads-main > #leads-list { grid-area: recent-list; }
+
+  /* Jobs view: use available width */
+  #view-jobs { display: none; }
+  #view-jobs.active { display: block; padding: 24px 32px; }
+  .job-board { display: flex !important; gap: 16px; overflow-x: auto; padding-bottom: 16px; }
+  .job-board .board-col { flex: 0 0 280px; min-width: 280px; }
+  .jobs-list-table { width: 100%; border-collapse: collapse; }
+  .jobs-list-table th, .jobs-list-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
+
+  /* Map fills remaining space */
+  #view-map { display: none; }
+  #view-map.active { display: flex; flex-direction: column; height: calc(100vh - 56px); padding: 0; }
+  #view-map .map-controls { padding: 10px 16px; background: var(--white); border-bottom: 1px solid var(--border); z-index: 2; }
+  #view-map #map-container { flex: 1; min-height: 0; }
+
+  /* Feed: readable cards column (left) + post box/sidebar (right). Reorder
+     so the post-box child renders on the right, feed list on the left. */
+  #view-feed { display: none; }
+  #view-feed.active { display: grid; grid-template-columns: minmax(420px, 640px) minmax(260px, 360px); gap: 32px; padding: 24px 32px; align-items: start; }
+  #view-feed > .feed-post { grid-column: 2; order: 2; position: sticky; top: 72px; }
+  #view-feed > .feed-list { grid-column: 1; order: 1; max-width: none; }
+}
