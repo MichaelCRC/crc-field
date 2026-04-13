@@ -32,7 +32,11 @@ async function validateAndEnter(code) {
     repCode = code; repName = data.name; repRole = data.role;
     localStorage.setItem('crc-rep-code', code); localStorage.setItem('crc-rep-name', data.name); localStorage.setItem('crc-rep-role', data.role);
     document.getElementById('gate').style.display = 'none'; document.getElementById('app').style.display = '';
-    document.getElementById('rep-badge').textContent = `${code} - ${data.name}`;
+    // Rep badge shows code only — full name + role live in the dropdown.
+    const badge = document.getElementById('rep-badge');
+    if (badge) badge.textContent = code;
+    const nm = document.getElementById('field-user-name'); if (nm) nm.textContent = data.name;
+    const rl = document.getElementById('field-user-role'); if (rl) rl.textContent = String(data.role || 'rep').toUpperCase() + ' · ' + code;
     if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
     loadLeads();
     initCheckin();

@@ -20,17 +20,31 @@
       if (t !== 'light' && t !== 'dark') t = 'dark';
       document.documentElement.setAttribute('data-theme', t);
     })();
-    function toggleFieldTheme() {
-      var cur = document.documentElement.getAttribute('data-theme') || 'dark';
-      var next = cur === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('crc_field_theme', next);
-      var icon = document.getElementById('field-theme-icon');
-      if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀';
+    function setFieldTheme(theme) {
+      var t = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('crc_field_theme', t);
+      document.querySelectorAll('.field-user-theme-toggle [data-theme-choice]').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-theme-choice') === t);
+      });
     }
+    function toggleFieldUserMenu(ev) {
+      if (ev) ev.stopPropagation();
+      var m = document.getElementById('field-user-menu');
+      if (m) m.classList.toggle('open');
+    }
+    document.addEventListener('click', function (e) {
+      var m = document.getElementById('field-user-menu');
+      if (!m || !m.classList.contains('open')) return;
+      if (e.target.closest('#field-user-wrap')) return;
+      m.classList.remove('open');
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') document.getElementById('field-user-menu')?.classList.remove('open');
+    });
     document.addEventListener('DOMContentLoaded', function () {
-      var icon = document.getElementById('field-theme-icon');
-      if (icon) icon.textContent = (document.documentElement.getAttribute('data-theme') === 'dark') ? '🌙' : '☀';
+      // Reflect the saved theme on the segmented toggle.
+      setFieldTheme(document.documentElement.getAttribute('data-theme') || 'dark');
     });
   </script>
 </head>
@@ -65,8 +79,23 @@
         </div>
       </div>
       <div class="app-header-right">
-        <button id="field-theme-toggle" class="field-theme-btn" onclick="toggleFieldTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="field-theme-icon">🌙</span></button>
-        <span id="rep-badge" class="rep-badge"></span>
+        <div class="field-user-wrap" id="field-user-wrap">
+          <button id="rep-badge" class="rep-badge" onclick="toggleFieldUserMenu(event)" aria-label="Account"></button>
+          <div id="field-user-menu" class="field-user-menu" role="menu">
+            <div class="field-user-head">
+              <div class="field-user-signed-as">Signed in as</div>
+              <div id="field-user-name">--</div>
+              <div id="field-user-role" class="field-user-role">--</div>
+            </div>
+            <div class="field-user-theme">
+              <span class="field-user-theme-label">Appearance</span>
+              <div class="field-user-theme-toggle" role="group" aria-label="Theme">
+                <button type="button" data-theme-choice="dark"  onclick="setFieldTheme('dark')">Dark</button>
+                <button type="button" data-theme-choice="light" onclick="setFieldTheme('light')">Light</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
