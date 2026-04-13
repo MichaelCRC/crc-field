@@ -458,11 +458,11 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
   .jobs-list-table { width: 100%; border-collapse: collapse; }
   .jobs-list-table th, .jobs-list-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
 
-  /* Map fills remaining space */
+  /* Map fills remaining space — subtract sidebar (92px) from width */
   #view-map { display: none; }
-  #view-map.active { display: flex; flex-direction: column; height: calc(100vh - 56px); padding: 0; }
+  #view-map.active { display: flex; flex-direction: column; height: calc(100vh - 56px); padding: 0; width: calc(100vw - 92px); }
   #view-map .map-controls { padding: 10px 16px; background: var(--white); border-bottom: 1px solid var(--border); z-index: 2; }
-  #view-map #map-container { flex: 1; min-height: 0; }
+  #view-map #map-container { flex: 1; min-height: 0; width: 100%; }
 
   /* Feed: readable cards column (left) + post box/sidebar (right). Reorder
      so the post-box child renders on the right, feed list on the left. */
