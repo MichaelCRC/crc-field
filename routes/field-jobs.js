@@ -263,4 +263,29 @@ router.patch('/:id/fieldnotes', async (req, res) => {
   }
 });
 
+// POST /api/field/checkins — submit daily check-in to portal
+router.post('/checkins', async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch('/api/checkins', {
+      method: 'POST',
+      body: JSON.stringify(req.body)
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to submit check-in' });
+  }
+});
+
+// GET /api/field/checkins/status — who has checked in today
+router.get('/checkins/status', async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch('/api/checkins/status');
+    if (!ok) return res.status(status).json(data);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to get check-in status' });
+  }
+});
+
 module.exports = router;

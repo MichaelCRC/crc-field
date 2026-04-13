@@ -21,6 +21,7 @@ app.use('/api/claims-dashboard', require('./routes/claims-dashboard'));
 app.use('/api/referrals', require('./routes/referrals'));
 app.use('/api/training', require('./routes/training'));
 app.use('/api/field/jobs', require('./routes/field-jobs'));
+app.use('/api/field', require('./routes/field-jobs'));
 app.use('/api/builds', require('./routes/builds'));
 app.use('/api/builds-map', require('./routes/builds-map'));
 app.use('/', require('./routes/rep-card'));

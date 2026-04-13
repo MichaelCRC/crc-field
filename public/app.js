@@ -35,6 +35,7 @@ async function validateAndEnter(code) {
     document.getElementById('rep-badge').textContent = `${code} - ${data.name}`;
     if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
     loadLeads();
+    initCheckin();
   } catch { document.getElementById('gate-error').textContent = 'Connection error'; }
 }
 document.getElementById('gate-code')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitRepCode(); });
@@ -716,6 +717,70 @@ async function sigAuthSubmit(jobId) {
     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign & Submit'; }
     errEl.textContent = 'Error: ' + e.message;
     errEl.style.display = 'block';
+  }
+}
+
+/* ============================================================
+   DAILY CHECK-IN
+   ============================================================ */
+const CI_KEY = 'crc-checkin-date';
+
+function initCheckin() {
+  const banner = document.getElementById('checkin-banner');
+  if (!banner || !repCode) return;
+  const today = new Date().toISOString().split('T')[0];
+  const stored = localStorage.getItem(CI_KEY);
+  if (stored === today) {
+    // Already submitted today — show done state
+    const doneText = localStorage.getItem('crc-checkin-today-text') || '';
+    document.getElementById('checkin-banner-prompt').style.display = 'none';
+    document.getElementById('checkin-done').style.display = 'block';
+    document.getElementById('checkin-done-text').textContent = doneText;
+    banner.style.display = 'block';
+  } else {
+    // Not yet submitted — show prompt
+    banner.style.display = 'block';
+  }
+}
+
+function toggleCheckin() {
+  const form = document.getElementById('checkin-form');
+  const chevron = document.getElementById('checkin-chevron');
+  const open = form.style.display !== 'none';
+  form.style.display = open ? 'none' : 'block';
+  chevron.textContent = open ? '▼' : '▲';
+}
+
+async function submitCheckin() {
+  const today = document.getElementById('ci-today').value.trim();
+  const errEl = document.getElementById('ci-error');
+  if (!today) { errEl.textContent = 'Please fill in what you\'re working on today.'; return; }
+  errEl.textContent = '';
+  try {
+    const res = await fetch('/api/field/checkins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        repCode,
+        repName: repName || repCode,
+        closedYesterday: document.getElementById('ci-yesterday').value.trim(),
+        workingToday: today,
+        needHelp: document.getElementById('ci-help').value.trim()
+      })
+    });
+    if (!res.ok) throw new Error('Server error');
+    // Mark submitted in localStorage
+    const dateStr = new Date().toISOString().split('T')[0];
+    localStorage.setItem(CI_KEY, dateStr);
+    localStorage.setItem('crc-checkin-today-text', today.substring(0, 80));
+    // Swap UI to done state
+    document.getElementById('checkin-banner-prompt').style.display = 'none';
+    document.getElementById('checkin-form').style.display = 'none';
+    document.getElementById('checkin-done').style.display = 'block';
+    document.getElementById('checkin-done-text').textContent = today.substring(0, 80);
+    if (typeof showToast === 'function') showToast('Check-in submitted ✓');
+  } catch (e) {
+    errEl.textContent = 'Failed to submit. Try again.';
   }
 }
 

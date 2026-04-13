@@ -55,6 +55,32 @@
 
     <!-- LEADS VIEW -->
     <div id="view-leads" class="app-view active">
+      <!-- DAILY CHECK-IN BANNER -->
+      <div id="checkin-banner" style="display:none;margin:10px 12px 0;border-radius:10px;overflow:hidden;border:1.5px solid var(--teal)">
+        <div id="checkin-banner-prompt" style="background:var(--navy);padding:12px 14px;cursor:pointer" onclick="toggleCheckin()">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#fff">👋 Good morning — start your day</div>
+              <div style="font-size:11px;color:var(--teal);margin-top:2px">Tap to submit your daily check-in</div>
+            </div>
+            <span id="checkin-chevron" style="color:var(--teal);font-size:18px">▼</span>
+          </div>
+        </div>
+        <div id="checkin-form" style="display:none;background:#f8f9ff;padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:4px">What did you close or accomplish yesterday?</div>
+          <textarea id="ci-yesterday" placeholder="Optional..." rows="2" style="width:100%;border:1px solid #dde;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:none;margin-bottom:10px"></textarea>
+          <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:4px">What are you working on today? <span style="color:var(--red)">*</span></div>
+          <textarea id="ci-today" placeholder="Knocking Westerville, adjuster meeting at 2pm..." rows="2" style="width:100%;border:1px solid #dde;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:none;margin-bottom:10px"></textarea>
+          <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:4px">Anything you need help with?</div>
+          <textarea id="ci-help" placeholder="Optional..." rows="1" style="width:100%;border:1px solid #dde;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:none;margin-bottom:12px"></textarea>
+          <button onclick="submitCheckin()" style="width:100%;padding:11px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Submit Check-in</button>
+          <div id="ci-error" style="color:var(--red);font-size:12px;margin-top:6px;text-align:center"></div>
+        </div>
+        <div id="checkin-done" style="display:none;background:#eaffef;padding:12px 14px">
+          <div style="font-size:13px;font-weight:700;color:#1a7a3a">✓ Checked in for today</div>
+          <div id="checkin-done-text" style="font-size:11px;color:#555;margin-top:2px"></div>
+        </div>
+      </div>
       <div id="leads-main">
         <div class="quick-add">
           <div style="position:relative">
