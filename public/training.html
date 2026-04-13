@@ -381,6 +381,36 @@ body {
 </head>
 <body>
 
+<!-- Field-app sidebar nav (bottom-nav on mobile, left rail on desktop). Anchors
+     route back to the main field app where the JS handles view switching. -->
+<nav class="bottom-nav fc-bottom-nav">
+  <a class="nav-item" href="/"><span class="nav-icon">&#127968;</span><span class="nav-label">Home</span></a>
+  <a class="nav-item" href="/"><span class="nav-icon">&#128197;</span><span class="nav-label">My Jobs</span></a>
+  <a class="nav-item" href="/"><span class="nav-icon">&#128205;</span><span class="nav-label">Map</span></a>
+  <a class="nav-item" href="/"><span class="nav-icon">&#128240;</span><span class="nav-label">Feed</span></a>
+  <a class="nav-item active" href="/training.html"><span class="nav-icon">&#127891;</span><span class="nav-label">CRC U</span></a>
+</nav>
+
+<style>
+  /* Inherit the field app's nav look (it's already loaded via <link> below would be
+     ideal — for now duplicate the minimal subset so training.html doesn't depend on
+     style.css being included). */
+  .fc-bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #1B2360; display: flex; z-index: 200; height: 60px;
+    padding-bottom: env(safe-area-inset-bottom);
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .fc-bottom-nav .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.6); text-decoration: none; gap: 2px;
+  }
+  .fc-bottom-nav .nav-item.active { color: #00B5CC; }
+  .fc-bottom-nav .nav-icon { font-size: 18px; line-height: 1; }
+  .fc-bottom-nav .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  body { padding-bottom: 76px; }
+</style>
+
 <!-- LOGIN OVERLAY -->
 <div class="login-overlay" id="loginOverlay">
   <div class="subtitle">CRC University</div>

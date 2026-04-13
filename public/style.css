@@ -551,3 +551,82 @@ body { font-family: var(--font-body); }
 [data-theme="light"] .bottom-nav { background: var(--surface-card); border-top: 1px solid var(--surface-border); }
 [data-theme="light"] .nav-item { color: var(--steel-mid); }
 [data-theme="light"] .nav-item.active { color: var(--teal); }
+
+/* ── FIX 3: Dark mode parity with portal ── */
+
+/* Theme icon button (header) */
+.field-theme-icon {
+  background: rgba(255,255,255,0.12);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.field-theme-icon:hover { border-color: var(--teal); }
+
+/* Section labels: brand spec — Inter Medium, uppercase, tracking 0.1em, steel-mid */
+.section-title {
+  padding: 16px 16px 6px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Chip pills (Roof / Insurance / Door Knock etc.) */
+.chip {
+  background: transparent;
+  border: 1px solid var(--steel-mid);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  cursor: pointer;
+  min-height: 36px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.chip:hover { border-color: var(--text-secondary); }
+.chip.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+
+/* Inputs — surface-secondary background, subtle border, white text */
+.input-lg, .input-md, .quick-add input[type="text"], .quick-add input[type="tel"], .quick-add input[type="email"] {
+  background: var(--surface-secondary);
+  border: 1px solid var(--surface-border);
+  color: var(--text-primary);
+  border-radius: 8px;
+}
+.input-lg::placeholder, .input-md::placeholder, .quick-add input::placeholder { color: var(--text-muted); }
+.input-lg:focus, .input-md:focus { border-color: var(--teal); outline: none; box-shadow: 0 0 0 2px rgba(0,181,204,0.2); }
+
+/* Brain suggestions row + input */
+#brain-suggestions .chip { background: transparent; border: 1px solid var(--steel-mid); color: var(--text-secondary); }
+#brain-suggestions .chip.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+#brain-input { background: var(--surface-secondary); color: var(--text-primary); border: 1px solid var(--surface-border); border-radius: 8px; padding: 10px 14px; }
+#brain-input:focus { border-color: var(--teal); outline: none; box-shadow: 0 0 0 2px rgba(0,181,204,0.2); }
+
+/* Leaderboard / scoreboard cards */
+.admin-stat { background: var(--surface-card); border: 1px solid var(--surface-border); }
+.admin-stat .val { color: var(--text-primary); font-family: var(--font-body); font-weight: 700; font-variant-numeric: tabular-nums; }
+.admin-stat .label { color: var(--text-muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Bottom nav (mobile) / left sidebar (desktop) */
+.bottom-nav { background: var(--navy); }
+.nav-item.active { color: var(--teal); }
+
+/* Light mode: theme icon flips to dark-on-light styling */
+[data-theme="light"] .field-theme-icon { background: rgba(0,0,0,0.05); color: var(--navy); border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .field-theme-icon:hover { border-color: var(--teal); }
+[data-theme="light"] .chip { color: var(--steel-dark); border-color: var(--steel-mid); }
+[data-theme="light"] .chip.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+[data-theme="light"] .input-lg, [data-theme="light"] .input-md,
+[data-theme="light"] .quick-add input { background: var(--white); color: var(--navy); border-color: var(--surface-border); }
+[data-theme="light"] .input-lg::placeholder, [data-theme="light"] .input-md::placeholder { color: var(--steel-mid); }

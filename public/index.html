@@ -24,9 +24,12 @@
       var t = theme === 'light' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', t);
       localStorage.setItem('crc_field_theme', t);
-      document.querySelectorAll('.field-user-theme-toggle [data-theme-choice]').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-theme-choice') === t);
-      });
+      var icon = document.getElementById('field-theme-icon');
+      if (icon) icon.textContent = t === 'dark' ? '🌙' : '☀';
+    }
+    function cycleFieldTheme() {
+      var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      setFieldTheme(cur === 'dark' ? 'light' : 'dark');
     }
     function toggleFieldUserMenu(ev) {
       if (ev) ev.stopPropagation();
@@ -79,6 +82,7 @@
         </div>
       </div>
       <div class="app-header-right">
+        <button id="field-theme-toggle" class="field-theme-icon" onclick="cycleFieldTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="field-theme-icon">🌙</span></button>
         <div class="field-user-wrap" id="field-user-wrap">
           <button id="rep-badge" class="rep-badge" onclick="toggleFieldUserMenu(event)" aria-label="Account"></button>
           <div id="field-user-menu" class="field-user-menu" role="menu">
@@ -87,7 +91,7 @@
               <div id="field-user-name">--</div>
               <div id="field-user-role" class="field-user-role">--</div>
             </div>
-            <div class="field-user-theme">
+            <div class="field-user-theme" hidden>
               <span class="field-user-theme-label">Appearance</span>
               <div class="field-user-theme-toggle" role="group" aria-label="Theme">
                 <button type="button" data-theme-choice="dark"  onclick="setFieldTheme('dark')">Dark</button>
