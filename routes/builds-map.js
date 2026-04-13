@@ -151,18 +151,15 @@ router.post('/pins', (req, res) => {
   res.json(pin);
 });
 
-// ── POST /api/builds-map/geocode ─────────────────────────────────────
-// Geocodes up to 10 ungeocoded pins per call. Cache-first: a pin that already
-// has lat/lng is never hit again.
-router.post('/geocode', async (req, res) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not set' });
+function needsGeocode(p) {
+  if (p.lat && p.lng) return false;
+  if (p.geocodeFailed) return false;
+  return true;
+}
 
-  const db = readDb();
-  const todo = db.pins.filter(p => !p.lat || !p.lng).slice(0, 10);
+async function geocodeBatch(pins, apiKey) {
   let geocoded = 0, failed = 0;
-
-  for (const pin of todo) {
+  for (const pin of pins) {
     try {
       const url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + encodeURIComponent(pin.address) + '&key=' + apiKey;
       const r = await fetch(url);
@@ -172,16 +169,86 @@ router.post('/geocode', async (req, res) => {
         pin.lat = loc.lat;
         pin.lng = loc.lng;
         pin.geocodedAt = new Date().toISOString();
+        pin.geocodeAttempts = 0;
         geocoded++;
       } else {
+        pin.geocodeAttempts = (pin.geocodeAttempts || 0) + 1;
+        if (pin.geocodeAttempts >= 3) pin.geocodeFailed = true;
         failed++;
       }
-    } catch { failed++; }
+    } catch {
+      pin.geocodeAttempts = (pin.geocodeAttempts || 0) + 1;
+      if (pin.geocodeAttempts >= 3) pin.geocodeFailed = true;
+      failed++;
+    }
   }
+  return { geocoded, failed };
+}
+
+// ── POST /api/builds-map/geocode ─────────────────────────────────────
+// Geocodes up to 10 ungeocoded pins per call. Cache-first; pins already
+// geocoded or marked geocodeFailed are skipped.
+router.post('/geocode', async (req, res) => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not set' });
+
+  const db = readDb();
+  const todo = db.pins.filter(needsGeocode).slice(0, 10);
+  const { geocoded, failed } = await geocodeBatch(todo, apiKey);
 
   writeDb(db);
-  const remaining = db.pins.filter(p => !p.lat || !p.lng).length;
+  const remaining = db.pins.filter(needsGeocode).length;
   res.json({ geocoded, failed, remaining });
 });
 
+// ── POST /api/builds-map/geocode-all ─────────────────────────────────
+// Batches through ALL ungeocoded pins (10 per API call, 1s between batches).
+// Keeps going until nothing is left or all remaining are marked failed.
+router.post('/geocode-all', async (req, res) => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not set' });
+
+  const db = readDb();
+  const total = db.pins.filter(needsGeocode).length;
+  let geocodedTotal = 0, failedTotal = 0;
+
+  while (true) {
+    const batch = db.pins.filter(needsGeocode).slice(0, 10);
+    if (!batch.length) break;
+    const { geocoded, failed } = await geocodeBatch(batch, apiKey);
+    geocodedTotal += geocoded;
+    failedTotal += failed;
+    writeDb(db);
+    if (db.pins.filter(needsGeocode).length === 0) break;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  const remaining = db.pins.filter(needsGeocode).length;
+  res.json({ total, geocoded: geocodedTotal, failed: failedTotal, remaining });
+});
+
+// Shared helper for the server-startup auto-geocoder.
+async function runAutoGeocode(log) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) { log && log('no API key; skip'); return; }
+  const db = readDb();
+  const total = db.pins.filter(needsGeocode).length;
+  if (!total) return;
+  log && log('starting: ' + total + ' pins need geocoding');
+  let done = 0;
+  while (true) {
+    const latest = readDb();
+    const batch = latest.pins.filter(needsGeocode).slice(0, 10);
+    if (!batch.length) break;
+    const { geocoded, failed } = await geocodeBatch(batch, apiKey);
+    writeDb(latest);
+    done += geocoded + failed;
+    log && log(done + '/' + total + ' processed (' + geocoded + ' ok, ' + failed + ' fail)');
+    if (latest.pins.filter(needsGeocode).length === 0) break;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  log && log('done');
+}
+
 module.exports = router;
+module.exports.runAutoGeocode = runAutoGeocode;

@@ -110,3 +110,13 @@ setTimeout(async () => {
     }
   } catch (e) { console.log('[BuildsMap] Startup import skipped:', e.message); }
 }, 3000);
+
+// Auto-geocode any ungeocoded pins in the background, 10s after boot.
+setTimeout(() => {
+  try {
+    const buildsMap = require('./routes/builds-map');
+    if (typeof buildsMap.runAutoGeocode !== 'function') return;
+    buildsMap.runAutoGeocode(msg => console.log('[BuildsMap] Geocoding: ' + msg))
+      .catch(e => console.log('[BuildsMap] Auto-geocode error:', e.message));
+  } catch (e) { console.log('[BuildsMap] Auto-geocode skipped:', e.message); }
+}, 10000);

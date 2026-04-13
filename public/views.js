@@ -368,12 +368,19 @@ async function toggleBuildsOverlay() {
     buildMarkers.forEach(m => m.setMap(null));
     buildMarkers = [];
     if (chips) chips.style.display = 'none';
+    hideBuildsStatus();
     return;
   }
-  if (chips) chips.style.display = 'block';
-  // Kick off background geocoding (fire-and-forget); then fetch pins.
-  fetch('/api/builds-map/geocode', { method: 'POST' }).catch(() => {});
   await loadBuildsPins();
+  // If any pins still need geocoding, nudge one batch along and re-plot
+  // (the server also auto-geocodes in the background on boot).
+  const ungeocoded = (_buildsCache || []).filter(p => !p.lat || !p.lng).length;
+  if (ungeocoded > 0) {
+    try {
+      await fetch('/api/builds-map/geocode', { method: 'POST' });
+      await loadBuildsPins();
+    } catch { /* server is auto-geocoding; next toggle picks it up */ }
+  }
 }
 
 async function loadBuildsPins() {
@@ -382,6 +389,7 @@ async function loadBuildsPins() {
     _buildsCache = data.pins || [];
     renderBuildsChips();
     plotBuildsPins();
+    updateBuildsStatus();
   } catch (e) { console.error('Builds load failed:', e); }
 }
 
@@ -390,6 +398,13 @@ function renderBuildsChips() {
   if (!wrap) return;
   const colorSet = new Set();
   (_buildsCache || []).forEach(p => { if (p.shingleColor) colorSet.add(String(p.shingleColor)); });
+  // Hide the chip row entirely until at least one pin has a color set.
+  if (colorSet.size === 0) {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.style.display = 'block';
   const colors = Array.from(colorSet).sort();
   const chipHtml = (label, key) =>
     `<button class="build-filter-chip ${_activeColorFilter === key ? 'active' : ''}" onclick="filterBuilds('${key.replace(/'/g, "\\'")}')">${label}</button>`;
@@ -397,6 +412,26 @@ function renderBuildsChips() {
   colors.forEach(c => { html += chipHtml(c, c); });
   html += chipHtml('No Color Set', 'unset');
   wrap.innerHTML = html;
+}
+
+function updateBuildsStatus() {
+  const total = (_buildsCache || []).length;
+  const ready = (_buildsCache || []).filter(p => p.lat && p.lng).length;
+  if (!total || ready === total) { hideBuildsStatus(); return; }
+  let el = document.getElementById('builds-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'builds-status';
+    el.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(27,35,96,0.92);color:#fff;padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
+    const mc = document.getElementById('map-container');
+    if (mc) mc.appendChild(el);
+  }
+  el.textContent = 'Geocoding builds: ' + ready + ' of ' + total + ' ready';
+}
+
+function hideBuildsStatus() {
+  const el = document.getElementById('builds-status');
+  if (el) el.remove();
 }
 
 function plotBuildsPins() {
