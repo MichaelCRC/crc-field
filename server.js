@@ -22,6 +22,7 @@ app.use('/api/referrals', require('./routes/referrals'));
 app.use('/api/training', require('./routes/training'));
 app.use('/api/field/jobs', require('./routes/field-jobs'));
 app.use('/api/builds', require('./routes/builds'));
+app.use('/api/builds-map', require('./routes/builds-map'));
 app.use('/', require('./routes/rep-card'));
 app.use('/', require('./routes/recruit'));
 
@@ -94,3 +95,18 @@ app.get('/{*path}', (req, res) => res.sendFile(path.join(__dirname, 'public', 'i
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`CRC Field Intel on port ${PORT}`));
+
+// Import ABC CSV on startup if builds-db.json is empty or missing.
+setTimeout(async () => {
+  try {
+    const fs = require('fs');
+    const dbPath = path.join(__dirname, 'data/builds-db.json');
+    let db = { pins: [] };
+    if (fs.existsSync(dbPath)) { try { db = JSON.parse(fs.readFileSync(dbPath, 'utf8')); } catch {} }
+    if (!db.pins || db.pins.length === 0) {
+      const r = await fetch(`http://localhost:${PORT}/api/builds-map/import-csv`, { method: 'POST' });
+      const data = await r.json();
+      console.log('[BuildsMap] Initial CSV import:', data);
+    }
+  } catch (e) { console.log('[BuildsMap] Startup import skipped:', e.message); }
+}, 3000);

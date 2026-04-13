@@ -6,6 +6,10 @@ let selectedAddress = '';
 let mapInitialized = false;
 let stormsLoaded = false;
 let gmap = null, mapMarkers = [], knockMode = false, dropPinMode = false;
+let buildMarkers = [];
+let buildsOverlayVisible = false;
+let _buildsCache = null;
+let _activeColorFilter = 'all';
 let activeJobContext = null; // For Brain context injection
 
 document.addEventListener('DOMContentLoaded', () => {

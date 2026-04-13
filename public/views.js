@@ -381,3 +381,131 @@ async function sendBrainMessage() {
   } catch(e) { brainHistory.push({role:'assistant',content:'Error: '+e.message}); renderBrain(); }
   brainStreaming=false;
 }
+
+// ── Builds overlay (ABC deliveries + manual adds) ─────────────────────────
+const BUILDS_COMMON_COLORS = ['Charcoal','Pewter Gray','Weathered Wood','Driftwood','Barkwood','Hunter Green','Shakewood','Hickory','Slate'];
+
+async function toggleBuildsOverlay() {
+  buildsOverlayVisible = !buildsOverlayVisible;
+  const btn = document.getElementById('btn-builds');
+  const chips = document.getElementById('builds-color-filters');
+  if (btn) btn.classList.toggle('active', buildsOverlayVisible);
+  if (!buildsOverlayVisible) {
+    buildMarkers.forEach(m => m.setMap(null));
+    buildMarkers = [];
+    if (chips) chips.style.display = 'none';
+    return;
+  }
+  if (chips) chips.style.display = 'block';
+  // Kick off background geocoding (fire-and-forget); then fetch pins.
+  fetch('/api/builds-map/geocode', { method: 'POST' }).catch(() => {});
+  await loadBuildsPins();
+}
+
+async function loadBuildsPins() {
+  try {
+    const data = await fetch('/api/builds-map/pins').then(r => r.json());
+    _buildsCache = data.pins || [];
+    renderBuildsChips();
+    plotBuildsPins();
+  } catch (e) { console.error('Builds load failed:', e); }
+}
+
+function renderBuildsChips() {
+  const wrap = document.getElementById('builds-color-filters');
+  if (!wrap) return;
+  const colorSet = new Set();
+  (_buildsCache || []).forEach(p => { if (p.shingleColor) colorSet.add(String(p.shingleColor)); });
+  const colors = Array.from(colorSet).sort();
+  const chipHtml = (label, key) =>
+    `<button class="build-filter-chip ${_activeColorFilter === key ? 'active' : ''}" onclick="filterBuilds('${key.replace(/'/g, "\\'")}')">${label}</button>`;
+  let html = chipHtml('All', 'all');
+  colors.forEach(c => { html += chipHtml(c, c); });
+  html += chipHtml('No Color Set', 'unset');
+  wrap.innerHTML = html;
+}
+
+function plotBuildsPins() {
+  if (!gmap) return;
+  buildMarkers.forEach(m => m.setMap(null));
+  buildMarkers = [];
+  const pins = filterBuildsList(_buildsCache || [], _activeColorFilter);
+  pins.forEach(p => {
+    if (!p.lat || !p.lng) return;
+    const m = new google.maps.Marker({
+      position: { lat: p.lat, lng: p.lng },
+      map: gmap,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#1B2360',
+        fillOpacity: 0.85,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 2
+      }
+    });
+    const info = new google.maps.InfoWindow({ content: buildInfoHtml(p) });
+    m.addListener('click', () => info.open(gmap, m));
+    m._pinId = p.id;
+    buildMarkers.push(m);
+  });
+}
+
+function filterBuildsList(pins, key) {
+  if (key === 'all') return pins;
+  if (key === 'unset') return pins.filter(p => !p.shingleColor);
+  const needle = String(key).toLowerCase();
+  return pins.filter(p => p.shingleColor && String(p.shingleColor).toLowerCase() === needle);
+}
+
+function filterBuilds(key) {
+  _activeColorFilter = key;
+  renderBuildsChips();
+  plotBuildsPins();
+}
+
+function buildInfoHtml(p) {
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const colorDot = p.shingleColor
+    ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${shingleDotColor(p.shingleColor)};margin-right:6px;vertical-align:middle;border:1px solid #999"></span>${esc(p.shingleColor)}`
+    : '<em style="color:#64748B">Not set &mdash; tap Set Color</em>';
+  return `<div style="font-size:13px;max-width:240px">
+    <div style="font-weight:700;margin-bottom:2px">${esc(p.name || '(no name)')}</div>
+    <div style="color:#475569;margin-bottom:4px">${esc(p.address)}</div>
+    ${p.deliveryDate ? `<div style="font-size:11px;color:#64748B">Delivered: ${esc(p.deliveryDate)}</div>` : ''}
+    ${p.total ? `<div style="font-size:11px;color:#64748B">Total: ${esc(p.total)}</div>` : ''}
+    <div style="margin-top:6px;font-size:12px">Color: ${colorDot}</div>
+    ${p.notes ? `<div style="font-size:11px;color:#475569;margin-top:4px">${esc(p.notes)}</div>` : ''}
+    <div style="margin-top:8px">
+      <button onclick="setBuildsColor('${p.id}')" style="background:#00B5CC;color:#fff;border:none;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">Set Color</button>
+    </div>
+  </div>`;
+}
+
+function shingleDotColor(name) {
+  const n = String(name || '').toLowerCase();
+  if (n.includes('charcoal')) return '#2a2d2f';
+  if (n.includes('pewter')) return '#707a7e';
+  if (n.includes('weathered')) return '#5a4a3a';
+  if (n.includes('driftwood')) return '#9a8872';
+  if (n.includes('barkwood')) return '#4a3524';
+  if (n.includes('hunter')) return '#2e5b3e';
+  if (n.includes('shakewood')) return '#8c6f4c';
+  if (n.includes('hickory')) return '#6e4f32';
+  if (n.includes('slate')) return '#4f5b66';
+  return '#64748B';
+}
+
+async function setBuildsColor(pinId) {
+  const options = BUILDS_COMMON_COLORS.join(', ');
+  const choice = prompt('Shingle color — pick one of:\n' + options + '\n\nOr type a custom color.', '');
+  if (!choice || !choice.trim()) return;
+  try {
+    const res = await fetch('/api/builds-map/pins/' + encodeURIComponent(pinId), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shingleColor: choice.trim() })
+    });
+    if (!res.ok) { alert('Update failed'); return; }
+    await loadBuildsPins();
+  } catch (e) { alert('Error: ' + e.message); }
+}
