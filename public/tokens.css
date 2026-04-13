@@ -1,0 +1,107 @@
+/* CRC Design Tokens — single source of truth for colors, typography, spacing.
+ * Load before every other stylesheet on every page (portal + field app).
+ * Brand rules:
+ *   - Navy is dominant (60%+ of any composition)
+ *   - Teal is reserved for actions/CTAs/active states — never big backgrounds
+ *   - Red = danger, Gold = premium, Green = success, Amber = pending */
+
+:root {
+  /* Primary */
+  --navy: #1B2360;
+  --teal: #00B5CC;
+  --white: #FFFFFF;
+  --black: #0D0D0D;
+
+  /* Secondary */
+  --steel-dark: #3A4A5C;
+  --steel-mid: #8C9BAD;
+  --steel-light: #D4DCE5;
+  --off-white: #F5F6FA;
+
+  /* Accent */
+  --red: #C0392B;
+  --gold: #B8965A;
+  --green: #27AE60;
+  --amber: #F59E0B;
+
+  /* Surfaces (dark mode = default) */
+  --surface-primary: #0D1117;
+  --surface-secondary: #161B22;
+  --surface-card: #1C2333;
+  --surface-hover: #252D3D;
+  --surface-border: rgba(255,255,255,0.08);
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: var(--steel-light);
+  --text-muted: var(--steel-mid);
+  --text-label: var(--steel-mid);
+
+  /* Typography */
+  --font-display: 'Bebas Neue', 'Impact', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  /* Shadows (muted in dark mode, real in light) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+
+  /* Legacy aliases used across existing CSS. Keep until those files
+     are fully migrated so nothing breaks in the interim. */
+  --bg: var(--surface-primary);
+  --surface: var(--surface-card);
+  --surface-2: var(--surface-hover);
+  --border: var(--surface-border);
+  --accent-teal: var(--teal);
+  --accent-navy: var(--navy);
+  --mid-gray: var(--steel-light);
+  --light-gray: var(--off-white);
+  --dark-gray: var(--steel-mid);
+  --gray: var(--steel-mid);
+  --text: var(--text-primary);
+}
+
+[data-theme="light"] {
+  --surface-primary: var(--off-white);
+  --surface-secondary: var(--white);
+  --surface-card: var(--white);
+  --surface-hover: #E8EBF0;
+  --surface-border: rgba(27,35,96,0.1);
+
+  --text-primary: var(--navy);
+  --text-secondary: var(--steel-dark);
+  --text-muted: var(--steel-mid);
+  --text-label: var(--steel-mid);
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Base typography hook — pages opt in by setting font-family on body.
+   Variables above are available everywhere. */
+.brand-display { font-family: var(--font-display); letter-spacing: 0.04em; }
+.brand-body    { font-family: var(--font-body); }
+
+/* Section labels (e.g. "3 CORE DRIVERS", "SCORECARD") — Bebas Neue, uppercase, tracked */
+.brand-section-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Inter with tabular numerals for data readouts */
+.brand-data { font-family: var(--font-body); font-weight: 700; font-variant-numeric: tabular-nums; }

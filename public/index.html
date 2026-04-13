@@ -9,6 +9,10 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/images/icon-192.png">
   <title>CRC Field Intel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -34,11 +38,11 @@
   <!-- Main App -->
   <div id="app" style="display:none">
     <div id="app-header" class="app-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="/img/crc-logo-monogram.jpg" alt="CRC" style="width:30px;height:30px;border-radius:4px;object-fit:cover">
-        <div style="display:flex;flex-direction:column;line-height:1.1">
-          <span style="font-size:15px;font-weight:800;letter-spacing:1.5px;color:#fff">COLUMBUS ROOFING</span>
-          <span style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--teal);text-transform:uppercase">OFFICIAL FIELD APP</span>
+      <div class="field-brand">
+        <img src="/assets/CRC_Icon.svg" alt="CRC" class="field-brand-logo">
+        <div class="field-brand-text">
+          <span class="field-brand-name">COLUMBUS ROOFING</span>
+          <span class="field-brand-sub">OFFICIAL FIELD APP</span>
         </div>
       </div>
       <span id="rep-badge" class="rep-badge"></span>
