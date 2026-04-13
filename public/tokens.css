@@ -105,3 +105,6 @@
 
 /* Inter with tabular numerals for data readouts */
 .brand-data { font-family: var(--font-body); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Google Places Autocomplete dropdown — must float above modals/dropdowns */
+.pac-container { z-index: 10000 !important; }
