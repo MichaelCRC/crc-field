@@ -14,6 +14,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      var t = localStorage.getItem('crc_field_theme');
+      if (t !== 'light' && t !== 'dark') t = 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+    function toggleFieldTheme() {
+      var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('crc_field_theme', next);
+      var icon = document.getElementById('field-theme-icon');
+      if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀';
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      var icon = document.getElementById('field-theme-icon');
+      if (icon) icon.textContent = (document.documentElement.getAttribute('data-theme') === 'dark') ? '🌙' : '☀';
+    });
+  </script>
 </head>
 <body>
   <!-- Loading Screen -->
@@ -45,7 +64,10 @@
           <span class="field-brand-sub">OFFICIAL FIELD APP</span>
         </div>
       </div>
-      <span id="rep-badge" class="rep-badge"></span>
+      <div class="app-header-right">
+        <button id="field-theme-toggle" class="field-theme-btn" onclick="toggleFieldTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="field-theme-icon">🌙</span></button>
+        <span id="rep-badge" class="rep-badge"></span>
+      </div>
     </div>
 
     <!-- JOBS VIEW -->

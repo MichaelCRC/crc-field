@@ -480,3 +480,49 @@ body { font-family: var(--font-body); }
 .field-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 .field-brand-name { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.12em; color: var(--white); }
 .field-brand-sub  { font-family: var(--font-display); font-size: 10px; letter-spacing: 0.2em; color: var(--teal); text-transform: uppercase; margin-top: 2px; }
+
+/* ── Theme toggle button (field app header) ── */
+.app-header-right { display: inline-flex; align-items: center; gap: 8px; }
+.field-theme-btn {
+  background: rgba(255,255,255,0.12);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.field-theme-btn:hover { border-color: var(--teal); }
+
+/* ── Light mode overrides ──
+   Brand rule: header + sidebar nav stay navy in both modes.
+   Body, content surfaces, and text swap. */
+[data-theme="light"] body,
+[data-theme="light"] .app-view { background: var(--off-white); color: var(--navy); }
+[data-theme="light"] .quick-add,
+[data-theme="light"] .lead-card,
+[data-theme="light"] .job-card,
+[data-theme="light"] .feed-card,
+[data-theme="light"] .feed-post,
+[data-theme="light"] .detail-panel { background: var(--white); border-color: var(--surface-border); color: var(--navy); }
+[data-theme="light"] .feed-card-rep,
+[data-theme="light"] .feed-card-headline,
+[data-theme="light"] .feed-card-body,
+[data-theme="light"] .feed-comment { color: var(--navy); }
+[data-theme="light"] .feed-card-when,
+[data-theme="light"] .feed-card-sub,
+[data-theme="light"] .feed-comment-when { color: var(--steel-mid); }
+[data-theme="light"] .feed-rx-btn { background: var(--off-white); color: var(--navy); border-color: var(--surface-border); }
+[data-theme="light"] .feed-rx-btn.mine { background: rgba(0,181,204,0.12); border-color: var(--teal); color: var(--teal); }
+[data-theme="light"] .feed-comment-input,
+[data-theme="light"] .feed-post textarea,
+[data-theme="light"] .feed-post-job,
+[data-theme="light"] .feed-comment-input { background: var(--off-white); color: var(--navy); border-color: var(--surface-border); }
+[data-theme="light"] .gate { background: var(--navy); }   /* gate stays dark */
+[data-theme="light"] .bottom-nav { background: var(--white); border-top: 1px solid var(--surface-border); }
+[data-theme="light"] .nav-item { color: var(--steel-mid); }
+[data-theme="light"] .nav-item.active { color: var(--teal); }
