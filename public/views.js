@@ -327,36 +327,10 @@ async function toggleRepCode(code, active) {
   catch(e) { alert('Failed to update rep code: ' + e.message); }
 }
 
-// --- Chat ---
-let chatThread = 'company', chatSSE = null;
-function initChat() { if (!chatSSE || chatSSE.readyState === 2) connectChat(chatThread); loadChatMessages(chatThread); }
-function switchChatThread(tid) { chatThread=tid; document.querySelectorAll('[id^="chat-tab-"]').forEach(c=>c.classList.remove('active')); const el=document.getElementById('chat-tab-'+tid); if(el)el.classList.add('active'); connectChat(tid); loadChatMessages(tid); }
-function connectChat(tid) {
-  if(chatSSE)chatSSE.close();
-  chatSSE=new EventSource('/api/chat/stream/'+tid);
-  chatSSE.onmessage=e=>{ try{ const d=JSON.parse(e.data); if(d.type==='message')appendChatMsg(d.message); }catch{} };
-  chatSSE.onerror=()=>{ chatSSE.close(); setTimeout(()=>{ if(document.getElementById('view-chat')?.classList.contains('active')) connectChat(tid); }, 3000); };
-}
-async function loadChatMessages(tid) {
-  const c=document.getElementById('chat-messages'); if(!c)return;
-  try { const data=await fetch('/api/chat/messages/'+tid).then(r=>r.json()); c.innerHTML=(data.messages||[]).map(m=>chatBubble(m)).join(''); c.scrollTop=c.scrollHeight; }
-  catch(e) { c.innerHTML='<p style="padding:16px;color:var(--red)">Failed to load messages</p>'; }
-}
-function chatBubble(m) { const mine=m.repCode===repCode; if(m.type==='system') return '<div style="text-align:center;padding:8px;font-size:12px;color:var(--gray);font-style:italic">'+m.text+'</div>'; const bg=mine?'var(--teal)':'var(--navy)'; const al=mine?'flex-end':'flex-start'; const t=m.timestamp?new Date(m.timestamp).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):''; return '<div style="display:flex;flex-direction:column;align-items:'+al+';margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--gray)">'+m.repCode+'</div><div style="background:'+bg+';color:white;padding:8px 14px;border-radius:16px;max-width:80%;font-size:14px;word-break:break-word">'+(m.photoUrl?'<img src="'+m.photoUrl+'" style="max-width:100%;border-radius:8px"><br>':'')+m.text+'</div><div style="font-size:10px;color:var(--gray)">'+t+'</div></div>'; }
-function appendChatMsg(m) { const c=document.getElementById('chat-messages'); if(!c)return; c.innerHTML+=chatBubble(m); c.scrollTop=c.scrollHeight; }
-async function sendChatMessage() {
-  const i=document.getElementById('chat-input'); const t=i.value.trim(); if(!t)return; i.value='';
-  try { await fetch('/api/chat/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({threadId:chatThread,text:t,repCode})}); }
-  catch(e) { alert('Failed to send message'); i.value=t; }
-}
-async function sendChatPhoto(file) {
-  if(!file)return;
-  try {
-    const fd=new FormData(); fd.append('photo',file); fd.append('threadId',chatThread); fd.append('repCode',repCode);
-    await fetch('/api/chat/photo',{method:'POST',body:fd});
-  } catch(e) { alert('Failed to send photo'); }
-}
-function showDmList() { alert('Direct messages coming soon. Use CRC Team thread for now.'); }
+// --- Chat (user-facing) removed; superseded by the CRC Activity Feed below.
+// Admin-side chat thread management (loadChatThreads / manageChatThread /
+// addChatMember / removeChatMember / createChatThread) above still operates
+// on the legacy /api/chat/* routes so historical threads stay manageable.
 
 // --- Brain ---
 let brainHistory = [], brainStreaming = false;

@@ -93,7 +93,7 @@ function switchView(name) {
   if (name === 'jobs') { document.getElementById('job-detail').classList.remove('open'); loadJobs(); }
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'stats') loadStats();
-  if (name === 'chat') initChat();
+  if (name === 'feed') initFeed();
   if (name === 'brain') initBrain();
   if (name === 'admin') loadAdmin();
 }

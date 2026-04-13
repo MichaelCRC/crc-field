@@ -166,19 +166,22 @@
       <div id="leaderboard"></div>
     </div>
 
-    <!-- CHAT VIEW -->
-    <div id="view-chat" class="app-view">
-      <div style="padding:8px 16px;background:var(--white);border-bottom:1px solid var(--border);display:flex;gap:6px">
-        <button class="chip active" onclick="switchChatThread('company')" id="chat-tab-company">CRC Team</button>
-        <button class="chip" onclick="switchChatThread('leadership')" id="chat-tab-leadership" style="display:none">Leadership</button>
-        <button class="chip" onclick="showDmList()" id="chat-tab-dm">DMs</button>
+    <!-- FEED VIEW (CRC Activity Feed) -->
+    <div id="view-feed" class="app-view">
+      <!-- Sticky post box -->
+      <div class="feed-post">
+        <textarea id="feed-post-text" placeholder="What's happening on your jobs?" rows="2"></textarea>
+        <div id="feed-post-photo-preview" class="feed-post-preview"></div>
+        <div class="feed-post-row">
+          <label class="feed-post-photo-btn" title="Attach photo">&#128247;
+            <input type="file" accept="image/*" style="display:none" onchange="feedPickPhoto(this)">
+          </label>
+          <select id="feed-post-job" class="feed-post-job"><option value="">Link job (optional)</option></select>
+          <button class="feed-post-btn" onclick="feedSubmitPost()">Post</button>
+        </div>
       </div>
-      <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;height:calc(100vh - 230px)"></div>
-      <div style="display:flex;gap:8px;padding:12px 16px;background:var(--white);border-top:1px solid var(--border)">
-        <label style="display:flex;align-items:center;cursor:pointer"><span style="font-size:20px">&#128247;</span><input type="file" accept="image/*" style="display:none" onchange="sendChatPhoto(this.files[0])"></label>
-        <input type="text" id="chat-input" placeholder="Message..." style="flex:1;padding:10px;border:1px solid var(--border);border-radius:20px;font-size:15px" onkeydown="if(event.key==='Enter')sendChatMessage()">
-        <button onclick="sendChatMessage()" style="background:var(--teal);color:white;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer">&#10148;</button>
-      </div>
+      <!-- Scrolling feed -->
+      <div id="feed-list" class="feed-list"><div class="feed-loading">Loading feed...</div></div>
     </div>
 
     <!-- BRAIN VIEW -->
@@ -270,8 +273,8 @@
       <button class="nav-item" onclick="switchView('map')" id="nav-map">
         <span class="nav-icon">&#128205;</span><span class="nav-label">Map</span>
       </button>
-      <button class="nav-item" onclick="switchView('chat')" id="nav-chat">
-        <span class="nav-icon">&#128172;</span><span class="nav-label">Team</span>
+      <button class="nav-item" onclick="switchView('feed')" id="nav-feed">
+        <span class="nav-icon">&#128240;</span><span class="nav-label">Feed</span>
       </button>
       <button class="nav-item" onclick="toggleMoreMenu()" id="nav-more">
         <span class="nav-icon">&#9776;</span><span class="nav-label">More</span>
@@ -325,6 +328,7 @@
   <script src="photo-actions.js"></script>
   <script src="photo-reports.js"></script>
   <script src="views.js"></script>
+  <script src="feed.js"></script>
   <script src="jobs.js"></script>
   <script src="fieldobs.js"></script>
   <script src="/markup.js"></script>
