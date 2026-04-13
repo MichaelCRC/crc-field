@@ -442,7 +442,7 @@ function openStagePickerInDetail(jobId) {
 function openPipelineTransfer(jobId) {
   var pipelines = [
     { key: 'insurance', label: 'Insurance', color: '#00B5CC' },
-    { key: 'retail',    label: 'Retail',    color: '#1B2360' },
+    { key: 'retail',    label: 'Retail',    color: '#001A4D' },
     { key: 'repair',    label: 'Repair',    color: '#6B7280' },
   ];
   showActionSheet('Transfer Job Type', pipelines.map(p => ({
@@ -472,7 +472,7 @@ function markJobLost(jobId) {
 function openJobActionMenu(jobId) {
   showActionSheet('Job Actions', [
     { label: 'Move Stage',    color: '#00B5CC', action: function() { openStagePickerInDetail(jobId); } },
-    { label: 'Transfer Type', color: '#1B2360', action: function() { openPipelineTransfer(jobId); } },
+    { label: 'Transfer Type', color: '#001A4D', action: function() { openPipelineTransfer(jobId); } },
     { label: 'Follow Up',     color: '#0EA5E9', action: function() { markJobFollowUp(jobId); } },
     { label: 'Mark Lost',     color: '#DC2626', action: function() { markJobLost(jobId); } },
   ]);

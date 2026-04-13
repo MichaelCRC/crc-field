@@ -356,7 +356,7 @@ router.get('/rep-card/:code', (req, res) => {
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     .card-header {
-      background: #1B2360;
+      background: #001A4D;
       padding: 30px 24px 20px;
       text-align: center;
       position: relative;
@@ -646,7 +646,7 @@ router.get('/rep-card/:code', (req, res) => {
     </div>
     ${editFormHtml}
     <div class="footer">
-      <div style="font-size:13px;color:#1B2360;font-weight:600">Columbus Roofing Company</div>
+      <div style="font-size:13px;color:#001A4D;font-weight:600">Columbus Roofing Company</div>
       <div style="font-size:11px;color:#999;margin-top:2px;font-style:italic">The Everyday Standard.</div>
       <div class="license">columbusroofingco.com</div>
     </div>

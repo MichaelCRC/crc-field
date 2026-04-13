@@ -11,7 +11,7 @@ const OUTPUT = path.join(__dirname, '..', 'public', 'docs', 'CRC-Buyers-Guide.pd
 const LOGO = path.join(process.env.HOME, 'vaults/crc-brain/active/brand/logos/active-v1/CRC_Primary_Badge.png');
 
 // Brand colors
-const NAVY = '#1B2360';
+const NAVY = '#001A4D';
 const TEAL = '#00B5CC';
 const WHITE = '#FFFFFF';
 const DARK = '#333333';

@@ -111,7 +111,7 @@ function buildReportHtml(lead, photos, type, reportType, repCode) {
   for (const [tag, tagPhotos] of Object.entries(grouped)) {
     const label = tag.charAt(0).toUpperCase() + tag.slice(1).replace('-', ' ');
     photoSections += `
-      <h3 style="color:#1B2360;margin:20px 0 10px;font-size:16px;border-bottom:2px solid #00B5CC;padding-bottom:4px">${label}</h3>
+      <h3 style="color:#001A4D;margin:20px 0 10px;font-size:16px;border-bottom:2px solid #00B5CC;padding-bottom:4px">${label}</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         ${tagPhotos.map(p => `<div>
           <img src="${p.url}" style="width:100%;height:200px;object-fit:cover;border-radius:4px">
@@ -127,11 +127,11 @@ function buildReportHtml(lead, photos, type, reportType, repCode) {
   body { font-family: -apple-system, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #1E293B; }
   @media print { body { padding: 0; } .no-print { display: none; } }
 </style></head><body>
-  <div style="text-align:center;margin-bottom:24px;border-bottom:3px solid #1B2360;padding-bottom:16px">
-    <div style="font-size:28px;font-weight:900;color:#1B2360;letter-spacing:2px">CRC</div>
+  <div style="text-align:center;margin-bottom:24px;border-bottom:3px solid #001A4D;padding-bottom:16px">
+    <div style="font-size:28px;font-weight:900;color:#001A4D;letter-spacing:2px">CRC</div>
     <div style="font-size:12px;color:#00B5CC;font-weight:600">COLUMBUS ROOFING COMPANY</div>
   </div>
-  <h1 style="font-size:22px;color:#1B2360;margin-bottom:4px">${title}</h1>
+  <h1 style="font-size:22px;color:#001A4D;margin-bottom:4px">${title}</h1>
   <p style="color:#64748B;margin-bottom:16px">${subtitle}</p>
   <div style="background:#F5F7FA;padding:16px;border-radius:8px;margin-bottom:24px;font-size:14px">
     <div><strong>Property:</strong> ${lead.address}</div>
@@ -141,8 +141,8 @@ function buildReportHtml(lead, photos, type, reportType, repCode) {
     ${lead.measurements ? `<div><strong>Roof:</strong> ${lead.measurements.totalSquares | '?'} SQ | Pitch: ${lead.measurements.predominantPitch | '?'}</div>` : ''}
   </div>
   ${photoSections}
-  <div style="margin-top:32px;padding-top:16px;border-top:2px solid #1B2360;text-align:center;font-size:12px;color:#64748B">
-    <div style="font-weight:700;color:#1B2360">Columbus Roofing Company</div>
+  <div style="margin-top:32px;padding-top:16px;border-top:2px solid #001A4D;text-align:center;font-size:12px;color:#64748B">
+    <div style="font-weight:700;color:#001A4D">Columbus Roofing Company</div>
     <div>columbusroofingco.com</div>
   </div>
   <div class="no-print" style="text-align:center;margin-top:24px">

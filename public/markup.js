@@ -30,7 +30,7 @@ function renderRoofDiagramLegacy(job) {
       </div>`;
     } else if (overheadPhoto) {
       // Offer overhead photo as diagram
-      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#1B2360;color:#fff">Overhead Photo Available</span></div>`;
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#001A4D;color:#fff">Overhead Photo Available</span></div>`;
       html += `<div style="margin-bottom:12px"><img src="${overheadPhoto.url}" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
       <div style="display:flex;gap:8px">
         <button class="btn-primary btn-sm" onclick="useImageAsDiagram('${overheadPhoto.url.replace(/'/g, "\\'")}')">Use as Diagram</button>

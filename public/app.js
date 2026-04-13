@@ -556,14 +556,14 @@ function openSignatureScreen(jobId, jobName, homeownerName) {
   overlay.style.cssText = 'position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;overflow:hidden';
 
   overlay.innerHTML = `
-    <div style="background:#1B2360;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div style="background:#001A4D;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">
       <div style="font-weight:800;font-size:15px;letter-spacing:1.5px;color:#fff">CRC</div>
       <div style="font-size:14px;font-weight:700;flex:1;text-align:center;letter-spacing:0.3px">Insurance Claim Authorization</div>
       <button onclick="document.getElementById('sig-auth-overlay').remove()" style="background:none;border:none;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;flex-shrink:0">&times;</button>
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch" id="sig-auth-body">
-      <div style="font-size:13px;color:#1B2360;line-height:1.65;margin-bottom:20px;padding:14px 16px;background:#f0f4ff;border-radius:8px;border-left:4px solid #00B5CC">
+      <div style="font-size:13px;color:#001A4D;line-height:1.65;margin-bottom:20px;padding:14px 16px;background:#f0f4ff;border-radius:8px;border-left:4px solid #00B5CC">
         <p style="margin:0 0 10px 0;font-weight:600">By signing below, I authorize Columbus Roofing Company (CRC) to:</p>
         <ol style="margin:0 0 10px 0;padding-left:20px">
           <li style="margin-bottom:7px">Review my insurance claim and communicate with my carrier regarding scope and supplements.</li>
@@ -576,15 +576,15 @@ function openSignatureScreen(jobId, jobName, homeownerName) {
       </div>
 
       <div style="margin-bottom:16px">
-        <label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Full Name</label>
+        <label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Full Name</label>
         <input type="text" id="sig-auth-name" placeholder="Enter full name" value="${escHtml(homeownerName)}"
-          style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#1B2360">
+          style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#001A4D">
       </div>
 
       <div style="margin-bottom:8px">
-        <label style="display:block;font-size:11px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Signature</label>
+        <label style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Signature</label>
         <canvas id="sig-auth-canvas"
-          style="width:100%;height:200px;background:#fff;border:2px solid #1B2360;border-radius:8px;display:block;touch-action:none"></canvas>
+          style="width:100%;height:200px;background:#fff;border:2px solid #001A4D;border-radius:8px;display:block;touch-action:none"></canvas>
         <div style="font-size:11px;color:#94a3b8;margin-top:4px;text-align:center">Draw your signature above with your finger</div>
       </div>
 
@@ -596,7 +596,7 @@ function openSignatureScreen(jobId, jobName, homeownerName) {
           Clear
         </button>
         <button onclick="sigAuthSubmit('${jobId}')"
-          style="flex:2;padding:13px;background:#1B2360;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.3px;font-family:inherit">
+          style="flex:2;padding:13px;background:#001A4D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.3px;font-family:inherit">
           Sign &amp; Submit
         </button>
       </div>
@@ -706,7 +706,7 @@ async function sigAuthSubmit(jobId) {
     if (body) {
       body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center">'
         + '<div style="font-size:72px;margin-bottom:16px">&#9989;</div>'
-        + '<div style="font-size:24px;font-weight:800;color:#1B2360;margin-bottom:8px">Signed!</div>'
+        + '<div style="font-size:24px;font-weight:800;color:#001A4D;margin-bottom:8px">Signed!</div>'
         + '<div style="font-size:14px;color:#64748b">Authorization captured successfully.</div>'
         + '</div>';
     }

@@ -435,7 +435,7 @@ function showBuildsToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'builds-toast';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B2360;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;box-shadow:0 4px 14px rgba(0,0,0,0.25)';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#001A4D;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;box-shadow:0 4px 14px rgba(0,0,0,0.25)';
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -508,7 +508,7 @@ function plotBuildsPins() {
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
-        fillColor: '#1B2360',
+        fillColor: '#001A4D',
         fillOpacity: 0.85,
         strokeColor: '#FFFFFF',
         strokeWeight: 2
