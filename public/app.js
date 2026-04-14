@@ -102,19 +102,14 @@ function switchView(name) {
   if (name === 'brain') initBrain();
   if (name === 'admin') loadAdmin();
   if (name === 'booking') {
-    const iframe = document.getElementById('booking-iframe');
-    // Load on first open, then keep alive (don't reload on revisit)
-    if (iframe && !iframe.src.includes('columbusroofingco')) {
-      iframe.src = 'https://crc-supplements-portal.onrender.com/book';
-    }
-    // Ensure view fills full available height
     const view = document.getElementById('view-booking');
     if (view) {
       const navH = document.querySelector('.bottom-nav')?.offsetHeight || 56;
       const headerH = document.querySelector('.app-header')?.offsetHeight || 56;
       view.style.height = `calc(100vh - ${headerH + navH}px)`;
-      if (iframe) iframe.style.height = '100%';
     }
+    if (typeof initBookingView === 'function') initBookingView();
+    return;
   }
 }
 
