@@ -20,11 +20,18 @@ function openCameraMode() {
   cameraTag = activePhotoTab === 'inspection' ? 'overview' : 'during';
   startCompass();
 
-  // Try live camera first, fall back to file input
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  // iOS Safari refuses to open getUserMedia in many PWA / standalone
+  // contexts, and even when it works the permission prompt + low-res
+  // viewfinder lose to <input capture> for field reps. Skip the live
+  // viewfinder on iOS and let the OS open the native camera UI directly.
+  // Desktop / Android keep the live viewfinder.
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent || '')
+    || (navigator.userAgent.includes('Mac') && navigator.maxTouchPoints > 1);
+
+  if (!isIOS && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     openLiveViewfinder();
   } else {
-    console.log('[Camera] getUserMedia not supported, using file input fallback');
+    console.log('[Camera]', isIOS ? 'iOS detected — using native camera via <input capture>' : 'getUserMedia unavailable — using file input fallback');
     renderCameraHUD();
     triggerCamera();
   }
