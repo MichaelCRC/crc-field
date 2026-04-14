@@ -334,8 +334,53 @@ async function toggleRepCode(code, active) {
 
 // --- Brain ---
 let brainHistory = [], brainStreaming = false;
+
+// Tiny markdown renderer for assistant responses. Escapes HTML first so
+// stray angle brackets in AI output can't inject markup, then applies
+// bold / italic / inline code / links / paragraph + line breaks. User
+// messages stay literal (escaped, no formatting).
+function _brainEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function brainMd(text) {
+  let s = _brainEsc(text);
+  // Bold first so its inner * doesn't trigger italic.
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  // Italic: *foo* / _foo_ — guarded so adjacent word chars don't false-match.
+  s = s.replace(/(^|[^\w*])\*([^*\n]+?)\*(?!\w)/g, '$1<em>$2</em>');
+  s = s.replace(/(^|[^\w_])_([^_\n]+?)_(?!\w)/g, '$1<em>$2</em>');
+  // Inline code.
+  s = s.replace(/`([^`\n]+?)`/g, '<code style="background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:3px;font-family:ui-monospace,Menlo,monospace;font-size:12px">$1</code>');
+  // Markdown links [text](url).
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color:#7DD3FC;text-decoration:underline">$1</a>');
+  // Bullet lines starting with "- " or "* ".
+  s = s.replace(/(^|\n)[*-]\s+(.+)/g, '$1• $2');
+  // Paragraph break (blank line) → two <br>; single newline → one <br>.
+  s = s.replace(/\n{2,}/g, '<br><br>');
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
 function initBrain() { const s=localStorage.getItem('crc-brain-'+repCode); if(s){try{brainHistory=JSON.parse(s);}catch{brainHistory=[];}} renderBrain(); }
-function renderBrain() { const c=document.getElementById('brain-messages'); if(!c)return; c.innerHTML=brainHistory.map((m,i)=>{ const mine=m.role==='user'; const bg=mine?'var(--teal)':'var(--navy)'; const al=mine?'flex-end':'flex-start'; const copyBtn=mine?'':'<button onclick="copyBrainMsg('+i+')" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;padding:2px 6px;margin-top:2px">Copy</button>'; return '<div style="display:flex;flex-direction:column;align-items:'+al+';margin-bottom:12px">'+(mine?'':'<div style="font-size:10px">&#129504; CRC Brain</div>')+'<div style="background:'+bg+';color:white;padding:10px 16px;border-radius:16px;max-width:85%;font-size:14px;line-height:1.5;white-space:pre-wrap">'+m.content+'</div>'+copyBtn+'</div>'; }).join(''); c.scrollTop=c.scrollHeight; if(brainHistory.length)document.getElementById('brain-suggestions').style.display='none'; }
+function renderBrain() {
+  const c = document.getElementById('brain-messages');
+  if (!c) return;
+  c.innerHTML = brainHistory.map((m, i) => {
+    const mine = m.role === 'user';
+    const bg = mine ? 'var(--teal)' : 'var(--navy)';
+    const al = mine ? 'flex-end' : 'flex-start';
+    const body = mine ? _brainEsc(m.content) : brainMd(m.content);
+    const copyBtn = mine ? '' : '<button onclick="copyBrainMsg(' + i + ')" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;padding:2px 6px;margin-top:2px">Copy</button>';
+    return '<div style="display:flex;flex-direction:column;align-items:' + al + ';margin-bottom:12px">'
+      + (mine ? '' : '<div style="font-size:10px">&#129504; CRC Brain</div>')
+      + '<div style="background:' + bg + ';color:white;padding:10px 16px;border-radius:16px;max-width:85%;font-size:14px;line-height:1.55">' + body + '</div>'
+      + copyBtn
+      + '</div>';
+  }).join('');
+  c.scrollTop = c.scrollHeight;
+  if (brainHistory.length) document.getElementById('brain-suggestions').style.display = 'none';
+}
 function copyBrainMsg(i) { if(brainHistory[i]) navigator.clipboard.writeText(brainHistory[i].content).then(()=>{ const btns=document.querySelectorAll('#brain-messages button'); const b=btns[Math.floor(i/2)]; if(b){b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1500);} }).catch(()=>{}); }
 function askBrain(t) { document.getElementById('brain-input').value=t; sendBrainMessage(); }
 async function sendBrainMessage() {
