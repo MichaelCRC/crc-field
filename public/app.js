@@ -99,6 +99,7 @@ function switchView(name) {
   if (name === 'map' && !mapInitialized) initMap();
   if (name === 'stats') loadStats();
   if (name === 'feed') initFeed();
+  if (name === 'notes') initNotes();
   if (name === 'brain') initBrain();
   if (name === 'admin') loadAdmin();
   if (name === 'booking') {
