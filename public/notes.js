@@ -44,10 +44,15 @@ async function notesFetch(path, opts) {
 }
 
 async function initNotes() {
-  // Render skeleton from cache for instant paint, then fetch.
+  const host = document.getElementById('view-notes');
+  if (!host) { console.error('[notes] #view-notes container missing'); return; }
+  // Paint the skeleton immediately from cache so the user sees the sidebar
+  // even before the API responds (or if it's offline).
   hydrateNotesFromCache();
   renderNotesView();
-  await Promise.all([loadNotesList(), loadNotebooks(), ensureJobsCache()]);
+  try {
+    await Promise.all([loadNotesList(), loadNotebooks(), ensureJobsCache()]);
+  } catch (e) { console.warn('[notes] background load failed:', e?.message || e); }
   renderNotesView();
   flushPendingPatches();
 }

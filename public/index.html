@@ -255,8 +255,10 @@
     <!-- BOOKING VIEW (native) -->
     <div id="view-booking" class="app-view" style="display:none"></div>
 
-    <!-- NOTES VIEW (rendered by notes.js) -->
-    <div id="view-notes" class="app-view" style="display:none"></div>
+    <!-- NOTES VIEW (rendered by notes.js). No inline display style — it would
+         override .app-view.active toggled by switchView() and #view-notes.active
+         in the notes CSS, leaving the panel permanently blank. -->
+    <div id="view-notes" class="app-view"></div>
 
     <div id="view-feed" class="app-view">
       <!-- Sticky post box -->
