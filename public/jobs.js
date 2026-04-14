@@ -5,6 +5,7 @@ const JOB_STAGES = [
   { key: 'appointment_set', label: 'Appointment Set',   color: '#F59E0B' },
   { key: 'inspected',       label: 'Inspected',         color: '#3B82F6' },
   { key: 'claim_filed',     label: 'Claim Filed',       color: '#8B5CF6' },
+  { key: 'crc_scope_built', label: 'CRC Scope Built',   color: '#7C3AED' },
   { key: 'scope_received',  label: 'Scope Received',    color: '#EC4899' },
   { key: 'supplementing',   label: 'Supplementing',     color: '#F97316' },
   { key: 'ready_to_collect',label: 'Ready to Collect',  color: '#10B981' },
