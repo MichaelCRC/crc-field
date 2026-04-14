@@ -155,10 +155,22 @@ function renderNoteList() {
     const pinned = n.pinned ? '<span class="notes-pin-mark">📌</span>' : '';
     const job = n.jobName ? `<span class="notes-job-pill">${escNotes(n.jobName)}</span>` : '';
     const preview = (n.body || '').slice(0, 80).replace(/\n/g, ' ');
+    const ds = Array.isArray(n.drawings) ? n.drawings : [];
+    // Thumbnail of the first drawing — small visual cue that the note
+    // contains handwriting alongside (or instead of) typed text.
+    const thumb = ds.length
+      ? `<img class="notes-row-thumb" src="${ds[0].dataUrl}" alt="drawing">`
+      : '';
+    const drawCount = ds.length > 1 ? `<span class="notes-row-draw-count">+${ds.length - 1}</span>` : '';
     return `<button class="notes-row${sel}" style="border-left-color:${meta.color}" onclick="selectNote('${n.id}')">
-      <div class="notes-row-top">${pinned}<span class="notes-row-title">${escNotes(n.title || 'Untitled')}</span><span class="notes-row-time">${notesRelTime(n.updatedAt)}</span></div>
-      ${preview ? `<div class="notes-row-preview">${escNotes(preview)}</div>` : ''}
-      ${job ? `<div class="notes-row-meta">${job}</div>` : ''}
+      <div class="notes-row-flex">
+        <div class="notes-row-main">
+          <div class="notes-row-top">${pinned}<span class="notes-row-title">${escNotes(n.title || 'Untitled')}</span><span class="notes-row-time">${notesRelTime(n.updatedAt)}</span></div>
+          ${preview ? `<div class="notes-row-preview">${escNotes(preview)}</div>` : ''}
+          ${job ? `<div class="notes-row-meta">${job}</div>` : ''}
+        </div>
+        ${thumb ? `<div class="notes-row-thumb-wrap">${thumb}${drawCount}</div>` : ''}
+      </div>
     </button>`;
   }).join('');
 }
@@ -201,7 +213,12 @@ function renderEditor() {
       </label>
     </div>
     ${n.jobId ? renderJobContextCard(n) : ''}
+    <div class="notes-mode-toggle" role="tablist">
+      <button type="button" class="notes-mode-btn active" data-mode="type" onclick="setNotesMode('type')">⌨ Type</button>
+      <button type="button" class="notes-mode-btn"        data-mode="draw" onclick="openDrawCanvas()">✏️ Draw</button>
+    </div>
     <textarea class="notes-body" id="notes-body" placeholder="Write here…" oninput="queueSave()">${escNotes(n.body || '')}</textarea>
+    ${renderDrawingsStrip(n)}
     <div class="notes-editor-actions">
       <button class="notes-action" onclick="togglePin()">${n.pinned ? '📌 Unpin' : '📌 Pin'}</button>
       <button class="notes-action" onclick="copyNote()">📋 Copy</button>
@@ -209,6 +226,29 @@ function renderEditor() {
       <button class="notes-action notes-action-danger" onclick="deleteNote()">🗑 Delete</button>
     </div>
   `;
+}
+
+function renderDrawingsStrip(n) {
+  const ds = Array.isArray(n.drawings) ? n.drawings : [];
+  if (!ds.length) return '';
+  return '<div class="notes-drawings-strip">'
+    + '<div class="notes-drawings-label">DRAWINGS</div>'
+    + '<div class="notes-drawings-grid">'
+    + ds.map(function (d) {
+        return '<div class="notes-drawing-thumb">'
+          + '<img src="' + d.dataUrl + '" alt="drawing" onclick="openDrawingFullscreen(\'' + d.id + '\')">'
+          + '<button class="notes-drawing-del" title="Delete drawing" onclick="deleteDrawing(\'' + d.id + '\')">×</button>'
+          + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+
+function setNotesMode(mode) {
+  document.querySelectorAll('.notes-mode-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  // Type mode just focuses the textarea — Draw mode is handled by openDrawCanvas().
+  if (mode === 'type') document.getElementById('notes-body')?.focus();
 }
 
 function renderJobContextCard(n) {
@@ -356,6 +396,187 @@ async function togglePin() {
       renderNotesView();
     }
   } catch {}
+}
+
+// ── Draw mode (HTML5 canvas overlay) ────────────────────────────────────
+// Full-screen canvas with PointerEvent input — supports Apple Pencil pressure
+// (modulates stroke width). Done → toDataURL('image/png') → push onto
+// note.drawings → save. Cancel → discard. No conversion to text.
+let _drawState = null;
+
+function openDrawCanvas() {
+  if (!notesState.selectedId) return;
+  closeDrawCanvas();  // safety
+  const overlay = document.createElement('div');
+  overlay.id = 'notes-draw-overlay';
+  overlay.className = 'notes-draw-overlay';
+  overlay.innerHTML = `
+    <div class="notes-draw-bar">
+      <button class="notes-draw-btn" onclick="closeDrawCanvas()">Cancel</button>
+      <div class="notes-draw-tools">
+        <button class="notes-draw-tool active" data-tool="pen" onclick="setDrawTool('pen')">🖊 Pen</button>
+        <button class="notes-draw-tool" data-tool="eraser" onclick="setDrawTool('eraser')">🧽 Erase</button>
+        <button class="notes-draw-tool" onclick="clearDrawCanvas()">↺ Clear</button>
+      </div>
+      <button class="notes-draw-btn primary" onclick="saveDrawCanvas()">Done</button>
+    </div>
+    <canvas id="notes-draw-canvas"></canvas>
+  `;
+  document.body.appendChild(overlay);
+
+  const canvas = overlay.querySelector('#notes-draw-canvas');
+  const ctx = canvas.getContext('2d');
+  // High-DPI: render at devicePixelRatio for crisp lines on Retina + iPad.
+  const dpr = window.devicePixelRatio || 1;
+  const wrap = canvas.getBoundingClientRect();
+  canvas.width  = Math.round(wrap.width * dpr);
+  canvas.height = Math.round(wrap.height * dpr);
+  canvas.style.width = wrap.width + 'px';
+  canvas.style.height = wrap.height + 'px';
+  ctx.scale(dpr, dpr);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#0D0D0D';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, wrap.width, wrap.height);
+
+  _drawState = { canvas, ctx, drawing: false, last: null, tool: 'pen', dpr };
+
+  canvas.addEventListener('pointerdown', _drawStart);
+  canvas.addEventListener('pointermove', _drawMove);
+  canvas.addEventListener('pointerup',   _drawEnd);
+  canvas.addEventListener('pointercancel', _drawEnd);
+  canvas.addEventListener('pointerleave',  _drawEnd);
+  // Prevent the page from scrolling under the canvas while drawing.
+  canvas.style.touchAction = 'none';
+}
+
+function _drawStart(ev) {
+  if (!_drawState) return;
+  ev.preventDefault();
+  _drawState.canvas.setPointerCapture(ev.pointerId);
+  _drawState.drawing = true;
+  const p = _pointerPos(ev);
+  _drawState.last = p;
+  _drawDot(p, ev);
+}
+function _drawMove(ev) {
+  if (!_drawState || !_drawState.drawing) return;
+  ev.preventDefault();
+  const p = _pointerPos(ev);
+  const ctx = _drawState.ctx;
+  // Stroke width modulated by stylus pressure (PointerEvent.pressure: 0–1).
+  // Falls back to a fixed width for finger / mouse where pressure is 0.
+  const pressure = (ev.pressure && ev.pressure > 0) ? ev.pressure : 0.5;
+  const baseWidth = _drawState.tool === 'eraser' ? 18 : 2;
+  ctx.lineWidth = baseWidth + (pressure * 4);
+  ctx.globalCompositeOperation = _drawState.tool === 'eraser' ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = _drawState.tool === 'eraser' ? 'rgba(0,0,0,1)' : '#0D0D0D';
+  ctx.beginPath();
+  ctx.moveTo(_drawState.last.x, _drawState.last.y);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  _drawState.last = p;
+}
+function _drawEnd(ev) {
+  if (!_drawState) return;
+  _drawState.drawing = false;
+  _drawState.last = null;
+  try { _drawState.canvas.releasePointerCapture(ev.pointerId); } catch {}
+}
+function _pointerPos(ev) {
+  const r = _drawState.canvas.getBoundingClientRect();
+  return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+}
+function _drawDot(p, ev) {
+  const ctx = _drawState.ctx;
+  const pressure = (ev.pressure && ev.pressure > 0) ? ev.pressure : 0.5;
+  const r = (_drawState.tool === 'eraser' ? 9 : 1.5) + pressure * 2;
+  ctx.globalCompositeOperation = _drawState.tool === 'eraser' ? 'destination-out' : 'source-over';
+  ctx.fillStyle = _drawState.tool === 'eraser' ? 'rgba(0,0,0,1)' : '#0D0D0D';
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+function setDrawTool(tool) {
+  if (!_drawState) return;
+  _drawState.tool = tool;
+  document.querySelectorAll('.notes-draw-tool').forEach(function (b) {
+    if (b.dataset.tool) b.classList.toggle('active', b.dataset.tool === tool);
+  });
+}
+function clearDrawCanvas() {
+  if (!_drawState) return;
+  if (!confirm('Clear the canvas?')) return;
+  const { ctx, canvas } = _drawState;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+function closeDrawCanvas() {
+  const overlay = document.getElementById('notes-draw-overlay');
+  if (overlay) overlay.remove();
+  _drawState = null;
+  // Restore Type as the active mode pill.
+  document.querySelectorAll('.notes-mode-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.mode === 'type');
+  });
+}
+async function saveDrawCanvas() {
+  if (!_drawState || !notesState.selectedId) { closeDrawCanvas(); return; }
+  const dataUrl = _drawState.canvas.toDataURL('image/png');
+  closeDrawCanvas();
+  const note = notesState.notes.find(x => x.id === notesState.selectedId);
+  if (!note) return;
+  note.drawings = (note.drawings || []).concat([{
+    id: 'd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    dataUrl: dataUrl,
+    createdAt: new Date().toISOString(),
+  }]);
+  // Persist via the existing PATCH path.
+  try {
+    const r = await notesFetch('/api/notes/' + encodeURIComponent(note.id), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ drawings: note.drawings })
+    });
+    if (r.ok) {
+      const body = await r.json();
+      Object.assign(note, body.note);
+      persistNotesCache();
+    } else {
+      notesState.saveStatus = 'Offline — drawing queued';
+      notesState.pendingPatches[note.id] = { drawings: note.drawings };
+    }
+  } catch {
+    notesState.saveStatus = 'Offline — drawing queued';
+    notesState.pendingPatches[note.id] = { drawings: note.drawings };
+  }
+  renderNotesView();
+}
+
+function deleteDrawing(drawingId) {
+  if (!confirm('Delete this drawing?')) return;
+  const note = notesState.notes.find(x => x.id === notesState.selectedId);
+  if (!note) return;
+  note.drawings = (note.drawings || []).filter(d => d.id !== drawingId);
+  notesFetch('/api/notes/' + encodeURIComponent(note.id), {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ drawings: note.drawings })
+  }).catch(() => {});
+  persistNotesCache();
+  renderNotesView();
+}
+
+function openDrawingFullscreen(drawingId) {
+  const note = notesState.notes.find(x => x.id === notesState.selectedId);
+  if (!note) return;
+  const d = (note.drawings || []).find(x => x.id === drawingId);
+  if (!d) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'notes-draw-view';
+  overlay.onclick = () => overlay.remove();
+  overlay.innerHTML = '<img src="' + d.dataUrl + '" alt="drawing"><button class="notes-draw-view-close">×</button>';
+  document.body.appendChild(overlay);
 }
 
 function copyNote() {

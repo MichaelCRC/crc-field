@@ -768,3 +768,38 @@ html, body { overflow-x: hidden; }
 @media (min-width: 1200px) {
   .notes-body { min-height: 60vh; }
 }
+
+/* ── Notes: type/draw mode toggle ── */
+.notes-mode-toggle { display: inline-flex; gap: 4px; margin: 6px 0 8px; background: var(--surface-secondary); padding: 3px; border-radius: 999px; }
+.notes-mode-btn { background: transparent; border: none; color: var(--text-muted); font-family: var(--font-body); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; padding: 6px 14px; border-radius: 999px; cursor: pointer; min-height: 32px; }
+.notes-mode-btn.active { background: var(--teal); color: var(--white); }
+
+/* Drawings strip (within editor) */
+.notes-drawings-strip { margin-top: 14px; }
+.notes-drawings-label { font-family: var(--font-body); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--text-muted); margin-bottom: 6px; }
+.notes-drawings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+.notes-drawing-thumb { position: relative; aspect-ratio: 1; background: #FFFFFF; border: 1px solid var(--surface-border); border-radius: 6px; overflow: hidden; }
+.notes-drawing-thumb img { width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; display: block; background: #FFFFFF; }
+.notes-drawing-del { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; border: none; font-size: 14px; line-height: 1; cursor: pointer; }
+
+/* Note list row thumbnail */
+.notes-row-flex { display: flex; gap: 10px; align-items: stretch; }
+.notes-row-main { flex: 1; min-width: 0; }
+.notes-row-thumb-wrap { position: relative; width: 44px; height: 44px; flex-shrink: 0; align-self: center; }
+.notes-row-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; background: #fff; border: 1px solid var(--surface-border); display: block; }
+.notes-row-draw-count { position: absolute; bottom: -4px; right: -4px; background: var(--teal); color: var(--white); font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; }
+
+/* Full-screen draw overlay */
+.notes-draw-overlay { position: fixed; inset: 0; background: #FFFFFF; z-index: 1000; display: flex; flex-direction: column; }
+.notes-draw-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: var(--navy); color: var(--white); border-bottom: 1px solid var(--surface-border); }
+.notes-draw-tools { display: inline-flex; gap: 6px; }
+.notes-draw-tool { background: rgba(255,255,255,0.12); color: var(--white); border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 8px 12px; font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
+.notes-draw-tool.active { background: var(--teal); border-color: var(--teal); }
+.notes-draw-btn { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 10px 16px; font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; min-height: 44px; }
+.notes-draw-btn.primary { background: var(--teal); border-color: var(--teal); }
+#notes-draw-canvas { flex: 1; width: 100%; background: #FFFFFF; cursor: crosshair; touch-action: none; }
+
+/* Fullscreen drawing viewer */
+.notes-draw-view { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1100; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+.notes-draw-view img { max-width: 95vw; max-height: 95vh; object-fit: contain; background: #FFFFFF; }
+.notes-draw-view-close { position: fixed; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.18); color: #fff; border: none; font-size: 22px; cursor: pointer; }
