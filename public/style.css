@@ -198,7 +198,8 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .rep-badge-small { position: absolute; top: 2px; left: 2px; font-size: 8px; font-weight: 600; color: white; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 3px; }
 
 /* Camera button */
-.btn-camera { position: sticky; bottom: 80px; float: right; width: 56px; height: 56px; border-radius: 50%; background: var(--teal); color: white; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,181,204,0.4); z-index: 10; -webkit-tap-highlight-color: transparent; }
+.btn-camera { position: sticky; bottom: 80px; float: right; width: 56px; height: 56px; border-radius: 50%; background: var(--teal); color: white; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,181,204,0.4); z-index: 10; -webkit-tap-highlight-color: transparent; display: inline-flex; align-items: center; justify-content: center; user-select: none; }
+.btn-camera:active { transform: scale(0.96); }
 
 /* Report button */
 .btn-report { width: 100%; padding: 12px; font-size: 14px; font-weight: 600; background: var(--surface-card); color: var(--navy); border: 2px solid var(--navy); border-radius: 8px; cursor: pointer; margin: 8px 0; }
