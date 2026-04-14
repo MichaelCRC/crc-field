@@ -420,6 +420,85 @@ body {
   <div class="error" id="loginError"></div>
 </div>
 
+<!-- Standard app header (matches every other field-app page) -->
+<header class="cu-app-header" id="cuAppHeader" style="display:none">
+  <div class="cu-brand">
+    <img src="/assets/CRC_Icon.svg" alt="CRC" class="cu-brand-logo">
+    <div class="cu-brand-text">
+      <span class="cu-brand-name">COLUMBUS ROOFING</span>
+      <span class="cu-brand-sub">OFFICIAL FIELD APP</span>
+    </div>
+  </div>
+  <div class="cu-app-header-right">
+    <button id="cuThemeToggle" onclick="cuToggleTheme()" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+    <span id="cuRepBadge"></span>
+  </div>
+</header>
+
+<style>
+  /* Standard app header — matches index.html's .app-header so users see the
+     same brand bar they see on every other view. Inline-scoped because
+     training.html doesn't import style.css. */
+  .cu-app-header {
+    background: #001A4D; color: #FFFFFF;
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 110;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .cu-brand { display: flex; align-items: center; gap: 10px; }
+  .cu-brand-logo { width: 28px; height: 28px; display: block; }
+  .cu-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+  .cu-brand-name { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 16px; letter-spacing: 0.12em; color: #FFFFFF; }
+  .cu-brand-sub  { font-family: 'Bebas Neue', Impact, sans-serif; font-size: 10px; letter-spacing: 0.2em; color: #00B5CC; text-transform: uppercase; margin-top: 2px; }
+  .cu-app-header-right { display: inline-flex; align-items: center; gap: 8px; }
+  .cu-app-header-right button {
+    background: rgba(255,255,255,0.12); color: #FFFFFF;
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 50%;
+    width: 36px; height: 36px; font-size: 14px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .cu-app-header-right button:hover { border-color: #00B5CC; }
+  #cuRepBadge {
+    background: #00B5CC; color: #FFFFFF;
+    border-radius: 50%; width: 36px; height: 36px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  /* Subordinate the original "CRC University" bar so it reads as a page
+     section header beneath the app header, not as a competing brand. */
+  .topbar { padding: 14px 20px !important; box-shadow: 0 1px 0 rgba(255,255,255,0.06); }
+  .topbar .topbar-brand .logo { width: 32px; height: 32px; font-size: 13px; }
+  .topbar .topbar-brand h1 { font-size: 16px; }
+  .topbar .topbar-brand .tag { font-size: 10px; }
+</style>
+
+<script>
+  // Mirror crc_field_theme so the toggle here flips the same setting the
+  // main app uses. Default to dark, persist across reloads.
+  (function () {
+    var t = localStorage.getItem('crc_field_theme');
+    if (t !== 'light' && t !== 'dark') t = 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+  function cuToggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('crc_field_theme', next);
+    var icon = document.getElementById('cuThemeToggle');
+    if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀';
+  }
+  function cuShowAppHeader() {
+    var h = document.getElementById('cuAppHeader');
+    if (h) h.style.display = 'flex';
+    var icon = document.getElementById('cuThemeToggle');
+    if (icon) icon.textContent = (document.documentElement.getAttribute('data-theme') === 'dark') ? '🌙' : '☀';
+    var code = (localStorage.getItem('crc-rep-code') || '').toUpperCase();
+    var badge = document.getElementById('cuRepBadge');
+    if (badge) badge.textContent = code || 'CRC';
+  }
+</script>
+
 <!-- TOP BAR -->
 <div class="topbar" id="topbar" style="display:none;">
   <div class="topbar-inner">
@@ -738,6 +817,7 @@ function doLogin() {
       isAdminUser = (rep.role === 'admin');
       repList = reps.filter(r => r.active !== false);
       document.getElementById('loginOverlay').style.display = 'none';
+      cuShowAppHeader();
       document.getElementById('topbar').style.display = '';
       document.getElementById('mainContent').style.display = '';
       if (isAdminUser) {
@@ -756,6 +836,7 @@ function logout() {
   currentRepCode = '';
   progress = {};
   document.getElementById('loginOverlay').style.display = '';
+  document.getElementById('cuAppHeader').style.display = 'none';
   document.getElementById('topbar').style.display = 'none';
   document.getElementById('mainContent').style.display = 'none';
   document.getElementById('loginInput').value = '';
