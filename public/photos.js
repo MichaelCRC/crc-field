@@ -46,11 +46,7 @@ function renderPhotoSection() {
     <div id="photo-grid" class="photo-grid"></div>
     ${activePhotoTab === 'inspection' && iCount > 0 ? '<button class="btn-report" onclick="startReport(\'inspection\')">&#128196; Generate Inspection Report</button>' : ''}
     ${activePhotoTab === 'build' && bCount > 0 ? '<button class="btn-report" onclick="startReport(\'build\')">&#128196; Generate Build Report</button>' : ''}
-    <!-- Label-wrapped file input: tapping the label IS the native camera
-         trigger on iOS, no .click() gymnastics required. onchange captures
-         the photo and uploads straight to the lead's photo collection. -->
-    <label class="btn-camera" for="btn-camera-input" role="button" aria-label="Take photo">&#128247;</label>
-    <input id="btn-camera-input" type="file" accept="image/*" capture="environment" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" onchange="handleDirectCameraCapture(this)">
+    <button class="btn-camera" type="button" aria-label="Take photo" onclick="capturePhotoAndUpload()">&#128247;</button>
     <div id="homeowner-share-status" style="font-size:12px;color:var(--gray);padding:8px 0;text-align:center"></div>
   `;
   renderPhotoGrid();
@@ -58,23 +54,9 @@ function renderPhotoSection() {
 
 function switchPhotoTab(tab) { activePhotoTab = tab; activePhotoFilter = 'all'; renderPhotoSection(); }
 
-// Direct camera capture from the "📷" label-button. Uses the existing
-// queueUpload pipeline so photos land in the right bucket + sync to the
-// homeowner portal just like HUD-captured shots do. No modal, no HUD —
-// iOS opens the native camera; desktop opens a file picker.
-function handleDirectCameraCapture(input) {
-  if (!input.files || !input.files.length) return;
-  const tag = activePhotoTab === 'inspection' ? 'overview' : 'during';
-  for (const file of input.files) {
-    if (typeof queueUpload === 'function') {
-      queueUpload(file, tag);
-    } else {
-      console.error('[Camera] queueUpload not available');
-    }
-  }
-  // Reset so picking the same file twice still fires onchange.
-  input.value = '';
-}
+// Camera entry point now lives in camera.js (capturePhotoAndUpload ←
+// triggerPhotoCapture → uploadLeadPhoto). The older handleDirectCameraCapture
+// helper was removed; this is the only path the .btn-camera button uses now.
 
 function filterPhotos(tag) {
   activePhotoFilter = tag;
