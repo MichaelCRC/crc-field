@@ -96,9 +96,13 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
 .quick-add { padding: 16px; background: var(--surface-card); border-bottom: 1px solid var(--border); }
 .input-lg { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--border); border-radius: 8px; }
 .input-lg:focus { border-color: var(--teal); outline: none; }
-.input-md { flex: 1; padding: 10px; font-size: 15px; border: 1px solid var(--border); border-radius: 6px; min-width: 0; }
+/* .input-md matches .input-lg dimensionally (same padding / font-size / border
+   weight) so a row of two .input-md fields renders the same height and visual
+   weight as the .input-lg above it. flex:1 + width:0 gives a guaranteed 50/50
+   split with no min-content surprises. */
+.input-md { flex: 1 1 0; width: 0; min-width: 0; padding: 14px; font-size: 16px; border: 2px solid var(--border); border-radius: 8px; }
 .input-md:focus { border-color: var(--teal); outline: none; }
-.form-row { display: flex; gap: 8px; margin-top: 10px; }
+.form-row { display: flex; gap: 10px; margin-top: 10px; align-items: stretch; }
 textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: inherit; }
 
 /* Chips */
