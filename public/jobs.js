@@ -371,12 +371,15 @@ function renderJobDetail(job) {
   var html = '<div style="padding:16px;max-width:540px;margin:0 auto">';
 
   // ── Header ──
+  // Hardcoded near-black + true navy on the breadcrumb + h2 so the page is
+  // readable in light mode regardless of CSS-variable cascade quirks. The
+  // address line stays muted (steel mid) — readable but visually secondary.
   html += '<div style="margin-bottom:16px">';
-  html += '<button onclick="closeJobDetail()" style="background:none;border:none;color:var(--teal);font-size:14px;font-weight:600;cursor:pointer;padding:0;margin-bottom:10px">&larr; My Jobs</button>';
+  html += '<button onclick="closeJobDetail()" style="background:none;border:none;color:#001A4D;font-size:14px;font-weight:700;cursor:pointer;padding:0;margin-bottom:10px;display:inline-flex;align-items:center;gap:4px">&larr; <u>My Jobs</u></button>';
   html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
   html += '<div style="flex:1;min-width:0">';
-  html += '<h2 style="font-size:18px;color:var(--navy);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</h2>';
-  html += '<div style="font-size:13px;color:var(--gray);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address||'') + '</div>';
+  html += '<h2 style="font-size:20px;font-weight:700;color:#0D0D0D;margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</h2>';
+  html += '<div style="font-size:13px;color:#6B7280;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address||'') + '</div>';
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">';
   html += pipelineBadge(job.pipeline || job.jobCategory || 'insurance');
   html += ' <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:' + sc + ';color:#fff;font-weight:600">' + stageLabel(job.stage) + '</span>';
@@ -404,9 +407,11 @@ function renderJobDetail(job) {
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
+  // Hardcoded teal/navy backgrounds + literal white text so the buttons render
+  // correctly in both modes even if a CSS variable somewhere fails to resolve.
   html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
-  html += '<button onclick="openStagePickerInDetail(\'' + jid + '\')" style="flex:1;padding:9px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-width:100px">Move Stage</button>';
-  html += '<button onclick="openPipelineTransfer(\'' + jid + '\')" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-width:100px">Transfer Type</button>';
+  html += '<button onclick="openStagePickerInDetail(\'' + jid + '\')" style="flex:1;padding:11px;background:#00B5CC;color:#FFFFFF;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Move Stage</button>';
+  html += '<button onclick="openPipelineTransfer(\'' + jid + '\')" style="flex:1;padding:11px;background:#001A4D;color:#FFFFFF;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Transfer Type</button>';
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
   html += '<button onclick="markJobFollowUp(\'' + jid + '\')" style="flex:1;padding:9px;background:#0EA5E9;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Follow Up</button>';
