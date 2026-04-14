@@ -1,4 +1,8 @@
-:root { --navy: var(--navy); --teal: var(--teal); --white: #FFF; --bg: var(--off-white); --gray: var(--text-muted); --border: var(--surface-border); --green: #16A34A; --red: #DC2626; --amber: var(--amber); }
+/* tokens.css (loaded first) defines all brand vars + legacy aliases:
+   --navy / --teal / --white / --black / --bg / --gray / --border / --green
+   / --red / --amber / --surface-primary / --surface-card / --text-primary etc.
+   The previous override here defined --navy: var(--navy) (circular) which
+   unset --navy + --teal + --amber and broke text color across the app. */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* Loading Screen */
