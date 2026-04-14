@@ -238,7 +238,7 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .cam-compass-float { position: absolute; bottom: 80px; right: 12px; z-index: 10; }
 .compass-ring-sm { width: 56px; height: 56px; border: 1.5px solid rgba(0,188,212,0.5); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: transform 0.15s ease-out; background: rgba(0,0,0,0.3); }
 .compass-n-sm { position: absolute; top: -1px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; color: #ff4444; transition: transform 0.15s ease-out; }
-.compass-dir-sm { font-size: 16px; font-weight: 900; color: #00BCD4; line-height: 1; margin-top: 4px; }
+.compass-dir-sm { font-size: 16px; font-weight: 900; color: var(--teal); line-height: 1; margin-top: 4px; }
 .compass-deg-sm { font-size: 9px; color: rgba(255,255,255,0.7); font-weight: 600; }
 .cam-upload-float { position: absolute; bottom: 80px; left: 12px; z-index: 10; }
 .cam-upload-float .cam-upload-status { font-size: 11px; color: var(--teal); background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 10px; }
@@ -697,4 +697,44 @@ body { font-family: var(--font-body); }
   .notes-fab { display: flex; align-items: center; justify-content: center; }
   body.notes-editing .notes-fab { display: none; }
   .notes-meta-row { grid-template-columns: 1fr; }
+}
+
+/* ── Responsive / touch-target QA pass ── */
+
+/* Prevent stray horizontal scroll from a single runaway element (long URLs,
+   wide tables, etc.). Individual scrollable containers still work. */
+html, body { overflow-x: hidden; }
+
+/* iOS 44px minimum touch target for any primary button, submit, or link
+   that behaves like a button. .chip rows stay at 36px so multi-pill rows
+   still fit on a phone — those are secondary interactions. */
+@media (max-width: 767px) {
+  button.btn-primary,
+  button.btn-secondary,
+  .nav-item,
+  .notes-new-btn,
+  .feed-post-btn,
+  .notes-fab {
+    min-height: 44px;
+  }
+  input.input-lg { min-height: 44px; }
+  /* Stack the Notes meta row on phone so the three dropdowns don't cram */
+  .notes-meta-row { grid-template-columns: 1fr; gap: 8px; }
+  /* Feed cards get the full 12px padding on each side the spec calls for */
+  .feed-list { padding: 12px; }
+  .feed-post { padding: 12px 12px 10px; }
+}
+
+/* Tablet: clamp content column so it doesn't stretch on 768-1199 widths
+   where the single-column layout would otherwise fill the full viewport. */
+@media (min-width: 768px) and (max-width: 1199px) {
+  #view-leads .quick-add,
+  #view-feed .feed-post,
+  #view-feed .feed-list { max-width: 640px; margin-left: auto; margin-right: auto; }
+}
+
+/* Desktop: the Notes sidebar fills its fixed width; make sure the editor
+   body textarea actually expands when the shell is flex-laid out. */
+@media (min-width: 1200px) {
+  .notes-body { min-height: 60vh; }
 }
