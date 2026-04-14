@@ -402,8 +402,8 @@ function renderJobDetail(job) {
   var _sigName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   html += '<button onclick="openSignatureScreen(\'' + jid + '\',\'' + _sigAddr + '\',\'' + _sigName + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer">'
     + '<span style="font-size:20px">\u270D\uFE0F</span><span style="font-size:11px;color:var(--gray)">Sign</span></button>';
-  html += '<button onclick="typeof switchView===\'function\'?switchView(\'camera\'):alert(\'Camera coming soon\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer">'
-    + '<span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
+  html += '<button onclick=\"currentLeadId=\'' + jid + '\';if(typeof openCameraMode===\'function\'){openCameraMode();}else{alert(\'Camera not available\');}\" style=\"background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer\">'
+    + '<span style=\"font-size:20px\">&#128247;</span><span style=\"font-size:11px;color:var(--gray)\">Camera</span></button>';
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
@@ -421,6 +421,17 @@ function renderJobDetail(job) {
     + 'style="width:100%;padding:9px;background:#10B981;color:#fff;border:none;border-radius:8px;'
     + 'font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px">'
     + '&#128203; Fill Field Observations</button>';
+
+  // ── Roof Diagram ──
+  if (typeof renderRoofDiagramLegacy === 'function') {
+    var diagHtml = renderRoofDiagramLegacy(job);
+    if (diagHtml) {
+      html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
+      html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Roof Diagram</div>';
+      html += diagHtml;
+      html += '</div>';
+    }
+  }
 
   // ── Job Info ──
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';

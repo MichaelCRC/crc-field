@@ -98,7 +98,7 @@ function _foCheckRow(cfg) {
 // Named section wrapper (title + white card)
 function _foSection(title, content) {
   return '<div style="margin-bottom:16px">'
-    + '<div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;'
+    + '<div style="font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;'
     + 'letter-spacing:0.5px;margin-bottom:8px">' + title + '</div>'
     + '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px 14px">'
     + content
@@ -108,7 +108,7 @@ function _foSection(title, content) {
 // Grouped box (Gutters / Gutter Guards)
 function _foGroupBox(title, content) {
   return '<div style="margin-bottom:16px">'
-    + '<div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;'
+    + '<div style="font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;'
     + 'letter-spacing:0.5px;margin-bottom:8px">' + title + '</div>'
     + '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px 14px">'
     + content
