@@ -260,26 +260,54 @@ function openStagePickerForJob(jobId) {
 }
 
 // ─── Lightweight action sheet ──────────────────────────────────────────────
+// Two prior bugs:
+//   1. Text used color:var(--navy) inside an inline style. The modal body is
+//      hardcoded white in both themes, so token resolution wasn't reliable on
+//      every device — labels disappeared next to the dots on iPhone. Fixed by
+//      hardcoding #0D0D0D / #FFFFFF on the modal so this is theme-independent.
+//   2. The onclick wrapped opt.action.toString() and re-eval'd it. That loses
+//      every closure variable (jobId, s) so clicking a stage did nothing. Fixed
+//      by keeping the callbacks in a real array and calling by index.
+window._actionSheetCallbacks = [];
 function showActionSheet(title, options) {
   var existing = document.getElementById('_action_sheet');
   if (existing) existing.remove();
+  window._actionSheetCallbacks = options.map(function (o) { return o.action; });
+
   var sheet = document.createElement('div');
   sheet.id = '_action_sheet';
   sheet.style.cssText = 'position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;justify-content:flex-end';
-  var backdrop = '<div onclick="document.getElementById(\'_action_sheet\').remove()" style="flex:1;background:rgba(0,0,0,0.4)"></div>';
-  var body = '<div style="background:var(--white);border-radius:16px 16px 0 0;padding:16px 0 calc(16px + env(safe-area-inset-bottom));max-height:75vh;overflow-y:auto">';
-  body += '<div style="font-size:13px;font-weight:700;color:var(--gray);text-align:center;padding:0 16px 12px;text-transform:uppercase;letter-spacing:0.5px">' + title + '</div>';
+
+  var backdrop = '<div onclick="closeActionSheet()" style="flex:1;background:rgba(0,0,0,0.4)"></div>';
+  // Modal stays white in both themes (overlays are mode-independent).
+  // Text hardcoded near-black so there's no CSS-variable lookup involved.
+  var body = '<div style="background:#FFFFFF;border-radius:16px 16px 0 0;padding:16px 0 calc(16px + env(safe-area-inset-bottom));max-height:75vh;overflow-y:auto">';
+  body += '<div style="font-size:13px;font-weight:700;color:#6B7280;text-align:center;padding:0 16px 12px;text-transform:uppercase;letter-spacing:0.5px">' + title + '</div>';
+
   for (var i = 0; i < options.length; i++) {
     var opt = options[i];
-    var dot = opt.color ? '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + opt.color + ';margin-right:10px;vertical-align:middle"></span>' : '';
-    body += '<button onclick="(function(){document.getElementById(\'_action_sheet\').remove();(' + opt.action.toString() + ')()})()" '
-      + 'style="width:100%;padding:14px 20px;text-align:left;background:none;border:none;border-top:1px solid var(--bg);font-size:15px;cursor:pointer;color:var(--navy)">'
-      + dot + opt.label + '</button>';
+    var dot = opt.color
+      ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + opt.color + ';margin-right:12px;vertical-align:middle;flex-shrink:0"></span>'
+      : '';
+    body += '<button onclick="runActionSheet(' + i + ')" '
+         +  'style="width:100%;padding:14px 20px;text-align:left;background:#FFFFFF;border:none;border-top:1px solid #E5E7EB;font-size:15px;font-weight:600;cursor:pointer;color:#0D0D0D;display:flex;align-items:center;min-height:48px">'
+         +  dot + '<span>' + opt.label + '</span></button>';
   }
-  body += '<button onclick="document.getElementById(\'_action_sheet\').remove()" style="width:100%;padding:14px 20px;text-align:center;background:none;border:none;border-top:1px solid var(--border);font-size:15px;cursor:pointer;color:var(--gray);margin-top:4px">Cancel</button>';
+  body += '<button onclick="closeActionSheet()" style="width:100%;padding:14px 20px;text-align:center;background:#FFFFFF;border:none;border-top:1px solid #E5E7EB;font-size:15px;font-weight:600;cursor:pointer;color:#6B7280;margin-top:4px">Cancel</button>';
   body += '</div>';
+
   sheet.innerHTML = backdrop + body;
   document.body.appendChild(sheet);
+}
+function runActionSheet(i) {
+  var fn = (window._actionSheetCallbacks || [])[i];
+  closeActionSheet();
+  if (typeof fn === 'function') fn();
+}
+function closeActionSheet() {
+  var el = document.getElementById('_action_sheet');
+  if (el) el.remove();
+  window._actionSheetCallbacks = [];
 }
 
 // ─── Update job field ──────────────────────────────────────────────────────
