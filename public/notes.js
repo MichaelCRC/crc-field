@@ -34,7 +34,7 @@ const notesState = {
 function notesHeaders(extra) {
   return Object.assign({
     'X-Field-App-Key': NOTES_APP_KEY,
-    'X-Field-Rep': (typeof repCode !== 'undefined' ? repCode : '').toUpperCase(),
+    'X-Field-Rep': (typeof repCode !== 'undefined' && repCode ? repCode : (localStorage.getItem('crc-rep-code') || 'MCG')).toUpperCase(),
   }, extra || {});
 }
 async function notesFetch(path, opts) {
