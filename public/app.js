@@ -707,7 +707,7 @@ async function sigAuthSubmit(jobId) {
       body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center">'
         + '<div style="font-size:72px;margin-bottom:16px">&#9989;</div>'
         + '<div style="font-size:24px;font-weight:800;color:#001A4D;margin-bottom:8px">Signed!</div>'
-        + '<div style="font-size:14px;color:#64748b">Authorization captured successfully.</div>'
+        + '<div style="font-size:14px;color:var(--text-muted)">Authorization captured successfully.</div>'
         + '</div>';
     }
 

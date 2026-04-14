@@ -38,7 +38,7 @@ async function loadMapPins() {
   try {
   const url = repRole === 'admin' ? '/api/leads' : `/api/leads?repCode=${repCode}`;
   const leads = await fetch(url).then(r => r.json());
-  const colors = { new:'#3B82F6', contacted:'#F59E0B', not_home:'#F59E0B', appointment:'#16A34A', claim_filed:'#16A34A', won:'#16A34A', not_interested:'#DC2626', lost:'#64748B' };
+  const colors = { new:'#3B82F6', contacted:'#F59E0B', not_home:'#F59E0B', appointment:'#16A34A', claim_filed:'#16A34A', won:'#16A34A', not_interested:'#DC2626', lost:'var(--text-muted)' };
   leads.forEach(l => {
     if (!l.lat || !l.lng) return;
     const m = new google.maps.Marker({ position: { lat: l.lat, lng: l.lng }, map: gmap, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: colors[l.status] || '#3B82F6', fillOpacity: 0.9, strokeColor: '#FFF', strokeWeight: 2 } });
@@ -538,12 +538,12 @@ function buildInfoHtml(p) {
   const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const colorDot = p.shingleColor
     ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${shingleDotColor(p.shingleColor)};margin-right:6px;vertical-align:middle;border:1px solid #999"></span>${esc(p.shingleColor)}`
-    : '<em style="color:#64748B">Not set &mdash; tap Set Color</em>';
+    : '<em style="color:var(--text-muted)">Not set &mdash; tap Set Color</em>';
   return `<div style="font-size:13px;max-width:240px">
     <div style="font-weight:700;margin-bottom:2px">${esc(p.name || '(no name)')}</div>
     <div style="color:#475569;margin-bottom:4px">${esc(p.address)}</div>
-    ${p.deliveryDate ? `<div style="font-size:11px;color:#64748B">Delivered: ${esc(p.deliveryDate)}</div>` : ''}
-    ${p.total ? `<div style="font-size:11px;color:#64748B">Total: ${esc(p.total)}</div>` : ''}
+    ${p.deliveryDate ? `<div style="font-size:11px;color:var(--text-muted)">Delivered: ${esc(p.deliveryDate)}</div>` : ''}
+    ${p.total ? `<div style="font-size:11px;color:var(--text-muted)">Total: ${esc(p.total)}</div>` : ''}
     <div style="margin-top:6px;font-size:12px">Color: ${colorDot}</div>
     ${p.notes ? `<div style="font-size:11px;color:#475569;margin-top:4px">${esc(p.notes)}</div>` : ''}
     <div style="margin-top:8px">
@@ -563,7 +563,7 @@ function shingleDotColor(name) {
   if (n.includes('shakewood')) return '#8c6f4c';
   if (n.includes('hickory')) return '#6e4f32';
   if (n.includes('slate')) return '#4f5b66';
-  return '#64748B';
+  return 'var(--text-muted)';
 }
 
 async function setBuildsColor(pinId) {
