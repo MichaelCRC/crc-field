@@ -13,6 +13,8 @@
 
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
 const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
@@ -179,6 +181,32 @@ router.post('/:id/tasks', async (req, res) => {
   } catch (e) {
     console.error('[FieldJobs] POST tasks error:', e.message);
     res.status(500).json({ error: 'Failed to add task' });
+  }
+});
+
+// POST /api/field/jobs/:id/photos — upload photo to portal simple-photos
+router.post('/:id/photos', upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No photo file' });
+    // Forward as multipart to portal
+    const FormData = (await import('form-data')).default || require('form-data');
+    const fd = new FormData();
+    fd.append('photo', req.file.buffer, {
+      filename: req.file.originalname || 'photo.jpg',
+      contentType: req.file.mimetype || 'image/jpeg',
+    });
+    if (req.body.label) fd.append('label', req.body.label);
+    const response = await fetch(`${PORTAL_URL}/api/jobs/${req.params.id}/simple-photos`, {
+      method: 'POST',
+      headers: { ...portalHeaders, ...fd.getHeaders() },
+      body: fd,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (e) {
+    console.error('[FieldJobs] Photo upload error:', e.message);
+    res.status(500).json({ error: 'Photo upload failed: ' + e.message });
   }
 });
 

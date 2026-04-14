@@ -402,8 +402,7 @@ function renderJobDetail(job) {
   var _sigName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   html += '<button onclick="openSignatureScreen(\'' + jid + '\',\'' + _sigAddr + '\',\'' + _sigName + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer">'
     + '<span style="font-size:20px">\u270D\uFE0F</span><span style="font-size:11px;color:var(--gray)">Sign</span></button>';
-  html += '<button onclick=\"currentLeadId=\'' + jid + '\';if(typeof openCameraMode===\'function\'){openCameraMode();}else{alert(\'Camera not available\');}\" style=\"background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer\">'
-    + '<span style=\"font-size:20px\">&#128247;</span><span style=\"font-size:11px;color:var(--gray)\">Camera</span></button>';
+  html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
@@ -607,4 +606,35 @@ async function toggleJobTask(jobId, taskId, completed) {
     var el = document.getElementById('job-tasks-list');
     if (el) el.innerHTML = renderJobTasks(job.tasks||[], jobId);
   } catch (e) { showToast('Error: ' + e.message, true); }
+}
+
+// ── Camera from Job Detail ─────────────────────────────────────────────────
+// Uses triggerPhotoCapture (camera.js) which works synchronously on iOS.
+// Uploads directly to portal via /api/field/jobs/:id/simple-photos.
+function jobTakePhoto(jobId) {
+  if (typeof triggerPhotoCapture !== 'function') {
+    alert('Camera not available');
+    return;
+  }
+  triggerPhotoCapture({ accept: 'image/*', base64: false }, function(result) {
+    if (!result || !result.file) return;
+    var toast = typeof showToast === 'function';
+    if (toast) showToast('Uploading photo...');
+    var fd = new FormData();
+    fd.append('photo', result.file, result.fileName || 'photo.jpg');
+    fd.append('label', 'Job Photo');
+    fetch('/api/field/jobs/' + jobId + '/photos', {
+      method: 'POST',
+      body: fd
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.error) throw new Error(data.error);
+      if (toast) showToast('Photo saved');
+      // Refresh job detail to show updated photo count
+      if (typeof openJobDetail === 'function') {
+        setTimeout(function() { openJobDetail(jobId); }, 500);
+      }
+    }).catch(function(e) {
+      if (toast) showToast('Upload failed: ' + e.message, true);
+    });
+  });
 }
