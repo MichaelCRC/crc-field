@@ -25,13 +25,13 @@ function openCameraMode() {
   // viewfinder lose to <input capture> for field reps. Skip the live
   // viewfinder on iOS and let the OS open the native camera UI directly.
   // Desktop / Android keep the live viewfinder.
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent || '')
-    || (navigator.userAgent.includes('Mac') && navigator.maxTouchPoints > 1);
-
-  if (!isIOS && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  // Always attempt the live viewfinder first — gives compass, tag strip,
+  // tap-to-shoot, pinch zoom. Fall back to native <input capture> only if
+  // getUserMedia is unavailable or throws (older iOS, restricted contexts).
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     openLiveViewfinder();
   } else {
-    console.log('[Camera]', isIOS ? 'iOS detected — using native camera via <input capture>' : 'getUserMedia unavailable — using file input fallback');
+    console.log('[Camera] getUserMedia unavailable — using native camera fallback');
     renderCameraHUD();
     triggerCamera();
   }
@@ -401,10 +401,19 @@ async function processQueue() {
   uploadsInFlight++;
   updateUploadStatus();
   const fd = new FormData();
-  fd.append('photos', item.file); fd.append('repCode', repCode);
-  fd.append('tag', item.tag); fd.append('category', activePhotoTab); fd.append('caption', '');
+  // Route to portal job endpoint if opened from My Jobs context
+  const isPortalJob = window._jobPhotoUploadId && window._jobPhotoUploadId === item.leadId;
+  if (isPortalJob) {
+    fd.append('photo', item.file); fd.append('label', item.tag || 'Job Photo');
+  } else {
+    fd.append('photos', item.file); fd.append('repCode', repCode);
+    fd.append('tag', item.tag); fd.append('category', activePhotoTab); fd.append('caption', '');
+  }
+  const uploadUrl = isPortalJob
+    ? `/api/field/jobs/${item.leadId}/photos`
+    : `/api/leads/${item.leadId}/photos`;
   try {
-    const resp = await fetch(`/api/leads/${item.leadId}/photos`, { method: 'POST', body: fd });
+    const resp = await fetch(uploadUrl, { method: 'POST', body: fd });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if (data.success) { currentLeadPhotos = data.photos; uploadsDone++; }

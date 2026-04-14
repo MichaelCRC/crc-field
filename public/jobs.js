@@ -609,32 +609,19 @@ async function toggleJobTask(jobId, taskId, completed) {
 }
 
 // ── Camera from Job Detail ─────────────────────────────────────────────────
-// Uses triggerPhotoCapture (camera.js) which works synchronously on iOS.
-// Uploads directly to portal via /api/field/jobs/:id/simple-photos.
+// Opens the full CRC viewfinder (compass, HAAG tags, tap-to-shoot, pinch zoom).
+// Sets currentLeadId to the portal job ID so uploads go to the right job.
+// photo-camera.js upload path sends to /api/leads/:id/photos — for portal
+// jobs we intercept via a monkey-patch on uploadQueue processing.
 function jobTakePhoto(jobId) {
-  if (typeof triggerPhotoCapture !== 'function') {
+  if (typeof openCameraMode !== 'function') {
     alert('Camera not available');
     return;
   }
-  triggerPhotoCapture({ accept: 'image/*', base64: false }, function(result) {
-    if (!result || !result.file) return;
-    var toast = typeof showToast === 'function';
-    if (toast) showToast('Uploading photo...');
-    var fd = new FormData();
-    fd.append('photo', result.file, result.fileName || 'photo.jpg');
-    fd.append('label', 'Job Photo');
-    fetch('/api/field/jobs/' + jobId + '/photos', {
-      method: 'POST',
-      body: fd
-    }).then(function(r) { return r.json(); }).then(function(data) {
-      if (data.error) throw new Error(data.error);
-      if (toast) showToast('Photo saved');
-      // Refresh job detail to show updated photo count
-      if (typeof openJobDetail === 'function') {
-        setTimeout(function() { openJobDetail(jobId); }, 500);
-      }
-    }).catch(function(e) {
-      if (toast) showToast('Upload failed: ' + e.message, true);
-    });
-  });
+  // Set context so photo-camera.js knows which job to attach photos to
+  if (typeof currentLeadId !== 'undefined') currentLeadId = jobId;
+  if (typeof activePhotoTab !== 'undefined') activePhotoTab = 'inspection';
+  // Override the upload endpoint for this session to use portal job route
+  window._jobPhotoUploadId = jobId;
+  openCameraMode();
 }
