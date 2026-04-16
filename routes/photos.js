@@ -33,6 +33,18 @@ router.post('/:id/photos', upload.array('photos', 20), async (req, res) => {
   }
 
   updateLead(req.params.id, { photos });
+
+  // Auto-sync new photos to portal job (fire-and-forget — never blocks response)
+  const updatedLead = getLead(req.params.id);
+  if (updatedLead?.portalJobId && process.env.SUPPLEMENT_PORTAL_URL && results.length > 0) {
+    const allPhotos = [...(photos.inspection || []), ...(photos.build || [])];
+    fetch(`${process.env.SUPPLEMENT_PORTAL_URL}/api/jobs/${updatedLead.portalJobId}/fields`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fieldPhotos: allPhotos }),
+    }).catch(e => console.warn('[Photos] Portal auto-sync failed:', e.message));
+  }
+
   res.json({ success: true, uploaded: results.length, photos });
 });
 
