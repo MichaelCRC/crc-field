@@ -54,6 +54,9 @@ async function loadJobs() {
   }
 }
 
+// ─── Search state ──────────────────────────────────────────────────────────
+let _jobsSearch = '';
+
 // ─── Filter + render ───────────────────────────────────────────────────────
 function renderJobsList() {
   const el = document.getElementById('view-jobs');
@@ -64,6 +67,18 @@ function renderJobsList() {
   else if (_jobsFilter === 'retail')    jobs = jobs.filter(j => j.pipeline === 'retail');
   else if (_jobsFilter === 'repair')    jobs = jobs.filter(j => j.pipeline === 'repair');
   else if (_jobsFilter === 'follow_up') jobs = jobs.filter(j => j.stage === 'follow_up' || j.subStatus === 'follow_up');
+
+  // Search filter
+  if (_jobsSearch.trim()) {
+    const q = _jobsSearch.trim().toLowerCase();
+    jobs = jobs.filter(j => {
+      const name = ((j.homeowner?.firstName || '') + ' ' + (j.homeowner?.lastName || '') + ' ' + (j.homeownerName || '')).toLowerCase();
+      const addr = (j.address || '').toLowerCase();
+      const claim = (j.claimNumber || '').toLowerCase();
+      const carrier = (j.carrier || '').toLowerCase();
+      return name.includes(q) || addr.includes(q) || claim.includes(q) || carrier.includes(q);
+    });
+  }
 
   const totalTasks = _jobsCache.reduce((n, j) => n + (j.openTasks || 0), 0);
 
@@ -80,6 +95,18 @@ function renderJobsList() {
   html += '<button onclick="_jobsView=\'list\';renderJobsList()" style="padding:6px 10px;border-radius:6px 0 0 6px;border:1px solid var(--border);background:' + (_jobsView==='list'?'var(--navy)':'var(--white)') + ';color:' + (_jobsView==='list'?'#fff':'var(--gray)') + ';cursor:pointer;font-size:12px;font-weight:600">&#9776; List</button>';
   html += '<button onclick="_jobsView=\'board\';renderJobsList()" style="padding:6px 10px;border-radius:0 6px 6px 0;border:1px solid var(--border);border-left:none;background:' + (_jobsView==='board'?'var(--navy)':'var(--white)') + ';color:' + (_jobsView==='board'?'#fff':'var(--gray)') + ';cursor:pointer;font-size:12px;font-weight:600">&#9707; Board</button>';
   html += '</div></div>';
+
+  // ── Search bar ──
+  html += '<div style="position:relative;margin-bottom:10px">';
+  html += '<span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">🔍</span>';
+  html += '<input id="jobs-search-input" type="text" placeholder="Search name, address, claim, carrier..." value="' + _jobsSearch.replace(/"/g,'&quot;') + '" '
+    + 'oninput="_jobsSearch=this.value;renderJobsList()" '
+    + 'style="width:100%;padding:10px 36px 10px 36px;border-radius:10px;border:1px solid var(--border);background:var(--white);color:#000;font-size:14px;box-sizing:border-box;-webkit-appearance:none">';
+  if (_jobsSearch) {
+    html += '<button onclick="_jobsSearch=\'\';document.getElementById(\'jobs-search-input\').value=\'\';renderJobsList()" '
+      + 'style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer;padding:0;line-height:1">&times;</button>';
+  }
+  html += '</div>';
 
   // ── Filter tabs ──
   html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none">';
