@@ -494,6 +494,35 @@ function renderJobDetail(job) {
   html += '<button onclick="addJobTask(\'' + jid + '\')" style="background:var(--navy);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Add</button>';
   html += '</div></div>';
 
+  // ── Photos ──
+  var allPhotos = (job.fieldPhotos || []).concat(job.photos && job.photos.rawPhotos ? job.photos.rawPhotos : []);
+  html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+  html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Photos <span style="background:var(--teal);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">' + allPhotos.length + '</span></div>';
+  html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--teal);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">+ Add Photo</button>';
+  html += '</div>';
+  if (allPhotos.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:var(--gray);font-size:13px">No photos yet. Tap camera above or Add Photo to start.</div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">';
+    var _photoJson = JSON.stringify(allPhotos);
+    allPhotos.slice(0, 18).forEach(function(p, i) {
+      var url = p.url || p.thumbnail || '';
+      var caption = p.caption || p.tag || '';
+      if (url) {
+        html += '<div style="position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;cursor:pointer" onclick="_jobPhotoFull=' + JSON.stringify(allPhotos) + ';openJobPhotoLightbox(' + i + ')">'
+          + '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentElement.style.display=\'none\'">'
+          + (caption ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);color:#fff;font-size:9px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + caption + '</div>' : '')
+          + '</div>';
+      }
+    });
+    if (allPhotos.length > 18) {
+      html += '<div style="aspect-ratio:1;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;border:1px solid var(--border)" onclick="_jobPhotoFull=' + JSON.stringify(allPhotos) + ';openJobPhotoLightbox(18)">+' + (allPhotos.length - 18) + '<br><span style=\'font-size:9px;font-weight:400\'>more</span></div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+
   html += '<button onclick="closeJobDetail()" style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:20px">Back to My Jobs</button>';
   html += '</div>';
   detail.innerHTML = html;
@@ -575,6 +604,42 @@ function renderJobTasks(tasks, jobId) {
       + (t.dueDate ? '<div style="font-size:11px;color:' + (overdue?'#DC2626;font-weight:600':'var(--gray)') + '">' + (overdue?'Overdue - ':'Due ') + new Date(t.dueDate).toLocaleDateString() + '</div>' : '')
       + '</div></div>';
   }).join('');
+}
+
+// ── Job Photo Lightbox ──────────────────────────────────────────────────────
+var _jobPhotoFull = [];
+var _jobPhotoIdx = 0;
+
+function openJobPhotoLightbox(idx) {
+  _jobPhotoIdx = idx;
+  var photos = _jobPhotoFull;
+  var existing = document.getElementById('job-photo-lightbox');
+  if (existing) existing.remove();
+
+  var lb = document.createElement('div');
+  lb.id = 'job-photo-lightbox';
+  lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column';
+
+  function renderLb() {
+    var p = photos[_jobPhotoIdx] || {};
+    var url = p.url || p.thumbnail || '';
+    var caption = p.caption || p.tag || '';
+    var total = photos.length;
+    lb.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0">'
+      + '<button onclick="document.getElementById(\'job-photo-lightbox\').remove()" style="background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1">&times;</button>'
+      + '<span style="color:#fff;font-size:13px;font-weight:600">' + (_jobPhotoIdx+1) + ' / ' + total + '</span>'
+      + '<a href="' + url + '" download target="_blank" style="color:#00B5CC;font-size:12px;font-weight:600;text-decoration:none">Save</a>'
+      + '</div>'
+      + '<div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
+      + '<img src="' + url + '" style="max-width:100%;max-height:100%;object-fit:contain">'
+      + (_jobPhotoIdx > 0 ? '<button onclick="_jobPhotoIdx--;document.getElementById(\'job-photo-lightbox\') && (document.getElementById(\'job-photo-lightbox\').querySelector(\'img\').src=(_jobPhotoFull[_jobPhotoIdx]||{}).url||\'\')" style="position:absolute;left:0;top:0;bottom:0;width:60px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:32px;cursor:pointer">&#8249;</button>' : '')
+      + (_jobPhotoIdx < total-1 ? '<button onclick="_jobPhotoIdx++;document.getElementById(\'job-photo-lightbox\') && (document.getElementById(\'job-photo-lightbox\').querySelector(\'img\').src=(_jobPhotoFull[_jobPhotoIdx]||{}).url||\'\')" style="position:absolute;right:0;top:0;bottom:0;width:60px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:32px;cursor:pointer">&#8250;</button>' : '')
+      + '</div>'
+      + (caption ? '<div style="padding:10px 16px;color:#ccc;font-size:12px;text-align:center;flex-shrink:0">' + caption + '</div>' : '');
+  }
+  renderLb();
+  document.body.appendChild(lb);
 }
 
 function closeJobDetail() {
