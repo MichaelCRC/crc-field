@@ -83,7 +83,20 @@ function _renderMeasureResults(data) {
 
   var html = '';
 
-  // Summary cards
+  // 1. Satellite image (static — Google Maps JS may not be loaded in the bottom sheet context)
+  if (data.satelliteImageUrl) {
+    html += '<div style="margin-bottom:10px;border-radius:8px;overflow:hidden;position:relative">';
+    html += '<img src="' + data.satelliteImageUrl + '" style="width:100%;height:auto;display:block" alt="Satellite view">';
+    // Overlay facet count badge
+    html += '<div style="position:absolute;top:8px;left:8px;background:rgba(0,26,77,0.8);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700">' + s.facetCount + ' facets detected</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px;margin-bottom:10px">';
+    html += '<button onclick="_closeMeasureSheet()" style="padding:6px 12px;background:#16A34A;color:#fff;border:0;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;flex:1">Looks correct</button>';
+    html += '<button onclick="_closeMeasureSheet();openMeasureFromMap()" style="padding:6px 12px;background:none;border:1px solid #94A3B8;color:#64748B;border-radius:4px;font-size:12px;cursor:pointer;flex:1">Wrong building</button>';
+    html += '</div>';
+  }
+
+  // 2. Summary cards
   html += '<div style="display:flex;gap:10px;margin-bottom:14px">';
   html += _summaryCard(s.totalSquares, 'SQUARES', 'actual');
   html += _summaryCard(s.wasteAdjustedSquares, 'W/WASTE', s.wastePercent + '%');
