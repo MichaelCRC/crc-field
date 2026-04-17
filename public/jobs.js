@@ -488,7 +488,11 @@ function renderJobDetail(job) {
   html += '</div></div>';
 
   // ── Photos ──
-  var allPhotos = (job.fieldPhotos || []).concat(job.photos && job.photos.rawPhotos ? job.photos.rawPhotos : []);
+  // Aggregate from all three portal sources: rawPhotos (CompanyCam sync),
+  // simplePhotos (direct uploads via field app + portal), fieldPhotos (legacy).
+  // De-dupe by URL so a photo present in more than one bucket only renders
+  // once.
+  var allPhotos = collectJobPhotos(job);
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
   html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Photos <span style="background:var(--teal);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">' + allPhotos.length + '</span></div>';
@@ -497,20 +501,23 @@ function renderJobDetail(job) {
   if (allPhotos.length === 0) {
     html += '<div style="text-align:center;padding:20px;color:var(--gray);font-size:13px">No photos yet. Tap camera above or Add Photo to start.</div>';
   } else {
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">';
-    var _photoJson = JSON.stringify(allPhotos);
+    // Stash the collected photo list keyed to this job so the grid onclicks
+    // stay short — they just look it up.
+    window._jobPhotosById = window._jobPhotosById || {};
+    window._jobPhotosById[jid] = allPhotos;
+    html += '<div class="job-photo-grid">';
     allPhotos.slice(0, 18).forEach(function(p, i) {
-      var url = p.url || p.thumbnail || '';
+      var url = p.thumbnail || p.url || '';
       var caption = p.caption || p.tag || '';
-      if (url) {
-        html += '<div style="position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;cursor:pointer" onclick="_jobPhotoFull=' + JSON.stringify(allPhotos) + ';openJobPhotoLightbox(' + i + ')">'
-          + '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentElement.style.display=\'none\'">'
-          + (caption ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);color:#fff;font-size:9px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + caption + '</div>' : '')
-          + '</div>';
-      }
+      if (!url) return;
+      html += '<div class="job-photo-cell" onclick="openJobPhotoLightboxFor(\'' + jid + '\',' + i + ')">'
+        + '<img src="' + url + '" loading="lazy" onerror="this.parentElement.classList.add(\'job-photo-bad\');this.src=\'\';this.style.display=\'none\'" alt="Photo ' + (i+1) + '">'
+        + '<span class="job-photo-bad-label">Photo unavailable</span>'
+        + (caption ? '<div class="job-photo-caption">' + caption + '</div>' : '')
+        + '</div>';
     });
     if (allPhotos.length > 18) {
-      html += '<div style="aspect-ratio:1;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;border:1px solid var(--border)" onclick="_jobPhotoFull=' + JSON.stringify(allPhotos) + ';openJobPhotoLightbox(18)">+' + (allPhotos.length - 18) + '<br><span style=\'font-size:9px;font-weight:400\'>more</span></div>';
+      html += '<div class="job-photo-cell job-photo-more" onclick="openJobPhotoLightboxFor(\'' + jid + '\',18)">+' + (allPhotos.length - 18) + '<div style="font-size:10px;font-weight:400;margin-top:2px">more</div></div>';
     }
     html += '</div>';
   }
@@ -599,40 +606,136 @@ function renderJobTasks(tasks, jobId) {
   }).join('');
 }
 
+// Collect every photo attached to a portal job, de-duplicated by URL.
+// Sources: job.photos.rawPhotos (CompanyCam), job.simplePhotos (direct
+// uploads), job.fieldPhotos (legacy field app). Each normalized to { url,
+// thumbnail, caption, label, tag, id, createdAt, source }.
+function collectJobPhotos(job) {
+  var out = [];
+  var seen = Object.create(null);
+  function push(p, source) {
+    if (!p) return;
+    var url = p.url || p.thumbnail || '';
+    if (!url || seen[url]) return;
+    seen[url] = true;
+    out.push({
+      url: url,
+      thumbnail: p.thumbnail || p.url || '',
+      caption: p.caption || p.label || '',
+      label: p.label || p.caption || '',
+      tag: (Array.isArray(p.tags) ? p.tags[0] : p.tag) || '',
+      id: p.id || p._id || '',
+      createdAt: p.created_at || p.createdAt || p.takenAt || null,
+      source: source,
+    });
+  }
+  ((job && job.photos && job.photos.rawPhotos) || []).forEach(function(p){ push(p,'companycam'); });
+  (job && job.simplePhotos || []).forEach(function(p){ push(p,'simple'); });
+  (job && job.fieldPhotos || []).forEach(function(p){ push(p,'field'); });
+  return out;
+}
+
 // ── Job Photo Lightbox ──────────────────────────────────────────────────────
 var _jobPhotoFull = [];
 var _jobPhotoIdx = 0;
+var _jobPhotoJobId = null;
+var _jobPhotoZoom = 1;
 
-function openJobPhotoLightbox(idx) {
+function openJobPhotoLightbox(idx, jobId) {
   _jobPhotoIdx = idx;
-  var photos = _jobPhotoFull;
+  _jobPhotoZoom = 1;
+  _jobPhotoJobId = jobId || (_currentJobDetail && _currentJobDetail.id) || null;
   var existing = document.getElementById('job-photo-lightbox');
   if (existing) existing.remove();
 
   var lb = document.createElement('div');
   lb.id = 'job-photo-lightbox';
-  lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column';
-
-  function renderLb() {
-    var p = photos[_jobPhotoIdx] || {};
-    var url = p.url || p.thumbnail || '';
-    var caption = p.caption || p.tag || '';
-    var total = photos.length;
-    lb.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0">'
-      + '<button onclick="document.getElementById(\'job-photo-lightbox\').remove()" style="background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1">&times;</button>'
-      + '<span style="color:#fff;font-size:13px;font-weight:600">' + (_jobPhotoIdx+1) + ' / ' + total + '</span>'
-      + '<a href="' + url + '" download target="_blank" style="color:#00B5CC;font-size:12px;font-weight:600;text-decoration:none">Save</a>'
-      + '</div>'
-      + '<div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">'
-      + '<img src="' + url + '" style="max-width:100%;max-height:100%;object-fit:contain">'
-      + (_jobPhotoIdx > 0 ? '<button onclick="_jobPhotoIdx--;document.getElementById(\'job-photo-lightbox\') && (document.getElementById(\'job-photo-lightbox\').querySelector(\'img\').src=(_jobPhotoFull[_jobPhotoIdx]||{}).url||\'\')" style="position:absolute;left:0;top:0;bottom:0;width:60px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:32px;cursor:pointer">&#8249;</button>' : '')
-      + (_jobPhotoIdx < total-1 ? '<button onclick="_jobPhotoIdx++;document.getElementById(\'job-photo-lightbox\') && (document.getElementById(\'job-photo-lightbox\').querySelector(\'img\').src=(_jobPhotoFull[_jobPhotoIdx]||{}).url||\'\')" style="position:absolute;right:0;top:0;bottom:0;width:60px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:32px;cursor:pointer">&#8250;</button>' : '')
-      + '</div>'
-      + (caption ? '<div style="padding:10px 16px;color:#ccc;font-size:12px;text-align:center;flex-shrink:0">' + caption + '</div>' : '');
-  }
-  renderLb();
+  lb.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;user-select:none';
   document.body.appendChild(lb);
+  _renderJobLightbox();
+
+  // Swipe navigation
+  var startX = null, startY = null;
+  lb.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }, { passive: true });
+  lb.addEventListener('touchend', function(e) {
+    if (startX == null) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    var dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) jobLightboxNext(); else jobLightboxPrev();
+    }
+    startX = null; startY = null;
+  });
+  // Keyboard arrow nav
+  lb._keyHandler = function(e) {
+    if (e.key === 'ArrowRight') jobLightboxNext();
+    else if (e.key === 'ArrowLeft') jobLightboxPrev();
+    else if (e.key === 'Escape') closeJobLightbox();
+  };
+  document.addEventListener('keydown', lb._keyHandler);
+}
+
+function _renderJobLightbox() {
+  var lb = document.getElementById('job-photo-lightbox');
+  if (!lb) return;
+  var photos = _jobPhotoFull;
+  var p = photos[_jobPhotoIdx] || {};
+  var url = p.url || p.thumbnail || '';
+  var caption = p.caption || p.label || p.tag || '';
+  var total = photos.length;
+  var date = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '';
+  var zoomed = _jobPhotoZoom > 1;
+
+  lb.innerHTML = ''
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0;background:rgba(0,0,0,0.5)">'
+    + '<button onclick="closeJobLightbox()" style="background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1">&times;</button>'
+    + '<span style="color:#fff;font-size:13px;font-weight:600">' + (_jobPhotoIdx + 1) + ' of ' + total + (date ? ' · ' + date : '') + '</span>'
+    + '<div style="display:flex;gap:10px;align-items:center">'
+    + '<button onclick="toggleJobPhotoZoom()" title="Zoom" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1">' + (zoomed ? '&#128270;' : '&#128269;') + '</button>'
+    + '<a href="' + url + '" download target="_blank" style="color:#00B5CC;font-size:12px;font-weight:600;text-decoration:none">Save</a>'
+    + '</div>'
+    + '</div>'
+    + '<div id="job-lightbox-stage" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:' + (zoomed ? 'auto' : 'hidden') + '" ondblclick="toggleJobPhotoZoom()">'
+    + '<img src="' + url + '" ondblclick="event.stopPropagation();toggleJobPhotoZoom()" style="max-width:100%;max-height:100%;object-fit:contain;transform:scale(' + _jobPhotoZoom + ');transform-origin:center center;transition:transform .2s ease;cursor:' + (zoomed ? 'zoom-out' : 'zoom-in') + '" onerror="this.alt=\'Photo unavailable\';this.style.opacity=0.35">'
+    + (_jobPhotoIdx > 0 ? '<button onclick="jobLightboxPrev()" style="position:absolute;left:0;top:0;bottom:0;width:60px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:36px;cursor:pointer">&#8249;</button>' : '')
+    + (_jobPhotoIdx < total - 1 ? '<button onclick="jobLightboxNext()" style="position:absolute;right:0;top:0;bottom:0;width:60px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:36px;cursor:pointer">&#8250;</button>' : '')
+    + '</div>'
+    + '<div style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.5);flex-shrink:0">'
+    + '<div style="color:#ccc;font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (caption || '') + '</div>'
+    + '<button onclick="deleteJobPhoto()" style="background:none;border:1px solid rgba(255,255,255,0.25);color:#FCA5A5;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer">Delete</button>'
+    + '</div>';
+}
+
+// Open the lightbox using the pre-collected photo list for a job. Keeps
+// per-cell onclicks tiny (no inline JSON blob).
+function openJobPhotoLightboxFor(jobId, idx) {
+  var list = (window._jobPhotosById || {})[jobId] || [];
+  _jobPhotoFull = list;
+  openJobPhotoLightbox(idx, jobId);
+}
+
+function jobLightboxNext() { if (_jobPhotoIdx < _jobPhotoFull.length - 1) { _jobPhotoIdx++; _jobPhotoZoom = 1; _renderJobLightbox(); } }
+function jobLightboxPrev() { if (_jobPhotoIdx > 0) { _jobPhotoIdx--; _jobPhotoZoom = 1; _renderJobLightbox(); } }
+function toggleJobPhotoZoom() { _jobPhotoZoom = _jobPhotoZoom > 1 ? 1 : 2.25; _renderJobLightbox(); }
+function closeJobLightbox() {
+  var lb = document.getElementById('job-photo-lightbox');
+  if (!lb) return;
+  if (lb._keyHandler) document.removeEventListener('keydown', lb._keyHandler);
+  lb.remove();
+}
+async function deleteJobPhoto() {
+  var p = _jobPhotoFull[_jobPhotoIdx]; if (!p) return;
+  if (!_jobPhotoJobId) { showToast('Cannot delete without job context', true); return; }
+  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  try {
+    var r = await fetch('/api/field/jobs/' + _jobPhotoJobId + '/photos/' + encodeURIComponent(p.id || ''), { method: 'DELETE' });
+    if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status);
+    _jobPhotoFull.splice(_jobPhotoIdx, 1);
+    showToast('Photo deleted');
+    if (!_jobPhotoFull.length) closeJobLightbox();
+    else { if (_jobPhotoIdx >= _jobPhotoFull.length) _jobPhotoIdx = _jobPhotoFull.length - 1; _renderJobLightbox(); }
+    if (typeof openJobDetail === 'function' && _jobPhotoJobId) openJobDetail(_jobPhotoJobId);
+  } catch (e) { showToast('Delete failed: ' + e.message, true); }
 }
 
 function closeJobDetail() {

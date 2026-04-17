@@ -249,6 +249,21 @@ router.patch('/:id/tasks/:taskId', async (req, res) => {
   }
 });
 
+// DELETE /api/field/jobs/:id/photos/:photoId — proxy delete to portal
+router.delete('/:id/photos/:photoId', async (req, res) => {
+  try {
+    const response = await fetch(`${PORTAL_URL}/api/jobs/${req.params.id}/simple-photos/${encodeURIComponent(req.params.photoId)}`, {
+      method: 'DELETE', headers: portalHeaders
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[FieldJobs] DELETE photo error:', e.message);
+    res.status(500).json({ error: 'Failed to delete photo' });
+  }
+});
+
 // POST /api/field/jobs/:id/photos/markup — proxy photo markup to portal
 router.post('/:id/photos/markup', async (req, res) => {
   try {
