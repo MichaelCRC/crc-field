@@ -220,7 +220,7 @@ function renderJobCard(job, showSwipeHint) {
   html += pipelineBadge(job.pipeline);
   html += '</div>';
   // Row 2: address
-  html += '<div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address || '') + '</div>';
+  html += '<div style="font-size:13px;font-weight:700;color:#0D0D0D;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address || '') + '</div>';
   // Row 3: meta
   html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--gray)">';
   if (job.carrier) html += '<span>' + job.carrier + '</span>';
