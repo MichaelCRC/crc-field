@@ -79,8 +79,8 @@ function _renderBuilder() {
     : 'Select photos to include. Add a label and (optionally) markup to each.';
 
   overlay.innerHTML = ''
-    + '<div style="background:#001A4D;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0">'
-    +   '<button onclick="_irClose()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0;line-height:1">&times;</button>'
+    + '<div style="background:#001A4D;color:#fff;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top, 0px));display:flex;align-items:center;gap:10px;flex-shrink:0">'
+    +   '<button onclick="_irClose()" style="background:none;border:none;color:#fff;font-size:26px;cursor:pointer;padding:4px 8px;line-height:1;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">&times;</button>'
     +   '<div style="flex:1"><div style="font-weight:800;font-size:15px">' + title + '</div>'
     +     '<div style="font-size:11px;color:#94A3B8">' + subtitle + '</div></div>'
     + '</div>'
