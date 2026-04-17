@@ -567,7 +567,6 @@ function openCamFieldObs() {
     { key:'existingGutters', label:'Gutters — D&R' },
     { key:'gutterGuards',  label:'Gutter Guards' },
     { key:'tarpInstalled', label:'Tarp Installed' },
-    { key:'interiorDamage',label:'Interior Damage' },
   ];
 
   sheet.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
