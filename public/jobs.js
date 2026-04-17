@@ -203,7 +203,7 @@ function renderJobCard(job, showSwipeHint) {
 
   let html = '<div class="job-card" data-id="' + job.id + '" onclick="openJobDetail(\'' + job.id + '\')" '
     + 'style="' + cardOpacity + 'position:relative;background:var(--white);border-radius:10px;'
-    + 'box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:12px 14px;margin-bottom:8px;cursor:pointer;'
+    + 'box-shadow:0 2px 8px rgba(0,0,0,0.18);padding:12px 14px;margin-bottom:8px;cursor:pointer;'
     + 'border-left:4px solid ' + sc + ';overflow:hidden;touch-action:pan-y;user-select:none">';
 
   // Swipe action labels (hidden behind card)
@@ -216,11 +216,11 @@ function renderJobCard(job, showSwipeHint) {
   html += '<div class="job-card-inner" style="position:relative;z-index:1">';
   // Row 1: name + pipeline
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">';
-  html += '<span style="font-size:14px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:6px">' + (job.homeownerName || 'Unknown') + '</span>';
+  html += '<span style="font-size:15px;font-weight:800;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:6px">' + (job.homeownerName || 'Unknown') + '</span>';
   html += pipelineBadge(job.pipeline);
   html += '</div>';
   // Row 2: address
-  html += '<div style="font-size:12px;color:var(--gray);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address || '') + '</div>';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address || '') + '</div>';
   // Row 3: meta
   html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--gray)">';
   if (job.carrier) html += '<span>' + job.carrier + '</span>';
@@ -465,10 +465,7 @@ function renderJobDetail(job) {
     squares ? '&#10003; ' + squares + ' SQ' : 'Not measured',
     squares ? '#16A34A' : '#94A3B8',
     'runFieldMeasure(\'' + (job.address || '').replace(/\'/g,"\\'") + '\',\'' + jid + '\')');
-  html += _workflowChip('&#128248;', 'Photos',
-    wfPhotos.length ? (wfPhotos.length + ' photos') : 'No photos',
-    wfPhotos.length ? '#16A34A' : '#94A3B8',
-    'jobTakePhoto(\'' + jid + '\')');
+  // Photos workflow chip removed — photos section below + camera button above handle this
   html += _workflowChip('&#128220;', 'Photo Report',
     photoReportBuilt ? '&#10003; Built' : (wfPhotos.length ? 'Build' : 'No photos yet'),
     photoReportBuilt ? '#16A34A' : '#94A3B8',
@@ -485,7 +482,7 @@ function renderJobDetail(job) {
   // correctly in both modes even if a CSS variable somewhere fails to resolve.
   html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
   html += '<button onclick="openStagePickerInDetail(\'' + jid + '\')" style="flex:1;padding:11px;background:#00B5CC;color:#FFFFFF;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Move Stage</button>';
-  html += '<button onclick="openPipelineTransfer(\'' + jid + '\')" style="flex:1;padding:11px;background:#001A4D;color:#FFFFFF;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Transfer Type</button>';
+  html += '<button onclick="openPipelineTransfer(\'' + jid + '\')" style="flex:1;padding:11px;background:#1e3a6e;color:#FFFFFF;border:1.5px solid #4a6fa5;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Transfer Type</button>';
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
   html += '<button onclick="markJobFollowUp(\'' + jid + '\')" style="flex:1;padding:9px;background:#0EA5E9;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Follow Up</button>';

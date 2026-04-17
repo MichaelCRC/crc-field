@@ -47,7 +47,7 @@ async function _launchBuilder(jobId, mode) {
     markPhoto: null,
     // Claim filing extras
     dateOfLoss: '',
-    stormType: 'Hail',
+    stormType: 'Wind & Hail',
     damageSummary: ''
   };
   // Prefill damage summary template for claim-filing mode
@@ -108,7 +108,7 @@ function _buildBody() {
       + '<input type="date" id="ir-dol" value="' + s.dateOfLoss + '" oninput="_irState.dateOfLoss=this.value" style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px"></div>'
       + '<div><label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px">Storm Type</label>'
       + '<select id="ir-storm" oninput="_irState.stormType=this.value" style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">'
-      + ['Hail','Wind','Hail + Wind','Other'].map(function(o){ return '<option ' + (s.stormType===o?'selected':'') + '>' + o + '</option>'; }).join('')
+      + ['Wind & Hail','Hail Only','Wind Only','Other'].map(function(o){ return '<option ' + (s.stormType===o?'selected':'') + '>' + o + '</option>'; }).join('')
       + '</select></div></div>'
       + '<label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px">Damage Summary</label>'
       + '<textarea id="ir-summary" oninput="_irState.damageSummary=this.value" rows="3" style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.damageSummary) + '</textarea>'
@@ -235,10 +235,11 @@ function _irShowSuccess(data, mode) {
     +   '<div style="font-size:64px;margin-bottom:12px">&#9989;</div>'
     +   '<div style="font-size:20px;font-weight:800;color:#001A4D;margin-bottom:8px">' + (mode === 'claim-filing' ? 'Package ready' : 'Report ready') + '</div>'
     +   '<div style="font-size:13px;color:#64748B;margin-bottom:24px;max-width:420px">Saved to this job\'s documents in the portal. You can open or share it below.</div>'
-    +   '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'
-    +     '<a href="' + url + '" target="_blank" style="padding:12px 20px;background:#001A4D;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Open PDF</a>'
-    +     '<button onclick="_irShare(\'' + url + '\')" style="padding:12px 20px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Share</button>'
-    +     '<button onclick="_irClose()" style="padding:12px 20px;background:#fff;color:#001A4D;border:1px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Done</button>'
+    +   '<div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">'
+    +     '<a href="' + url + '" download target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#001A4D;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">&#11015;&#65039; Download PDF</a>'
+    +     '<button onclick="_irCopyLink(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#128279; Copy Link</button>'
+    +     '<button onclick="_irShowQR(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#fff;color:#001A4D;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#9638; QR Code</button>'
+    +     '<button onclick="_irClose()" style="padding:10px;background:none;color:#64748B;border:none;font-size:13px;cursor:pointer">Close</button>'
     +   '</div>'
     + '</div>';
   var bar = document.querySelector('#ir-overlay > div:last-child');
@@ -248,7 +249,30 @@ function _irShowSuccess(data, mode) {
 function _irShare(url) {
   if (!url) return;
   if (navigator.share) navigator.share({ title: 'CRC Report', url: url }).catch(function(){});
-  else navigator.clipboard && navigator.clipboard.writeText(url).then(function(){ alert('Link copied'); }).catch(function(){ window.open(url); });
+  else _irCopyLink(url);
+}
+function _irCopyLink(url) {
+  if (!url) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      var btn = document.querySelector('#ir-body button[onclick*="CopyLink"]');
+      if (btn) { var orig = btn.innerHTML; btn.innerHTML = '&#10003; Copied!'; setTimeout(function(){ btn.innerHTML = orig; }, 2000); }
+    }).catch(function(){ window.open(url); });
+  } else { window.open(url); }
+}
+function _irShowQR(url) {
+  if (!url) return;
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+  var body = document.getElementById('ir-body');
+  if (!body) return;
+  var qrDiv = document.createElement('div');
+  qrDiv.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  qrDiv.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;text-align:center">'
+    + '<div style="font-size:13px;font-weight:700;color:#001A4D;margin-bottom:12px">Scan to open PDF</div>'
+    + '<img src="' + qrUrl + '" style="width:200px;height:200px;display:block">'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:16px;padding:10px 24px;background:#001A4D;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Close</button>'
+    + '</div>';
+  document.body.appendChild(qrDiv);
 }
 
 // Expose
@@ -260,3 +284,5 @@ window._irApplyChip = _irApplyChip;
 window._irClose = _irClose;
 window._irGenerate = _irGenerate;
 window._irShare = _irShare;
+window._irCopyLink = _irCopyLink;
+window._irShowQR = _irShowQR;
