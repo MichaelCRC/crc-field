@@ -15,6 +15,9 @@ let liveThumbnails = []; // data URLs for bottom strip
 
 function openCameraMode() {
   cameraActive = true;
+  // Hide the FAB — not needed while taking photos
+  var fab = document.querySelector('.crc-fab-root');
+  if (fab) fab.style.display = 'none';
   // Preserve any in-flight uploads from the previous session — don't wipe the queue
   // Only reset counts if nothing is pending
   if (uploadsInFlight === 0 && uploadQueue.length === 0) {
@@ -68,9 +71,12 @@ async function openLiveViewfinder() {
       
       <div class="cam-count" id="cam-count" onclick="event.stopPropagation();closeLiveCamera()">${cameraSessionCount || ''}</div>
 
-      <div class="cam-tag-strip-min" id="cam-tag-strip-top">
-        ${camTags.map(t => `<button class="cam-tag-pill-min ${t === cameraTag ? 'active' : ''}" onclick="event.stopPropagation();pickTag('${t}')" data-tag="${t}">${camLabels[t]}</button>`).join('')}
-      </div>
+      <button id="cam-tag-btn" onclick="event.stopPropagation();openCamTagPicker()" style="position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.65);border:1.5px solid rgba(255,255,255,0.35);color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;white-space:nowrap;min-height:36px;letter-spacing:0.5px">
+        📷 <span id="cam-tag-label">${camLabels[cameraTag] || 'Overview'}</span> ▾
+      </button>
+      <button onclick="event.stopPropagation();openCamFieldObs()" style="position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));right:12px;z-index:10;background:rgba(0,181,204,0.85);border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 11px;border-radius:20px;min-height:36px;white-space:nowrap">
+        📋 Field Obs
+      </button>
 
       <div class="cam-compass-float" id="cam-compass">
         <div class="compass-ring-sm">
@@ -260,6 +266,9 @@ function updateLiveHUD() {
 }
 
 function closeLiveCamera() {
+  // Restore FAB
+  var fab = document.querySelector('.crc-fab-root');
+  if (fab) fab.style.display = '';
   // Stop video stream
   if (liveStream) {
     liveStream.getTracks().forEach(track => track.stop());
@@ -491,11 +500,130 @@ function showTagPicker() { const s = document.getElementById('cam-tag-sheet'); i
 function hideTagPicker() { const s = document.getElementById('cam-tag-sheet'); if (s) s.classList.remove('open'); }
 function pickTag(tag) {
   cameraTag = tag;
-  // Update pill buttons
+  // Update new tag button label
+  const lbl = document.getElementById('cam-tag-label');
+  if (lbl) {
+    const haagTags = ['Overview','North Slope','South Slope','East Slope','West Slope','Soft Metals','Components','Interior','General'];
+    const haagKeys = ['overview','north-slope','south-slope','east-slope','west-slope','soft-metal','components','interior','general'];
+    const idx = haagKeys.indexOf(tag);
+    lbl.textContent = idx >= 0 ? haagTags[idx] : tag;
+  }
+  // Legacy pill update
   document.querySelectorAll('.cam-tag-pill-min').forEach(b => b.classList.toggle('active', b.dataset.tag === tag));
-  // Fallback for old UI
   const el = document.querySelector('.cam-tag-current'); if (el) el.textContent = tag;
   document.querySelectorAll('.cam-tag-option').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase().includes(tag.replace('-', ' '))));
+}
+
+// ── Camera Tag Picker ──────────────────────────────────────────────────────
+function openCamTagPicker() {
+  const haagTags = ['Overview','North Slope','South Slope','East Slope','West Slope','Soft Metals','Components','Interior','General'];
+  const haagKeys = ['overview','north-slope','south-slope','east-slope','west-slope','soft-metal','components','interior','general'];
+
+  var existing = document.getElementById('cam-tag-picker-sheet');
+  if (existing) { existing.remove(); return; }
+
+  var sheet = document.createElement('div');
+  sheet.id = 'cam-tag-picker-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9800;background:#111;border-radius:16px 16px 0 0;padding:8px 0 calc(20px + env(safe-area-inset-bottom,0px));max-height:60vh;overflow-y:auto';
+  sheet.innerHTML = '<div style="text-align:center;padding:8px 0 4px;color:#999;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Select Photo Category</div>'
+    + haagKeys.map((k, i) => `<button onclick="event.stopPropagation();pickTag('${k}');document.getElementById('cam-tag-picker-sheet')?.remove()" style="display:block;width:100%;padding:14px 20px;background:${k===cameraTag?'rgba(0,181,204,0.15)':'transparent'};border:none;border-bottom:1px solid rgba(255,255,255,0.06);color:${k===cameraTag?'#00B5CC':'#fff'};font-size:15px;font-weight:${k===cameraTag?'700':'400'};text-align:left;cursor:pointer">${k===cameraTag?'✓ ':''  }${haagTags[i]}</button>`).join('');
+
+  // Tap outside to dismiss
+  var backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:9799';
+  backdrop.onclick = function() { sheet.remove(); backdrop.remove(); };
+
+  document.body.appendChild(backdrop);
+  document.body.appendChild(sheet);
+}
+
+// ── Camera Field Obs Quick Panel ──────────────────────────────────────────
+function openCamFieldObs() {
+  var existing = document.getElementById('cam-fieldobs-sheet');
+  if (existing) { existing.remove(); return; }
+
+  // Pull current field obs from the active job
+  var fn = (typeof _currentJobDetail !== 'undefined' && _currentJobDetail && _currentJobDetail.fieldNotes) || {};
+
+  var sheet = document.createElement('div');
+  sheet.id = 'cam-fieldobs-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9800;background:#111;border-radius:16px 16px 0 0;padding:12px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:70vh;overflow-y:auto';
+
+  function tog(key, qty) {
+    if (!fn[key]) { fn[key] = true; if (qty && !fn[qty]) fn[qty] = 1; }
+    else if (qty) { fn[qty] = (fn[qty] || 0) + 1; }
+    else { delete fn[key]; }
+    saveCamFieldObs(fn);
+    sheet.remove(); document.getElementById('cam-fieldobs-backdrop')?.remove();
+    openCamFieldObs();
+  }
+
+  var rows = [
+    { key:'chimney',       label:'Chimney',          qty:'chimneyQty' },
+    { key:'skylights',     label:'Skylights',         qty:'skylightQty' },
+    { key:'pipeJacks',     label:'Pipe Jacks',        qty:'pipeJacks', isNum:true },
+    { key:'twoStory',      label:'2+ Stories' },
+    { key:'existingDripEdge', label:'Drip Edge (existing)' },
+    { key:'satelliteDish', label:'Satellite Dish',    qty:'satelliteDishQty' },
+    { key:'counterFlashing', label:'Counter Flashing' },
+    { key:'exhaustVent',   label:'Exhaust Vent',      qty:'exhaustVentQty' },
+    { key:'replaceGutters',label:'Gutters — R&R' },
+    { key:'existingGutters', label:'Gutters — D&R' },
+    { key:'gutterGuards',  label:'Gutter Guards' },
+    { key:'tarpInstalled', label:'Tarp Installed' },
+    { key:'interiorDamage',label:'Interior Damage' },
+  ];
+
+  sheet.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    + '<span style="color:#fff;font-size:13px;font-weight:700">Field Observations</span>'
+    + '<button onclick="document.getElementById(\'cam-fieldobs-sheet\')?.remove();document.getElementById(\'cam-fieldobs-backdrop\')?.remove()" style="background:none;border:none;color:#999;font-size:20px;cursor:pointer">&times;</button>'
+    + '</div>'
+    + rows.map(r => {
+        var on = r.isNum ? (fn[r.key] || 0) > 0 : !!fn[r.key];
+        var detail = r.qty && fn[r.qty] ? ` (${fn[r.qty]})` : '';
+        return `<button onclick="event.stopPropagation();_camFoToggle('${r.key}','${r.qty||''}',${!!r.isNum})" style="display:flex;align-items:center;gap:10px;width:100%;padding:11px 4px;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.07);cursor:pointer">`
+          + `<span style="width:22px;height:22px;border-radius:6px;border:2px solid ${on?'#00B5CC':'#555'};background:${on?'#00B5CC':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#fff">${on?'✓':''}</span>`
+          + `<span style="color:#fff;font-size:14px;text-align:left">${r.label}${detail}</span>`
+          + `</button>`;
+      }).join('');
+
+  var backdrop = document.createElement('div');
+  backdrop.id = 'cam-fieldobs-backdrop';
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:9799';
+  backdrop.onclick = function() { sheet.remove(); backdrop.remove(); };
+
+  document.body.appendChild(backdrop);
+  document.body.appendChild(sheet);
+}
+
+function _camFoToggle(key, qtyKey, isNum) {
+  var fn = (typeof _currentJobDetail !== 'undefined' && _currentJobDetail && _currentJobDetail.fieldNotes) || {};
+  if (isNum) {
+    fn[key] = (fn[key] || 0) + 1;
+  } else if (fn[key]) {
+    delete fn[key];
+    if (qtyKey) delete fn[qtyKey];
+  } else {
+    fn[key] = true;
+    if (qtyKey && !fn[qtyKey]) fn[qtyKey] = 1;
+  }
+  saveCamFieldObs(fn);
+  document.getElementById('cam-fieldobs-sheet')?.remove();
+  document.getElementById('cam-fieldobs-backdrop')?.remove();
+  openCamFieldObs();
+}
+
+function saveCamFieldObs(fn) {
+  if (typeof _currentJobDetail === 'undefined' || !_currentJobDetail) return;
+  _currentJobDetail.fieldNotes = fn;
+  var jobId = _currentJobDetail.id || (typeof currentLeadId !== 'undefined' ? currentLeadId : null);
+  if (!jobId) return;
+  // Save to portal in background
+  fetch('/api/field/jobs/' + jobId + '/fieldnotes', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fieldNotes: fn })
+  }).catch(() => {});
 }
 
 // --- Pinch to Zoom ---

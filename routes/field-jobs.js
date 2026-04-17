@@ -140,6 +140,8 @@ router.patch('/:id', async (req, res) => {
       'roofDiagramClean', 'roofDiagramMarkup', 'roofDiagramStrokes',
       // Field notes whiteboard (separate freehand canvas below the measure diagram)
       'fieldNotesWhiteboard',
+      // Field observations (from camera quick-fill)
+      'fieldNotes',
       // Claim-filing workflow flag
       'claimFilingReady',
     ];

@@ -258,7 +258,7 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .cam-done { background: var(--teal); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .cam-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; }
 /* Minimal camera overlay elements */
-.cam-x { position: absolute; top: 12px; left: 12px; z-index: 10; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 24px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cam-x { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 10; background: rgba(0,0,0,0.65); border: 2px solid rgba(255,255,255,0.3); color: white; font-size: 22px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .cam-count { position: absolute; top: 12px; right: 12px; z-index: 10; background: var(--teal); color: white; font-size: 14px; font-weight: 800; min-width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: pointer; }
 .cam-count:empty { display: none; }
 .cam-tag-strip-min { position: absolute; top: 54px; left: 0; right: 0; z-index: 10; display: flex; gap: 4px; padding: 4px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
