@@ -13,6 +13,10 @@ let _feedLoading = false;
 let _feedPendingPhotoUrl = null;
 let _feedPollTimer = null;
 let _feedJobsCache = null;
+let _feedChannel = 'activity'; // active channel
+
+// Key events to show in activity channel (system events only these types)
+const FEED_KEY_EVENTS = new Set(['job_created','claim_filed','scope_approved','supplement_submitted','scope_built']);
 
 function feedHeaders(extra) {
   return Object.assign({
@@ -127,8 +131,36 @@ function renderFeed() {
   const host = document.getElementById('feed-list');
   if (!host) return;
   if (_feedLoading && !_feedEntries.length) { host.innerHTML = '<div class="feed-loading">Loading feed...</div>'; return; }
-  if (!_feedEntries.length) { host.innerHTML = '<div class="feed-empty">No activity yet — post the first update above.</div>'; return; }
-  host.innerHTML = _feedEntries.map(renderFeedCard).join('');
+  // Filter by channel
+  let entries = _feedEntries;
+  if (_feedChannel === 'activity') {
+    // Show rep posts + key system events only
+    entries = entries.filter(e => e.type === 'rep_post' || FEED_KEY_EVENTS.has(e.event));
+  } else if (_feedChannel === 'leadership' || _feedChannel === 'projects') {
+    // Show rep posts tagged for this channel, or all rep posts if no channel tag
+    entries = entries.filter(e => e.type === 'rep_post' && (e.channel === _feedChannel || (!e.channel && _feedChannel === 'activity')));
+  }
+  if (!entries.length) { host.innerHTML = '<div class="feed-empty">No posts in this channel yet.</div>'; return; }
+  host.innerHTML = entries.map(renderFeedCard).join('');
+}
+
+function switchFeedChannel(channel) {
+  _feedChannel = channel;
+  document.querySelectorAll('.feed-channel-tab').forEach(function(tab) {
+    tab.classList.toggle('active', tab.dataset.channel === channel);
+  });
+  renderFeed();
+}
+
+function feedTakePhoto() {
+  triggerPhotoCapture({ base64: false }, function(result) {
+    if (!result || !result.file) return;
+    // Simulate a file input change with the captured file
+    var dt = new DataTransfer();
+    dt.items.add(result.file);
+    var fakeInput = { files: dt.files };
+    feedPickPhoto(fakeInput);
+  });
 }
 
 function feedEventClass(e) {
@@ -295,6 +327,7 @@ async function feedSubmitPost() {
       body: JSON.stringify({
         body: text,
         photoUrl: _feedPendingPhotoUrl || null,
+        channel: _feedChannel !== 'activity' ? _feedChannel : null,
         jobId: jobSel && jobSel.value || null,
       })
     });

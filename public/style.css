@@ -366,6 +366,9 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 
 /* ── CRC Activity Feed ─────────────────────────── */
 #view-feed { display: none; background: var(--bg); padding-bottom: 90px; }
+.feed-channel-tab { flex-shrink: 0; padding: 10px 18px; font-size: 13px; font-weight: 700; border: none; background: none; color: var(--text-secondary); cursor: pointer; border-bottom: 3px solid transparent; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.feed-channel-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+.feed-camera-btn { flex-shrink: 0; }
 #view-feed.active { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* Sticky post box */

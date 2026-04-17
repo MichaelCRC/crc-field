@@ -6,11 +6,20 @@
  * generates the "Next Steps" PDF the homeowner takes to their carrier.
  */
 
-var IR_LABEL_CHIPS = [
+var IR_LABEL_CHIPS_DEFAULT = [
   'Hail Impact','Wind Damage','Missing Shingle','Cracked Shingle',
   'Missing Granules','Lifted Flashing','Gutter Damage',
   'Soft Spot','Exposed Nail','Collateral Damage'
 ];
+// Persisted to localStorage so user edits survive
+function _irGetLabels() {
+  try { var s = localStorage.getItem('crc_ir_labels'); if (s) return JSON.parse(s); } catch(e) {}
+  return IR_LABEL_CHIPS_DEFAULT.slice();
+}
+function _irSaveLabels(arr) {
+  try { localStorage.setItem('crc_ir_labels', JSON.stringify(arr)); } catch(e) {}
+}
+var IR_LABEL_CHIPS = _irGetLabels();
 
 var _irState = null;
 
@@ -45,6 +54,7 @@ async function _launchBuilder(jobId, mode) {
     labels: {}, // url -> label
     includeDiagram: !!(job.roofDiagramMarkup || job.roofDiagramClean),
     markPhoto: null,
+    photoSummary: '',
     // Claim filing extras
     dateOfLoss: '',
     stormType: 'Wind & Hail',
@@ -115,6 +125,14 @@ function _buildBody() {
       + '</div>';
   }
 
+  // Photo report summary section
+  if (s.mode === 'photo-report') {
+    html += '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">'
+      + '<div style="font-size:12px;font-weight:800;color:#001A4D;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Inspection Summary</div>'
+      + '<textarea id="ir-photo-summary" oninput="_irState.photoSummary=this.value" rows="3" placeholder="Describe the damage found, areas affected, recommended next steps..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.photoSummary || '') + '</textarea>'
+      + '</div>';
+  }
+
   // Options toolbar
   html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">'
     + '<button onclick="_irSelectAll(true)" style="padding:7px 12px;background:#001A4D;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Select All</button>'
@@ -128,8 +146,8 @@ function _buildBody() {
   html += '</div>';
 
   // Label chips
-  html += '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Quick Labels</div>'
-    + '<div style="display:flex;flex-wrap:wrap;gap:6px">'
+  html += '<div style="margin-bottom:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.4px">Quick Labels</span><button onclick="_irManageLabels()" style="font-size:11px;color:#00B5CC;background:none;border:none;cursor:pointer;font-weight:700">Edit Labels</button></div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px" id="ir-label-chips">'
     + IR_LABEL_CHIPS.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#001A4D;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('')
     + '</div>'
     + '<div style="font-size:11px;color:#94A3B8;margin-top:4px">Tap a chip to label all selected photos at once.</div></div>';
@@ -211,6 +229,9 @@ async function _irGenerate() {
     body.stormType = s.stormType;
     body.damageSummary = s.damageSummary;
   }
+  if (s.mode === 'photo-report' && s.photoSummary) {
+    body.damageSummary = s.photoSummary;
+  }
 
   try {
     var r = await fetch('/api/field/jobs/' + s.jobId + '/' + endpoint, {
@@ -244,6 +265,54 @@ function _irShowSuccess(data, mode) {
     + '</div>';
   var bar = document.querySelector('#ir-overlay > div:last-child');
   if (bar) bar.style.display = 'none';
+}
+
+function _irManageLabels() {
+  var current = _irGetLabels();
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
+  function render() {
+    current = _irGetLabels();
+    modal.innerHTML = '<div style="background:#fff;border-radius:14px;padding:20px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+      + '<span style="font-size:15px;font-weight:800;color:#001A4D">Edit Labels</span>'
+      + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748B">&times;</button></div>'
+      + current.map(function(l, i) {
+          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F1F5F9">'
+            + '<span style="flex:1;font-size:13px;color:#001A4D">' + l + '</span>'
+            + '<button onclick="_irDeleteLabel(' + i + ')" style="background:none;border:none;color:#DC2626;font-size:18px;cursor:pointer;line-height:1">&times;</button></div>';
+        }).join('')
+      + '<div style="display:flex;gap:6px;margin-top:12px">'
+      + '<input id="ir-new-label" type="text" placeholder="Add label..." style="flex:1;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px">'
+      + '<button onclick="_irAddLabel()" style="padding:8px 14px;background:#00B5CC;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">Add</button></div>'
+      + '</div>';
+  }
+  render();
+  document.body.appendChild(modal);
+}
+function _irDeleteLabel(idx) {
+  var labels = _irGetLabels();
+  labels.splice(idx, 1);
+  _irSaveLabels(labels);
+  IR_LABEL_CHIPS = labels;
+  // Re-render modal
+  var modal = document.querySelector('div[style*="position:fixed"][style*="2000"]');
+  if (modal) { modal.remove(); _irManageLabels(); }
+  // Refresh chips in builder
+  var chipsEl = document.getElementById('ir-label-chips');
+  if (chipsEl) chipsEl.innerHTML = labels.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#001A4D;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('');
+}
+function _irAddLabel() {
+  var input = document.getElementById('ir-new-label');
+  var val = input ? input.value.trim() : '';
+  if (!val) return;
+  var labels = _irGetLabels();
+  if (!labels.includes(val)) { labels.push(val); _irSaveLabels(labels); IR_LABEL_CHIPS = labels; }
+  // Re-render modal
+  var modal = document.querySelector('div[style*="position:fixed"][style*="2000"]');
+  if (modal) { modal.remove(); _irManageLabels(); }
+  var chipsEl = document.getElementById('ir-label-chips');
+  if (chipsEl) chipsEl.innerHTML = labels.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#001A4D;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('');
 }
 
 function _irShare(url) {
@@ -286,3 +355,6 @@ window._irGenerate = _irGenerate;
 window._irShare = _irShare;
 window._irCopyLink = _irCopyLink;
 window._irShowQR = _irShowQR;
+window._irManageLabels = _irManageLabels;
+window._irDeleteLabel = _irDeleteLabel;
+window._irAddLabel = _irAddLabel;

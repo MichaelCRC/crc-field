@@ -88,7 +88,7 @@ async function openLiveViewfinder() {
 
       <div class="cam-upload-float"><span class="cam-upload-status"></span></div>
 
-      <div class="cam-thumb-strip" id="cam-thumb-strip"></div>
+      <!-- Thumbnails removed — photos auto-save silently. Count shown in cam-count. -->
       <canvas id="cam-live-canvas" style="display:none"></canvas>
       <input type="file" id="cam-lib-live" accept="image/*" multiple style="display:none">
     </div>`;
@@ -247,13 +247,9 @@ function createThumbnailFromCanvas(srcCanvas) {
 }
 
 function updateThumbStrip() {
-  const strip = document.getElementById('cam-thumb-strip');
-  if (!strip) return;
-  // Show last 20 thumbnails
-  const recent = liveThumbnails.slice(-20);
-  strip.innerHTML = recent.map(url => `<img src="${url}" class="cam-thumb-img">`).join('');
-  // Scroll to end
-  strip.scrollLeft = strip.scrollWidth;
+  // Thumbnails removed — photos auto-save silently, count shown in cam-count badge
+  const countEl = document.getElementById('cam-count');
+  if (countEl && cameraSessionCount > 0) countEl.textContent = cameraSessionCount;
 }
 
 function updateLiveHUD() {

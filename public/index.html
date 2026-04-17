@@ -262,12 +262,19 @@
     <div id="view-notes" class="app-view"></div>
 
     <div id="view-feed" class="app-view">
+      <!-- Channel tabs -->
+      <div id="feed-channels" style="display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--surface-card);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
+        <button class="feed-channel-tab active" data-channel="activity" onclick="switchFeedChannel('activity')">Activity</button>
+        <button class="feed-channel-tab" data-channel="leadership" onclick="switchFeedChannel('leadership')">Leadership</button>
+        <button class="feed-channel-tab" data-channel="projects" onclick="switchFeedChannel('projects')">Projects</button>
+      </div>
       <!-- Sticky post box -->
       <div class="feed-post">
         <textarea id="feed-post-text" placeholder="What's happening on your jobs?" rows="2"></textarea>
         <div id="feed-post-photo-preview" class="feed-post-preview"></div>
         <div class="feed-post-row">
-          <label class="feed-post-photo-btn" title="Attach photo">&#128247;
+          <button class="feed-camera-btn" title="Take photo" onclick="feedTakePhoto()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px;color:var(--teal)">&#128247;</button>
+          <label class="feed-post-photo-btn" title="Upload photo" style="font-size:22px;cursor:pointer;padding:4px;color:var(--gray)">&#10133;
             <input type="file" accept="image/*" style="display:none" onchange="feedPickPhoto(this)">
           </label>
           <select id="feed-post-job" class="feed-post-job"><option value="">Link job (optional)</option></select>
