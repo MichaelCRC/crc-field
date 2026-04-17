@@ -1,6 +1,11 @@
-const CACHE_NAME = 'crc-field-v5';
+const CACHE_NAME = 'crc-field-v6';
 const AUDIO_CACHE = 'crc-audio-v2';
-const SHELL = ['/', '/style.css', '/app.js', '/views.js', '/manifest.json', '/training.html'];
+const SHELL = [
+  '/', '/style.css', '/app.js', '/views.js', '/manifest.json', '/training.html',
+  '/tokens.css',
+  '/images/icon-192.png', '/images/icon-512.png', '/images/apple-touch-icon.png',
+  '/assets/CRC_Icon.svg', '/assets/CRC_PRIMARY_LOGO.svg'
+];
 
 // Max audio entries to cache (prevents runaway storage on small devices)
 const AUDIO_MAX = 30;
