@@ -141,9 +141,9 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 /* Map */
 .map-container { width: 100%; height: calc(100vh - 200px); background: var(--bg); position: relative; }
 .map-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray); font-size: 14px; }
-.map-controls { display: flex; gap: 8px; padding: 12px 16px; background: var(--surface-card); border-bottom: 1px solid var(--border); }
-.map-btn { padding: 8px 16px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-card); cursor: pointer; }
-.map-btn.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
+.map-controls { display: flex; gap: 8px; padding: 10px 16px; background: var(--navy); border-bottom: 1px solid rgba(255,255,255,0.12); }
+.map-btn { padding: 8px 18px; font-size: 13px; font-weight: 700; border: 1.5px solid rgba(255,255,255,0.35); border-radius: 20px; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; letter-spacing: 0.3px; -webkit-tap-highlight-color: transparent; }
+.map-btn.active { background: var(--teal); color: #fff; border-color: var(--teal); box-shadow: 0 0 8px rgba(0,181,204,0.4); }
 
 /* Storms */
 .storm-header { padding: 16px; background: var(--surface-card); border-bottom: 1px solid var(--border); }
@@ -715,7 +715,7 @@ body { font-family: var(--font-body); }
 .notes-action-archive { color: var(--amber); }
 .notes-action-danger { color: var(--red); }
 
-.notes-fab { display: none; position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; background: var(--teal); color: var(--white); border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 100; }
+.notes-fab { display: none !important; } /* Replaced by FAB quick-access menu */
 
 @media (max-width: 1199px) {
   .notes-shell { display: block; }

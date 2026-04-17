@@ -119,8 +119,22 @@ function _renderMeasureResults(data) {
     html += '</div>';
   }
 
-  // Small roof warning
-  if (data.smallRoofWarning) {
+  // If data looks unreliable (small structure + very few facets), show error instead of bad numbers
+  var isUnreliable = (s.totalSquares && parseFloat(s.totalSquares) < 6) && (s.facetCount <= 2);
+  if (isUnreliable) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 16px">'
+      + '<div style="font-size:36px;margin-bottom:10px">&#9888;&#65039;</div>'
+      + '<div style="font-weight:700;color:#991B1B;margin-bottom:8px;font-size:15px">Measurement Unreliable</div>'
+      + '<div style="font-size:13px;color:#64748B;margin-bottom:16px">This structure is too small or lacks sufficient satellite data for an accurate reading (' + s.totalSquares + ' SQ, ' + s.facetCount + ' facets). Results would be inaccurate.</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto">'
+      + '<button onclick="_closeMeasureSheet()" style="padding:12px;background:#00B5CC;color:#fff;border:0;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Order Hover Instead</button>'
+      + '<button onclick="_closeMeasureSheet()" style="padding:10px;background:#fff;color:#001A4D;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;cursor:pointer">Field Measure</button>'
+      + '</div></div>';
+    return;
+  }
+
+  // Small roof warning (moderate — show warning but still display data)
+  if (data.smallRoofWarning && !isUnreliable) {
     html += '<div style="padding:10px;background:#FEE2E2;border:1px solid #DC2626;border-radius:8px;margin-bottom:10px;font-size:13px;color:#991B1B">';
     html += '<strong>Small structure (' + s.totalSquares + ' SQ).</strong> Accuracy is low. Recommend Hover or hand measurement.';
     html += '</div>';
@@ -172,9 +186,7 @@ function _renderMeasureResults(data) {
     html += '</tbody></table>';
   }
 
-  // Materials
-  html += '<div style="font-size:12px;color:#334155;margin-bottom:4px"><strong>Quick estimate:</strong> ~' + (mat.shingleBundles || 0) + ' bundles shingles - ~' + (mat.underlayment || 0) + ' rolls underlayment</div>';
-  html += '<div style="font-size:10px;color:#94A3B8;margin-bottom:12px">Edges + penetrations require field measurement</div>';
+  // Quick estimate removed — field measurement required for accurate material counts
 
   // Comparison
   if (comp) {

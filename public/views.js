@@ -102,9 +102,10 @@ function renderStormList(events) {
 
 function filterStormList(val, all) {
   let f = all;
-  if (val === '30') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 30*86400000);
-  else if (val === '90') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 90*86400000);
-  else if (parseFloat(val) > 0) f = all.filter(e => e.hailSize >= parseFloat(val));
+  if (val === '90')  f = all.filter(e => Date.now()-new Date(e.date).getTime() < 90*86400000);
+  else if (val === '180') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 180*86400000);
+  // 'all' = 12 months
+  else if (val === 'all') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 365*86400000);
   renderStormList(f);
   addStormMarkersToMap(f);
 }

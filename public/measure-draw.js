@@ -62,19 +62,11 @@ function _roofSectionHtml() {
     + '</div>'
     // Toolbar
     + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
-    + _toolbarBtn('md-color-black','Black','background:#0D0D0D;color:#fff', "mdSetRoofColor(\'#0D0D0D\',this)", true)
-    + _toolbarBtn('md-color-red','Red','background:#DC2626;color:#fff', "mdSetRoofColor(\'#DC2626\',this)")
+    + _toolbarBtn('md-color-black','Black','background:#0D0D0D;color:#fff', "mdSetRoofColor(\\'#0D0D0D\\',this)", true)
+    + _toolbarBtn('md-color-red','Red','background:#DC2626;color:#fff', "mdSetRoofColor(\\'#DC2626\\',this)")
     + '<span style="width:1px;background:#cbd5e1;margin:0 2px"></span>'
-    + _toolbarBtn('md-size-s','S','', 'mdSetRoofSize(2,this)')
-    + _toolbarBtn('md-size-m','M','', 'mdSetRoofSize(4,this)', true)
-    + _toolbarBtn('md-size-l','L','', 'mdSetRoofSize(8,this)')
-    + '<span style="width:1px;background:#cbd5e1;margin:0 2px"></span>'
-    + _toolbarBtn('md-tool-pen','Pen','', "mdSetRoofTool(\'pen\',this)", true)
-    + _toolbarBtn('md-tool-line','Line','', "mdSetRoofTool(\'line\',this)")
-    + _toolbarBtn('md-tool-circle','Circle','', "mdSetRoofTool(\'circle\',this)")
-    + _toolbarBtn('md-tool-arrow','Arrow','', "mdSetRoofTool(\'arrow\',this)")
-    + _toolbarBtn('md-tool-text','Text','', "mdSetRoofTool(\'text\',this)")
-    + _toolbarBtn('md-tool-eraser','Erase','', "mdSetRoofTool(\'eraser\',this)")
+    + _toolbarBtn('md-tool-pen','Pen','', "mdSetRoofTool(\\'pen\\',this)", true)
+    + _toolbarBtn('md-tool-eraser','Erase','', "mdSetRoofTool(\\'eraser\\',this)")
     + '<span style="width:1px;background:#cbd5e1;margin:0 2px"></span>'
     + _toolbarBtn('md-undo','Undo','', 'mdRoofUndo()')
     + _toolbarBtn('md-clear','Clear','background:#fff;color:#DC2626;border-color:#DC2626', 'mdRoofClear()')

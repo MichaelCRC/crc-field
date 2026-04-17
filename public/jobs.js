@@ -156,7 +156,7 @@ function renderListView(jobs) {
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     html += '<div style="width:10px;height:10px;border-radius:50%;background:' + sc + ';flex-shrink:0"></div>';
-    html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">' + stageLabel(s) + '</span>';
+    html += '<span style="font-size:12px;font-weight:700;color:' + stageColor(s) + ';text-transform:uppercase;letter-spacing:0.5px">' + stageLabel(s) + '</span>';
     html += '<span style="font-size:11px;color:var(--gray);background:var(--bg);padding:1px 7px;border-radius:10px">' + group.length + '</span>';
     html += '</div>';
     for (const job of group) {
@@ -371,6 +371,15 @@ function showToast(msg, isError) {
 // ─── Job Detail ────────────────────────────────────────────────────────────
 let _currentJobDetail = null;
 
+// Toggle photo section expand/collapse in job detail
+function toggleJobPhotos(jobId) {
+  window._jobPhotosExpanded = window._jobPhotosExpanded || {};
+  var current = window._jobPhotosExpanded[jobId];
+  // Default is expanded (true), toggle to false and back
+  window._jobPhotosExpanded[jobId] = current === false ? true : false;
+  openJobDetail(jobId);
+}
+
 // Navigate to My Jobs view then open a specific job — used by lead confirm "View Job" button
 async function loadAndOpenJob(jobId) {
   switchView('jobs');
@@ -530,33 +539,38 @@ function renderJobDetail(job) {
   // De-dupe by URL so a photo present in more than one bucket only renders
   // once.
   var allPhotos = collectJobPhotos(job);
+  var photosExpanded = (window._jobPhotosExpanded || {})[jid] !== false; // default expanded
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-  html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Photos <span style="background:var(--teal);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px">' + allPhotos.length + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;' + (photosExpanded && allPhotos.length ? 'margin-bottom:10px' : '') + '">';
+  html += '<button onclick="toggleJobPhotos(\'' + jid + '\')" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:0">'
+    + '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Photos</span>'
+    + '<span style="background:var(--teal);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700">' + allPhotos.length + '</span>'
+    + '<span style="font-size:14px;color:var(--gray);margin-left:2px">' + (photosExpanded ? '▲' : '▼') + '</span>'
+    + '</button>';
   html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--teal);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">+ Add Photo</button>';
   html += '</div>';
-  if (allPhotos.length === 0) {
-    html += '<div style="text-align:center;padding:20px;color:var(--gray);font-size:13px">No photos yet. Tap camera above or Add Photo to start.</div>';
-  } else {
-    // Stash the collected photo list keyed to this job so the grid onclicks
-    // stay short — they just look it up.
-    window._jobPhotosById = window._jobPhotosById || {};
-    window._jobPhotosById[jid] = allPhotos;
-    html += '<div class="job-photo-grid">';
-    allPhotos.slice(0, 18).forEach(function(p, i) {
-      var url = p.thumbnail || p.url || '';
-      var caption = p.caption || p.tag || '';
-      if (!url) return;
-      html += '<div class="job-photo-cell" onclick="openJobPhotoLightboxFor(\'' + jid + '\',' + i + ')">'
-        + '<img src="' + url + '" loading="lazy" onerror="this.parentElement.classList.add(\'job-photo-bad\');this.src=\'\';this.style.display=\'none\'" alt="Photo ' + (i+1) + '">'
-        + '<span class="job-photo-bad-label">Photo unavailable</span>'
-        + (caption ? '<div class="job-photo-caption">' + caption + '</div>' : '')
-        + '</div>';
-    });
-    if (allPhotos.length > 18) {
-      html += '<div class="job-photo-cell job-photo-more" onclick="openJobPhotoLightboxFor(\'' + jid + '\',18)">+' + (allPhotos.length - 18) + '<div style="font-size:10px;font-weight:400;margin-top:2px">more</div></div>';
+  if (photosExpanded) {
+    if (allPhotos.length === 0) {
+      html += '<div style="text-align:center;padding:20px;color:var(--gray);font-size:13px">No photos yet. Tap camera above or Add Photo to start.</div>';
+    } else {
+      window._jobPhotosById = window._jobPhotosById || {};
+      window._jobPhotosById[jid] = allPhotos;
+      html += '<div class="job-photo-grid">';
+      allPhotos.slice(0, 18).forEach(function(p, i) {
+        var url = p.thumbnail || p.url || '';
+        var caption = p.caption || p.tag || '';
+        if (!url) return;
+        html += '<div class="job-photo-cell" onclick="openJobPhotoLightboxFor(\'' + jid + '\',' + i + ')">'
+          + '<img src="' + url + '" loading="lazy" onerror="this.parentElement.classList.add(\'job-photo-bad\');this.src=\'\';this.style.display=\'none\'" alt="Photo ' + (i+1) + '">'
+          + '<span class="job-photo-bad-label">Photo unavailable</span>'
+          + (caption ? '<div class="job-photo-caption">' + caption + '</div>' : '')
+          + '</div>';
+      });
+      if (allPhotos.length > 18) {
+        html += '<div class="job-photo-cell job-photo-more" onclick="openJobPhotoLightboxFor(\'' + jid + '\',18)">+' + (allPhotos.length - 18) + '<div style="font-size:10px;font-weight:400;margin-top:2px">more</div></div>';
+      }
+      html += '</div>';
     }
-    html += '</div>';
   }
   html += '</div>';
 
