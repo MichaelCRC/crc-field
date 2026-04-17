@@ -14,8 +14,9 @@ const NOTEBOOK_META = {
   operations: { label: 'Operations', icon: '🏗', color: 'var(--teal)' },
   ideas:      { label: 'Ideas',      icon: '💡', color: 'var(--amber)' },
   meetings:   { label: 'Meetings',   icon: '📅', color: 'var(--navy)' },
-  personal:   { label: 'Personal',   icon: '👤', color: 'var(--steel-mid)' },
-  jobs:       { label: 'Job Notes',  icon: '📌', color: 'var(--green)' },
+  personal:      { label: 'Personal',    icon: '👤', color: 'var(--steel-mid)' },
+  jobs:          { label: 'Job Notes',   icon: '📌', color: 'var(--green)' },
+  'quick-notes': { label: 'Quick Notes', icon: '⚡', color: 'var(--teal)' },
 };
 
 const notesState = {

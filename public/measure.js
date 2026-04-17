@@ -127,8 +127,7 @@ function _renderMeasureResults(data) {
       + '<div style="font-weight:700;color:#991B1B;margin-bottom:8px;font-size:15px">Measurement Unreliable</div>'
       + '<div style="font-size:13px;color:#64748B;margin-bottom:16px">This structure is too small or lacks sufficient satellite data for an accurate reading (' + s.totalSquares + ' SQ, ' + s.facetCount + ' facets). Results would be inaccurate.</div>'
       + '<div style="display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto">'
-      + '<button onclick="_closeMeasureSheet()" style="padding:12px;background:#00B5CC;color:#fff;border:0;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Order Hover Instead</button>'
-      + '<button onclick="_closeMeasureSheet()" style="padding:10px;background:#fff;color:#001A4D;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;cursor:pointer">Field Measure</button>'
+      + '<button onclick="_closeMeasureSheet()" style="padding:12px;background:#00B5CC;color:#fff;border:0;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Got It</button>'
       + '</div></div>';
     return;
   }
