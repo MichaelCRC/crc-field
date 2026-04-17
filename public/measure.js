@@ -17,14 +17,18 @@ function _portalUrl() {
     || 'https://crc-supplements-portal.onrender.com';
 }
 
-async function runFieldMeasure(address) {
+// jobId is optional. When supplied, the drawing layer will sync to the portal
+// job. Called without a jobId from the map (openMeasureFromMap) — drawings
+// still render but saves are skipped.
+var _measureJobCtx = null;
+async function runFieldMeasure(address, jobId) {
   if (!address) { alert('No address to measure.'); return; }
+  _measureJobCtx = { address: address, jobId: jobId || null };
   _showMeasureSheet(address, true);
   try {
     var url = _portalUrl() + '/api/measure?address=' + encodeURIComponent(address);
     var r = await fetch(url);
     var data = await r.json();
-    // No-data fallback
     if (data.noSolarCoverage) {
       _renderNoSolarCoverage(data);
       return;
@@ -45,7 +49,7 @@ function _showMeasureSheet(address, loading) {
   _closeMeasureSheet();
   var sheet = document.createElement('div');
   sheet.id = 'measure-sheet';
-  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:900;background:#fff;border-top-left-radius:16px;border-top-right-radius:16px;box-shadow:0 -4px 20px rgba(0,0,0,0.15);max-height:75vh;overflow-y:auto;padding:0;transition:transform .25s ease;';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:900;background:#fff;border-top-left-radius:16px;border-top-right-radius:16px;box-shadow:0 -4px 20px rgba(0,0,0,0.15);max-height:92vh;overflow-y:auto;padding:0;transition:transform .25s ease;';
   sheet.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #E5E7EB;position:sticky;top:0;background:#fff;z-index:1;border-radius:16px 16px 0 0">'
     + '<div style="font-weight:700;font-size:15px;color:#001A4D">CRC Measure</div>'
     + '<button onclick="_closeMeasureSheet()" style="background:none;border:0;font-size:22px;color:#64748B;cursor:pointer;padding:0;line-height:1">&times;</button>'
@@ -185,6 +189,17 @@ function _renderMeasureResults(data) {
   html += '<div style="font-size:10px;color:#94A3B8;margin-bottom:14px">Satellite imagery: ' + (data.imageryDateStr || '?') + ' - CRC Measure is an estimate. Verify on site for insurance claims.</div>';
 
   body.innerHTML = html;
+
+  // Mount the drawing overlay + field notes whiteboard under the results.
+  if (typeof measureMountDrawing === 'function') {
+    try {
+      measureMountDrawing(body, {
+        satelliteImageUrl: data.satelliteImageUrl || null,
+        jobId: (_measureJobCtx && _measureJobCtx.jobId) || null,
+        address: (_measureJobCtx && _measureJobCtx.address) || ''
+      });
+    } catch (e) { console.error('[Measure] drawing mount failed:', e); }
+  }
 }
 
 function _summaryCard(value, label, sub) {

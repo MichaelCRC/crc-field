@@ -131,10 +131,18 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/field/jobs/:id — update stage, pipeline, subStatus
+// PATCH /api/field/jobs/:id — update stage, pipeline, status, drawings
 router.patch('/:id', async (req, res) => {
   try {
-    const allowed = ['stage', 'pipeline', 'subStatus', 'carrier', 'claimNumber', 'estimateValue'];
+    const allowed = [
+      'stage', 'pipeline', 'subStatus', 'carrier', 'claimNumber', 'estimateValue',
+      // CRC Measure drawing layer (satellite + strokes + composite image)
+      'roofDiagramClean', 'roofDiagramMarkup', 'roofDiagramStrokes',
+      // Field notes whiteboard (separate freehand canvas below the measure diagram)
+      'fieldNotesWhiteboard',
+      // Claim-filing workflow flag
+      'claimFilingReady',
+    ];
     const update = {};
     for (const k of allowed) { if (req.body[k] !== undefined) update[k] = req.body[k]; }
     if (!Object.keys(update).length) return res.status(400).json({ error: 'No valid fields to update' });

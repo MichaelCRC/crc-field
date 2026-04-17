@@ -431,7 +431,7 @@ function renderJobDetail(job) {
     + '<span style="font-size:20px">\u270D\uFE0F</span><span style="font-size:11px;color:var(--gray)">Sign</span></button>';
   html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
   html += '<button onclick="startReport(\'inspection\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128203;</span><span style="font-size:11px;color:var(--gray)">Report</span></button>';
-  html += '<button onclick="runFieldMeasure(\'' + (job.address || '').replace(/'/g, "\\'") + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128207;</span><span style="font-size:11px;color:var(--gray)">Measure</span></button>';
+  html += '<button onclick="runFieldMeasure(\'' + (job.address || '').replace(/'/g, "\\'") + '\',\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128207;</span><span style="font-size:11px;color:var(--gray)">Measure</span></button>';
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
@@ -450,16 +450,8 @@ function renderJobDetail(job) {
     + 'font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px">'
     + '&#128203; Fill Field Observations</button>';
 
-  // ── Roof Diagram ──
-  if (typeof renderRoofDiagramLegacy === 'function') {
-    var diagHtml = renderRoofDiagramLegacy(job);
-    if (diagHtml) {
-      html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
-      html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Roof Diagram</div>';
-      html += diagHtml;
-      html += '</div>';
-    }
-  }
+  // Roof diagram is now rendered inside the CRC Measure bottom sheet — removed
+  // the standalone Job Detail section 2026-04 to avoid duplicate surfaces.
 
   // ── Job Info ──
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
