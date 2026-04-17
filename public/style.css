@@ -25,12 +25,12 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
 .gate-error { color: var(--red); font-size: 13px; margin-top: 8px; min-height: 20px; }
 
 /* App header */
-.app-header { background: var(--navy); color: var(--white); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+.app-header { background: var(--navy); color: var(--white); padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
 .app-title { font-size: 16px; font-weight: 700; }
 /* .rep-badge moved to the field-user-wrap dropdown styles below */
 
 /* Views */
-.app-view { display: none; padding-bottom: 80px; }
+.app-view { display: none; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 .app-view.active { display: block; }
 
 /* Detail panels — fixed overlay, always above content, always below bottom nav.
@@ -40,8 +40,7 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
   top: 0;
   left: 0;
   right: 0;
-  bottom: 60px; /* stops at the nav bar */
-  bottom: calc(60px + env(safe-area-inset-bottom));
+  bottom: calc(60px + env(safe-area-inset-bottom)); /* stops at the nav bar */
   background: var(--bg);
   z-index: 100;
   overflow-y: auto;
@@ -52,7 +51,7 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
 .detail-panel.open { display: block; }
 
 /* Bottom nav */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; z-index: 200; padding-bottom: env(safe-area-inset-bottom); height: 60px; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; z-index: 200; padding-bottom: env(safe-area-inset-bottom); height: calc(60px + env(safe-area-inset-bottom)); }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .nav-item.active { color: var(--teal); }
 .nav-icon { font-size: 22px; line-height: 1; }
@@ -107,7 +106,7 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 
 /* Chips */
 .chip-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-.chip { padding: 8px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-card); color: var(--gray); cursor: pointer; min-height: 36px; -webkit-tap-highlight-color: transparent; }
+.chip { padding: 8px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-card); color: var(--text-secondary); cursor: pointer; min-height: 36px; -webkit-tap-highlight-color: transparent; }
 .chip.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
 
 /* Add Lead button */
@@ -505,7 +504,7 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 
 /* ── CRC Brand Header (field app) ── */
 body { font-family: var(--font-body); }
-.app-header { background: var(--navy); color: var(--white); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+.app-header { background: var(--navy); color: var(--white); padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; }
 .field-brand { display: flex; align-items: center; gap: 10px; }
 .field-brand-logo { width: 28px; height: 28px; display: block; }
 .field-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
@@ -716,7 +715,7 @@ body { font-family: var(--font-body); }
 .notes-action-archive { color: var(--amber); }
 .notes-action-danger { color: var(--red); }
 
-.notes-fab { display: none; position: fixed; right: 16px; bottom: 76px; width: 56px; height: 56px; border-radius: 50%; background: var(--teal); color: var(--white); border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 100; }
+.notes-fab { display: none; position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; background: var(--teal); color: var(--white); border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3); z-index: 100; }
 
 @media (max-width: 1199px) {
   .notes-shell { display: block; }

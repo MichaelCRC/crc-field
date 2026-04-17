@@ -138,7 +138,9 @@ function feedEventClass(e) {
 
 function renderFeedCard(e) {
   const cls = feedEventClass(e);
-  const initials = feedInitials(e.repName || e.repId || 'CRC');
+  const REP_NAMES = { MCG: 'Michael McGovern', LANE: 'Lane Campbell', NICK: 'Nick' };
+  const displayName = e.repName || (e.repId && REP_NAMES[e.repId.toUpperCase()]) || e.repId || 'CRC';
+  const initials = feedInitials(displayName);
   const when = feedRelativeTime(e.timestamp);
   const jobPill = e.jobId
     ? '<button class="feed-job-pill" onclick="feedOpenJob(\'' + feedAttr(e.jobId) + '\')">&#128205; Job</button>'
@@ -157,7 +159,7 @@ function renderFeedCard(e) {
     + '<div class="feed-card-head">'
     +   '<div class="feed-avatar">' + feedEscape(initials) + '</div>'
     +   '<div class="feed-card-meta">'
-    +     '<div class="feed-card-rep">' + feedEscape(e.repName || e.repId || 'CRC') + '</div>'
+    +     '<div class="feed-card-rep">' + feedEscape(displayName) + '</div>'
     +     '<div class="feed-card-when">' + feedEscape(when) + '</div>'
     +   '</div>'
     +   jobPill
