@@ -14,8 +14,11 @@
   }
   function mount() {
     if (document.getElementById('crc-issue-btn')) return;
+    // Bug reporting is accessible via the FAB menu — don't render a duplicate floating button.
+    // Keep the widget logic available for programmatic use (reportBug() in FAB still works).
     const b = document.createElement('button');
     b.id = 'crc-issue-btn'; b.type = 'button'; b.title = 'Report an issue'; b.textContent = '🐛';
+    b.style.display = 'none'; // hidden — FAB handles visibility
     b.onclick = open;
     document.body.appendChild(b);
     const css = document.createElement('style');
