@@ -82,7 +82,7 @@ function renderJobsList() {
 
   const totalTasks = _jobsCache.reduce((n, j) => n + (j.openTasks || 0), 0);
 
-  let html = '<div style="padding:12px 16px">';
+  let html = '<div style="padding:12px 16px;padding-bottom:calc(80px + env(safe-area-inset-bottom, 0px))">';
 
   // ── Top bar: summary + view toggle ──
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
