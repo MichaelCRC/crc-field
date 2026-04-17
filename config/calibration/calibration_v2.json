@@ -1,0 +1,167 @@
+{
+  "version": "v2",
+  "created_at": "2026-04-17T00:23:13.496855Z",
+  "total_paired_samples": 223,
+  "solar_coverage_rate_pct": 59.4,
+  "global": {
+    "coefficient": 0.933496,
+    "intercept": 1.8164,
+    "r_squared": 0.8902,
+    "std_err": 0.02205,
+    "ci_95": [
+      0.89,
+      0.977
+    ],
+    "p_value": 0.0,
+    "n": 223,
+    "pitch_accuracy_pct": 13.9,
+    "mean_pitch_error_when_wrong": 3.26,
+    "facet_count_mae": 5.81,
+    "mean_delta_pct": 3.42,
+    "median_delta_pct": 3.35,
+    "std_delta_pct": 26.81
+  },
+  "buckets": {
+    "complex": {
+      "coefficient": 0.89962,
+      "intercept": 4.4545,
+      "r_squared": 0.8977,
+      "std_err": 0.026336,
+      "ci_95": [
+        0.8475,
+        0.9517
+      ],
+      "p_value": 0.0,
+      "n": 135,
+      "pitch_accuracy_pct": 3.7,
+      "mean_pitch_error_when_wrong": 3.92,
+      "facet_count_mae": 8.03,
+      "mean_delta_pct": -4.03,
+      "median_delta_pct": -0.7,
+      "recommended_use": "production"
+    },
+    "small": {
+      "coefficient": 0.315858,
+      "intercept": 10.0381,
+      "r_squared": 0.2174,
+      "std_err": 0.07937,
+      "ci_95": [
+        0.1569,
+        0.4748
+      ],
+      "p_value": 0.00019745,
+      "n": 59,
+      "pitch_accuracy_pct": 27.1,
+      "mean_pitch_error_when_wrong": 2.07,
+      "facet_count_mae": 2.17,
+      "mean_delta_pct": 19.99,
+      "median_delta_pct": 10.1,
+      "recommended_use": "directional_only"
+    },
+    "hip_standard": {
+      "coefficient": 0.87109,
+      "intercept": 3.0571,
+      "r_squared": 0.9903,
+      "std_err": 0.027269,
+      "ci_95": [
+        0.8103,
+        0.9318
+      ],
+      "p_value": 0.0,
+      "n": 12,
+      "pitch_accuracy_pct": 33.3,
+      "mean_pitch_error_when_wrong": 1.62,
+      "facet_count_mae": 3.08,
+      "mean_delta_pct": 1.94,
+      "median_delta_pct": 4.49,
+      "recommended_use": "directional_only"
+    },
+    "simple_gable": {
+      "coefficient": 0.98457,
+      "intercept": -0.7135,
+      "r_squared": 0.9211,
+      "std_err": 0.096072,
+      "ci_95": [
+        0.7672,
+        1.2019
+      ],
+      "p_value": 2.92e-06,
+      "n": 11,
+      "pitch_accuracy_pct": 27.3,
+      "mean_pitch_error_when_wrong": 1.25,
+      "facet_count_mae": 1.09,
+      "mean_delta_pct": 5.02,
+      "median_delta_pct": 3.33,
+      "recommended_use": "directional_only"
+    },
+    "steep": {
+      "coefficient": 1.00441,
+      "intercept": -2.5741,
+      "r_squared": 0.9219,
+      "std_err": 0.14617,
+      "ci_95": [
+        0.5986,
+        1.4102
+      ],
+      "p_value": 0.00234952,
+      "n": 6,
+      "pitch_accuracy_pct": 50.0,
+      "mean_pitch_error_when_wrong": 1.33,
+      "facet_count_mae": 5.83,
+      "mean_delta_pct": 7.96,
+      "median_delta_pct": 6.02,
+      "recommended_use": "directional_only"
+    }
+  },
+  "outliers": [
+    {
+      "hover_job_id": "15252226",
+      "address": "1390 Gray Meadow Drive, Columbus, OH, 43223",
+      "hover_sq": 16.51,
+      "crc_sq": 37.1,
+      "delta_pct": 124.71,
+      "bucket": "small"
+    },
+    {
+      "hover_job_id": "20636919",
+      "address": "5580 Hayden Run Road, Hilliard, OH, 43026",
+      "hover_sq": 34.41,
+      "crc_sq": 17.0,
+      "delta_pct": -50.6,
+      "bucket": "complex"
+    },
+    {
+      "hover_job_id": "10377911",
+      "address": "675 Morning Street, Worthington, OH, 43085",
+      "hover_sq": 32.27,
+      "crc_sq": 10.9,
+      "delta_pct": -66.22,
+      "bucket": "complex"
+    },
+    {
+      "hover_job_id": "20817233",
+      "address": "4500 Langport Road, Columbus, OH, Columbus, OH, 43220",
+      "hover_sq": 29.99,
+      "crc_sq": 11.1,
+      "delta_pct": -62.99,
+      "bucket": "complex"
+    },
+    {
+      "hover_job_id": "17459126",
+      "address": "6396 Phoenix Park Drive, Dublin, OH, 43016",
+      "hover_sq": 29.96,
+      "crc_sq": 12.8,
+      "delta_pct": -57.28,
+      "bucket": "complex"
+    },
+    {
+      "hover_job_id": "12742926",
+      "address": "2481 Brady Commons Drive, Columbus, OH, 43229",
+      "hover_sq": 10.33,
+      "crc_sq": 25.6,
+      "delta_pct": 147.82,
+      "bucket": "small"
+    }
+  ],
+  "recommended_production_use": "Production: complex. Directional: small, hip_standard, simple_gable, steep. Insufficient: none."
+}

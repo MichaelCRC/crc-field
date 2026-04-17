@@ -24,6 +24,11 @@ async function runFieldMeasure(address) {
     var url = _portalUrl() + '/api/measure?address=' + encodeURIComponent(address);
     var r = await fetch(url);
     var data = await r.json();
+    // No-data fallback
+    if (data.noSolarCoverage) {
+      _renderNoSolarCoverage(data);
+      return;
+    }
     if (!r.ok || data.error) throw new Error(data.error || 'Measurement failed');
     _renderMeasureResults(data);
   } catch (e) {
@@ -70,6 +75,20 @@ function _renderMeasureError(msg) {
 
 function _fmtN(n) { return n != null ? Number(n).toLocaleString() : '--'; }
 
+function _renderNoSolarCoverage(data) {
+  var body = document.getElementById('measure-body');
+  if (!body) return;
+  body.innerHTML = '<div style="text-align:center;padding:20px 0">'
+    + '<div style="font-size:28px;margin-bottom:8px">&#127758;</div>'
+    + '<div style="font-weight:700;color:#001A4D;margin-bottom:6px">Satellite measurement unavailable</div>'
+    + '<div style="font-size:13px;color:#64748B;margin-bottom:16px">Google Solar API does not have coverage for this property. Common for newer subdivisions and rural areas.</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto">'
+    + '<button onclick="_closeMeasureSheet()" style="padding:12px;background:#00B5CC;color:#fff;border:0;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Order Hover</button>'
+    + '<button onclick="_closeMeasureSheet()" style="padding:10px;background:#fff;color:#001A4D;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;cursor:pointer">Field Measure</button>'
+    + '<button onclick="_closeMeasureSheet();openMeasureFromMap()" style="padding:10px;background:none;color:#64748B;border:0;font-size:12px;cursor:pointer;text-decoration:underline">Retry with different address</button>'
+    + '</div></div>';
+}
+
 function _renderMeasureResults(data) {
   var body = document.getElementById('measure-body');
   if (!body) return;
@@ -95,6 +114,27 @@ function _renderMeasureResults(data) {
     html += '<button onclick="_closeMeasureSheet();openMeasureFromMap()" style="padding:6px 12px;background:none;border:1px solid #94A3B8;color:#64748B;border-radius:4px;font-size:12px;cursor:pointer;flex:1">Wrong building</button>';
     html += '</div>';
   }
+
+  // Small roof warning
+  if (data.smallRoofWarning) {
+    html += '<div style="padding:10px;background:#FEE2E2;border:1px solid #DC2626;border-radius:8px;margin-bottom:10px;font-size:13px;color:#991B1B">';
+    html += '<strong>Small structure (' + s.totalSquares + ' SQ).</strong> Accuracy is low. Recommend Hover or hand measurement.';
+    html += '</div>';
+  }
+
+  // Calibration badge
+  if (data.calibrated) {
+    var calColor = data.confidence === 'production' ? '#16A34A' : data.confidence === 'directional' ? '#F59E0B' : '#DC2626';
+    html += '<div style="margin-bottom:8px;font-size:11px">';
+    html += '<span style="display:inline-block;padding:2px 8px;background:' + calColor + ';color:#fff;border-radius:10px;font-weight:700">' + (data.confidence || '').toUpperCase() + '</span>';
+    if (data.rawSquares && data.calibratedSquares && data.rawSquares !== data.calibratedSquares) {
+      html += ' <span style="color:#94A3B8">Raw ' + data.rawSquares + ' -> ' + data.calibratedSquares + ' SQ (' + data.calibrationVersion + ')</span>';
+    }
+    html += '</div>';
+  }
+
+  // Pitch satellite disclaimer
+  html += '<div style="font-size:11px;color:#F59E0B;margin-bottom:8px">Pitch ' + (s.predominantPitch || '?') + ' estimated from satellite - confirm with pitch gauge on site</div>';
 
   // 2. Summary cards
   html += '<div style="display:flex;gap:10px;margin-bottom:14px">';
