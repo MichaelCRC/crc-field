@@ -136,6 +136,7 @@ router.patch('/:id', async (req, res) => {
   try {
     const allowed = [
       'stage', 'pipeline', 'subStatus', 'carrier', 'claimNumber', 'estimateValue',
+      'adjusterName', 'adjusterPhone', 'adjusterEmail', 'adjusterDate',
       // CRC Measure drawing layer (satellite + strokes + composite image)
       'roofDiagramClean', 'roofDiagramMarkup', 'roofDiagramStrokes',
       // Field notes whiteboard (separate freehand canvas below the measure diagram)
