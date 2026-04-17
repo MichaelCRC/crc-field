@@ -369,7 +369,7 @@ async function useCurrentLocation() {
       btn.disabled = false;
       setTimeout(() => { status.style.display = 'none'; }, 3000);
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
   );
 }
 

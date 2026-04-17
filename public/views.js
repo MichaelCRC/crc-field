@@ -22,7 +22,19 @@ async function initMap() {
     script.async = true;
     window.onMapsLoaded = () => {
       gmap = new google.maps.Map(document.getElementById('map-container'), { center: { lat: 39.96, lng: -82.99 }, zoom: 11, mapTypeControl: false, streetViewControl: false, fullscreenControl: false, styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }] });
-      if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { gmap.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }); gmap.setZoom(13); }, () => {}, { timeout: 5000 });
+      if (navigator.geolocation) {
+        // Use cached position if fresh (< 60s) to avoid repeated permission prompts
+        const _cached = window._lastKnownPos;
+        const _age = _cached ? (Date.now() - _cached.ts) : Infinity;
+        if (_cached && _age < 60000) {
+          gmap.setCenter({ lat: _cached.lat, lng: _cached.lng }); gmap.setZoom(13);
+        } else {
+          navigator.geolocation.getCurrentPosition(pos => {
+            window._lastKnownPos = { lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now() };
+            gmap.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }); gmap.setZoom(13);
+          }, () => {}, { timeout: 5000, maximumAge: 60000 });
+        }
+      }
       loadMapPins();
       gmap.addListener('click', async (e) => {
         const lat = e.latLng.lat(), lng = e.latLng.lng();
@@ -49,7 +61,13 @@ async function loadMapPins() {
   });
   } catch (e) { console.error('Map pins error:', e); }
 }
-function centerOnMe() { if (gmap && navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { gmap.setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }); gmap.setZoom(15); }); }
+function centerOnMe() {
+  if (!gmap || !navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(p => {
+    window._lastKnownPos = { lat: p.coords.latitude, lng: p.coords.longitude, ts: Date.now() };
+    gmap.setCenter({ lat: p.coords.latitude, lng: p.coords.longitude }); gmap.setZoom(15);
+  }, () => {}, { timeout: 8000, maximumAge: 30000 });
+}
 function toggleKnockMode() { knockMode = !knockMode; dropPinMode = false; document.getElementById('btn-knock-mode').classList.toggle('active', knockMode); document.getElementById('btn-drop-pin').classList.remove('active'); }
 function toggleDropPin() { dropPinMode = !dropPinMode; knockMode = false; document.getElementById('btn-drop-pin').classList.toggle('active', dropPinMode); document.getElementById('btn-knock-mode').classList.remove('active'); }
 

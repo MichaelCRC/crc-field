@@ -15,7 +15,11 @@ let liveThumbnails = []; // data URLs for bottom strip
 
 function openCameraMode() {
   cameraActive = true;
-  cameraSessionCount = 0; uploadsDone = 0; uploadsInFlight = 0; uploadQueue = [];
+  // Preserve any in-flight uploads from the previous session — don't wipe the queue
+  // Only reset counts if nothing is pending
+  if (uploadsInFlight === 0 && uploadQueue.length === 0) {
+    cameraSessionCount = 0; uploadsDone = 0;
+  }
   liveThumbnails = [];
   cameraTag = activePhotoTab === 'inspection' ? 'overview' : 'during';
   startCompass();
@@ -540,11 +544,18 @@ function getCardinalDirection(deg) {
 
 function startCompass() {
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Only request if not already granted — avoids repeated permission prompts
+    if (window._compassPermission === 'granted') {
+      window.addEventListener('deviceorientation', handleCompass, true);
+      return;
+    }
+    if (window._compassPermission === 'denied') return; // user already said no
     DeviceOrientationEvent.requestPermission().then(response => {
+      window._compassPermission = response;
       if (response === 'granted') {
         window.addEventListener('deviceorientation', handleCompass, true);
       }
-    }).catch(e => console.log('Compass permission denied'));
+    }).catch(e => { window._compassPermission = 'denied'; console.log('Compass permission denied'); });
   } else if ('DeviceOrientationEvent' in window) {
     window.addEventListener('deviceorientation', handleCompass, true);
   }

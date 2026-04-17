@@ -371,6 +371,13 @@ function showToast(msg, isError) {
 // ─── Job Detail ────────────────────────────────────────────────────────────
 let _currentJobDetail = null;
 
+// Navigate to My Jobs view then open a specific job — used by lead confirm "View Job" button
+async function loadAndOpenJob(jobId) {
+  switchView('jobs');
+  await loadJobs();
+  setTimeout(() => openJobDetail(jobId), 300);
+}
+
 async function openJobDetail(jobId) {
   var detail = document.getElementById('job-detail');
   var list = document.getElementById('view-jobs');
