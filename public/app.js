@@ -549,10 +549,22 @@ async function saveFieldPhotoMarkup(leadId, photoIndex, category) {
   }
 }
 
-// ── AUTH AGREEMENT SIGNATURE SCREEN ─────────────────────────────────────────
+// ── PROPERTY INSPECTION AUTHORIZATION ──────────────────────────────────────
+// Rewritten 2026-04: This is NOT an insurance commitment. It's inspection
+// access + liability protection. Seven required acknowledgments + signature.
 var _sigAuthCtx = null, _sigAuthDrawing = false, _sigAuthHasStrokes = false;
 
-function openSignatureScreen(jobId, jobName, homeownerName) {
+var AUTH_ITEMS = [
+  'I authorize Columbus Roofing Company ("CRC") to access my property for the purpose of conducting a visual inspection of the roof and exterior.',
+  'I understand this inspection is provided at no cost and does not obligate me to purchase any services from CRC.',
+  'I authorize CRC to photograph and document the condition of my property, including the roof, siding, gutters, and any visible damage, for the sole purpose of assessment and reporting.',
+  'I acknowledge that CRC is not responsible for any pre-existing damage, deterioration, or conditions present on the property prior to inspection.',
+  'I release CRC and its representatives from liability for any injury sustained during the inspection, provided CRC exercises reasonable care and follows standard safety protocols.',
+  'If I choose to file an insurance claim, I authorize CRC to be present during the adjuster\'s inspection to assist with documentation and scope review on my behalf.',
+  'I understand that CRC\'s findings and recommendations are professional opinions based on visual inspection only, and that final determination of damage and coverage is made by my insurance carrier.'
+];
+
+function openSignatureScreen(jobId, jobAddress, homeownerName) {
   var existing = document.getElementById('sig-auth-overlay');
   if (existing) existing.remove();
 
@@ -561,64 +573,96 @@ function openSignatureScreen(jobId, jobName, homeownerName) {
   };
 
   var today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  var inspectorName = (typeof repName !== 'undefined' && repName) ? repName : '';
 
   var overlay = document.createElement('div');
   overlay.id = 'sig-auth-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:500;background:#fff;display:flex;flex-direction:column;overflow:hidden';
 
-  overlay.innerHTML = `
-    <div style="background:#001A4D;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">
-      <div style="font-weight:800;font-size:15px;letter-spacing:1.5px;color:#fff">CRC</div>
-      <div style="font-size:14px;font-weight:700;flex:1;text-align:center;letter-spacing:0.3px">Insurance Claim Authorization</div>
-      <button onclick="document.getElementById('sig-auth-overlay').remove()" style="background:none;border:none;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;flex-shrink:0">&times;</button>
-    </div>
+  var itemsHtml = AUTH_ITEMS.map(function(text, i) {
+    return ''
+      + '<label class="auth-item" data-idx="' + i + '" for="auth-chk-' + i + '" '
+      + 'style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:#fff;border:1.5px solid #cbd5e1;border-radius:10px;margin-bottom:10px;cursor:pointer;transition:border-color .15s, background .15s">'
+      + '<input type="checkbox" id="auth-chk-' + i + '" onchange="_onAuthItemToggle(this)" '
+      + 'style="width:22px;height:22px;margin:0;flex-shrink:0;accent-color:#00B5CC;cursor:pointer">'
+      + '<span style="font-size:13px;line-height:1.55;color:#1e293b">' + escHtml(text) + '</span>'
+      + '</label>';
+  }).join('');
 
-    <div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch" id="sig-auth-body">
-      <div style="font-size:13px;color:#001A4D;line-height:1.65;margin-bottom:20px;padding:14px 16px;background:#f0f4ff;border-radius:8px;border-left:4px solid #00B5CC">
-        <p style="margin:0 0 10px 0;font-weight:600">By signing below, I authorize Columbus Roofing Company (CRC) to:</p>
-        <ol style="margin:0 0 10px 0;padding-left:20px">
-          <li style="margin-bottom:7px">Review my insurance claim and communicate with my carrier regarding scope and supplements.</li>
-          <li style="margin-bottom:7px">Submit supplemental documentation on my behalf to recover costs for all covered damage.</li>
-          <li style="margin-bottom:7px">Inspect my property as needed to document damage.</li>
-        </ol>
-        <p style="margin:0 0 10px 0">This authorization does <strong>NOT</strong> obligate me to use CRC for repairs. I understand that CRC does not determine coverage or act as a public adjuster.</p>
-        <p style="margin:0 0 6px 0"><strong>Property Address:</strong> ${escHtml(jobName)}</p>
-        <p style="margin:0"><strong>Date:</strong> ${today}</p>
-      </div>
-
-      <div style="margin-bottom:16px">
-        <label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Full Name</label>
-        <input type="text" id="sig-auth-name" placeholder="Enter full name" value="${escHtml(homeownerName)}"
-          style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#001A4D">
-      </div>
-
-      <div style="margin-bottom:8px">
-        <label style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Signature</label>
-        <canvas id="sig-auth-canvas"
-          style="width:100%;height:200px;background:#fff;border:2px solid #001A4D;border-radius:8px;display:block;touch-action:none"></canvas>
-        <div style="font-size:11px;color:#94a3b8;margin-top:4px;text-align:center">Draw your signature above with your finger</div>
-      </div>
-
-      <div id="sig-auth-error" style="display:none;color:#DC2626;font-size:13px;font-weight:600;padding:10px 14px;background:#fef2f2;border-radius:6px;margin-bottom:12px;border-left:3px solid #DC2626"></div>
-
-      <div style="display:flex;gap:10px;margin-bottom:24px">
-        <button onclick="sigAuthClear()"
-          style="flex:1;padding:13px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:#475569;font-family:inherit">
-          Clear
-        </button>
-        <button onclick="sigAuthSubmit('${jobId}')"
-          style="flex:2;padding:13px;background:#001A4D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.3px;font-family:inherit">
-          Sign &amp; Submit
-        </button>
-      </div>
-    </div>
-  `;
+  overlay.innerHTML = ''
+    + '<div style="background:#001A4D;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">'
+    + '<div style="font-weight:800;font-size:15px;letter-spacing:1.5px;color:#fff">CRC</div>'
+    + '<div style="font-size:14px;font-weight:700;flex:1;text-align:center;letter-spacing:0.3px">Property Inspection Authorization</div>'
+    + '<button onclick="document.getElementById(\'sig-auth-overlay\').remove()" style="background:none;border:none;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;flex-shrink:0">&times;</button>'
+    + '</div>'
+    + '<div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch" id="sig-auth-body">'
+    + '<div style="max-width:720px;margin:0 auto">'
+    + '<div style="text-align:center;font-size:11px;font-weight:700;color:#64748B;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px">Columbus Roofing Company</div>'
+    + '<h2 style="text-align:center;font-size:20px;font-weight:800;color:#001A4D;margin:0 0 6px">Property Inspection Authorization</h2>'
+    + '<div style="text-align:center;font-size:12px;color:#64748B;margin-bottom:14px">' + escHtml(jobAddress || '') + ' &middot; ' + today + '</div>'
+    + '<div style="font-size:12px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Please review and check each item</div>'
+    + itemsHtml
+    + '<div style="margin-top:18px">'
+    + '<label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Printed Name</label>'
+    + '<input type="text" id="sig-auth-name" placeholder="Full name" value="' + escHtml(homeownerName) + '" '
+    + 'style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#001A4D">'
+    + '</div>'
+    + '<div style="margin-top:14px">'
+    + '<label style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Signature</label>'
+    + '<canvas id="sig-auth-canvas" style="width:100%;height:200px;background:#fff;border:2px solid #001A4D;border-radius:8px;display:block;touch-action:none"></canvas>'
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:4px">'
+    + '<span>Draw above with finger or Apple Pencil</span>'
+    + '<button type="button" onclick="sigAuthClear()" style="background:none;border:none;color:#00B5CC;font-size:11px;font-weight:700;cursor:pointer;padding:0">Clear</button>'
+    + '</div>'
+    + '</div>'
+    + '<div style="margin-top:18px;padding:12px 14px;background:#F0F9FF;border-radius:8px;border-left:3px solid #00B5CC;font-size:12px;color:#334155;line-height:1.6">'
+    + '<div><strong>Inspected by:</strong> ' + escHtml(inspectorName || '—') + '</div>'
+    + '<div><strong>CRC License:</strong> HIC.L00838 &middot; <strong>GAF Certified:</strong> G09361</div>'
+    + '<div>Columbus Roofing Company &middot; crc@columbusroofingco.com &middot; 614-824-7462</div>'
+    + '</div>'
+    + '<div id="sig-auth-error" style="display:none;color:#DC2626;font-size:13px;font-weight:600;padding:10px 14px;background:#fef2f2;border-radius:6px;margin-top:14px;border-left:3px solid #DC2626"></div>'
+    + '<div style="margin-top:18px;margin-bottom:24px">'
+    + '<button id="sig-auth-submit-btn" onclick="sigAuthSubmit(\'' + jobId + '\',\'' + escHtml(jobAddress) + '\')" disabled '
+    + 'style="width:100%;padding:14px;background:#94A3B8;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:not-allowed;letter-spacing:0.4px;font-family:inherit">'
+    + 'Check all items to continue</button>'
+    + '</div>'
+    + '</div>'
+    + '</div>';
 
   document.body.appendChild(overlay);
   _sigAuthHasStrokes = false;
   _sigAuthCtx = null;
   _sigAuthDrawing = false;
-  setTimeout(function() { sigAuthInitCanvas(); }, 50);
+  setTimeout(function() { sigAuthInitCanvas(); _onAuthItemToggle(); }, 50);
+}
+
+// Tracks which acknowledgment items are checked; enables submit only when all 7 + signature.
+function _onAuthItemToggle(cb) {
+  if (cb) {
+    var label = cb.closest('.auth-item');
+    if (label) {
+      label.style.borderColor = cb.checked ? '#00B5CC' : '#cbd5e1';
+      label.style.background  = cb.checked ? '#F0F9FF' : '#fff';
+    }
+  }
+  var checks = document.querySelectorAll('#sig-auth-body input[type="checkbox"]');
+  var allChecked = checks.length === AUTH_ITEMS.length
+    && Array.prototype.every.call(checks, function(c) { return c.checked; });
+  var btn = document.getElementById('sig-auth-submit-btn');
+  if (btn) {
+    if (allChecked) {
+      btn.disabled = false;
+      btn.style.background = '#001A4D';
+      btn.style.cursor = 'pointer';
+      btn.textContent = 'Complete & Sign';
+    } else {
+      btn.disabled = true;
+      btn.style.background = '#94A3B8';
+      btn.style.cursor = 'not-allowed';
+      var remaining = AUTH_ITEMS.length - Array.prototype.filter.call(checks, function(c){return c.checked;}).length;
+      btn.textContent = 'Check all items to continue (' + remaining + ' left)';
+    }
+  }
 }
 
 function sigAuthInitCanvas() {
@@ -674,10 +718,11 @@ function sigAuthClear() {
   }
 }
 
-async function sigAuthSubmit(jobId) {
+async function sigAuthSubmit(jobId, jobAddress) {
   var nameEl  = document.getElementById('sig-auth-name');
   var errEl   = document.getElementById('sig-auth-error');
   var canvas  = document.getElementById('sig-auth-canvas');
+  var submitBtn = document.getElementById('sig-auth-submit-btn');
   var signerName = nameEl ? nameEl.value.trim() : '';
 
   errEl.style.display = 'none';
@@ -694,7 +739,6 @@ async function sigAuthSubmit(jobId) {
     return;
   }
 
-  var submitBtn = document.querySelector('#sig-auth-overlay button[onclick^="sigAuthSubmit"]');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting\u2026'; }
 
   try {
@@ -706,19 +750,21 @@ async function sigAuthSubmit(jobId) {
         signatureDataUrl: signatureDataUrl,
         signedAt: new Date().toISOString(),
         signerName: signerName,
-        repName: typeof repName !== 'undefined' ? repName : ''
+        repName: typeof repName !== 'undefined' ? repName : '',
+        authVariant: 'property-inspection',
+        acknowledgedItems: AUTH_ITEMS.slice(),
+        propertyAddress: jobAddress || ''
       })
     });
     var data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Submission failed');
 
-    // Brief success screen
     var body = document.getElementById('sig-auth-body');
     if (body) {
       body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center">'
         + '<div style="font-size:72px;margin-bottom:16px">&#9989;</div>'
-        + '<div style="font-size:24px;font-weight:800;color:#001A4D;margin-bottom:8px">Signed!</div>'
-        + '<div style="font-size:14px;color:var(--text-muted)">Authorization captured successfully.</div>'
+        + '<div style="font-size:24px;font-weight:800;color:#001A4D;margin-bottom:8px">Authorization signed.</div>'
+        + '<div style="font-size:14px;color:#64748B;max-width:340px">You may now begin the inspection. A signed PDF has been saved to this job.</div>'
         + '</div>';
     }
 
@@ -726,10 +772,13 @@ async function sigAuthSubmit(jobId) {
       var overlay = document.getElementById('sig-auth-overlay');
       if (overlay) overlay.remove();
       if (typeof showToast === 'function') showToast('Authorization saved');
+      if (typeof _currentJobDetail !== 'undefined' && _currentJobDetail && _currentJobDetail.id === jobId && typeof openJobDetail === 'function') {
+        openJobDetail(jobId);
+      }
     }, 1500);
 
   } catch (e) {
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign & Submit'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Complete & Sign'; }
     errEl.textContent = 'Error: ' + e.message;
     errEl.style.display = 'block';
   }

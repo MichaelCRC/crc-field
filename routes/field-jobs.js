@@ -258,15 +258,17 @@ router.post('/:id/photos/markup', async (req, res) => {
 });
 
 // POST /api/field/jobs/:id/sign — capture authorization agreement signature
+// Forwards all fields (incl. authVariant, acknowledgedItems) to the portal so
+// the new Property Inspection Authorization PDF can render correctly.
 router.post('/:id/sign', async (req, res) => {
   try {
-    const { signatureDataUrl, signedAt, signerName, repName } = req.body;
+    const { signatureDataUrl, signerName } = req.body || {};
     if (!signatureDataUrl || !signerName) {
       return res.status(400).json({ error: 'signatureDataUrl and signerName are required' });
     }
     const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/authorization-agreement/sign`, {
       method: 'POST',
-      body: JSON.stringify({ signatureDataUrl, signedAt, signerName, repName })
+      body: JSON.stringify(req.body)
     });
     if (!ok) return res.status(status).json(data);
     res.json({ success: true, ...data });
