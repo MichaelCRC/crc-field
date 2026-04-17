@@ -182,23 +182,25 @@
           <button id="btn-add-lead" class="btn-add" onclick="addLead()">ADD LEAD</button>
         </div>
         <div id="lead-confirm" class="lead-confirm" style="display:none"></div>
+        <div id="quick-notes-section" style="margin:0 0 16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px">
+            <span style="font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">Quick Note</span>
+            <span style="font-size:11px;color:var(--gray)">Saves to Notes</span>
+          </div>
+          <textarea id="quick-note-input" placeholder="Type a quick note..." rows="2" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:none;background:var(--surface-card);color:var(--text-primary);box-sizing:border-box"></textarea>
+          <button onclick="saveQuickNote()" style="margin-top:6px;width:100%;padding:9px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Note</button>
+          <div id="quick-note-status" style="font-size:11px;color:var(--teal);text-align:center;margin-top:4px;min-height:16px"></div>
+        </div>
         <h3 class="section-title">Recent Leads</h3>
         <div id="leads-list"></div>
       </div>
       <div id="lead-detail" class="detail-panel"></div>
     </div>
 
-    <!-- Door Knock Status Modal -->
-    <div id="knock-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--white);border-radius:16px;padding:24px;width:300px;text-align:center">
-        <h3 style="font-size:16px;margin-bottom:12px;color:var(--navy)">Mark This Door</h3>
-        <div style="display:flex;flex-direction:column;gap:8px" id="knock-options">
-          <button class="btn-add" onclick="completeKnock('not_home')" style="background:var(--amber)">Not Home</button>
-          <button class="btn-add" onclick="completeKnock('not_interested')" style="background:var(--red)">Not Interested</button>
-          <button class="btn-add" onclick="completeKnock('contacted')" style="background:var(--teal)">Interested</button>
-          <button class="btn-add" onclick="completeKnock('appointment')" style="background:var(--green)">Appointment Set</button>
-          <button onclick="closeKnockModal()" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px;width:100%">Cancel</button>
-        </div>
+    <!-- Property Tap Popup (tap on map at zoom 15+) -->
+    <div id="knock-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--white);border-radius:16px;padding:20px;width:300px;max-width:90vw">
+        <div style="display:flex;flex-direction:column;gap:8px" id="knock-options"></div>
       </div>
     </div>
 

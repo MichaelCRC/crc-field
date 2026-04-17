@@ -150,6 +150,31 @@ async function addLead() {
 }
 function clearLeadForm() { document.getElementById('lead-confirm').style.display = 'none'; document.getElementById('lead-address').focus(); }
 
+// ── Quick Note (home screen, saves to Notes notebook) ──
+async function saveQuickNote() {
+  var input = document.getElementById('quick-note-input');
+  var status = document.getElementById('quick-note-status');
+  var text = input ? input.value.trim() : '';
+  if (!text) return;
+  if (status) status.textContent = 'Saving...';
+  try {
+    var res = await fetch('https://crc-supplements-portal.onrender.com/api/notes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Field-App-Key': 'crc-field-2026',
+        'X-Field-Rep': (typeof repCode !== 'undefined' ? repCode : '').toUpperCase()
+      },
+      body: JSON.stringify({ text: text, notebook: 'quick-notes', title: text.substring(0, 60) })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (input) input.value = '';
+    if (status) { status.textContent = '✓ Saved to Quick Notes'; setTimeout(function(){ status.textContent = ''; }, 2500); }
+  } catch (e) {
+    if (status) { status.textContent = 'Save failed — try again'; setTimeout(function(){ status.textContent = ''; }, 3000); }
+  }
+}
+
 // --- Lead List ---
 async function loadLeads() {
   const c = document.getElementById('leads-list'); if (!c) return;

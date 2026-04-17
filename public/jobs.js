@@ -380,6 +380,37 @@ function toggleJobPhotos(jobId) {
   openJobDetail(jobId);
 }
 
+function toggleJobInfo(jobId) {
+  window._jobInfoExpanded = window._jobInfoExpanded || {};
+  window._jobInfoExpanded[jobId] = (window._jobInfoExpanded[jobId] === false) ? true : false;
+  openJobDetail(jobId);
+}
+
+async function saveJobInfo(jobId) {
+  var btn = document.querySelector('button[onclick*="saveJobInfo"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  var patch = {
+    carrier:       document.getElementById('ji-carrier')?.value?.trim() || '',
+    claimNumber:   document.getElementById('ji-claim')?.value?.trim() || '',
+    adjusterName:  document.getElementById('ji-adjname')?.value?.trim() || '',
+    adjusterPhone: document.getElementById('ji-adjphone')?.value?.trim() || '',
+    adjusterEmail: document.getElementById('ji-adjemail')?.value?.trim() || '',
+    adjusterDate:  document.getElementById('ji-adjdate')?.value || '',
+  };
+  try {
+    await fetch('/api/field/jobs/' + jobId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    });
+    showToast('Job info saved');
+    openJobDetail(jobId);
+  } catch (e) {
+    showToast('Save failed: ' + e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Job Info'; }
+  }
+}
+
 // Navigate to My Jobs view then open a specific job — used by lead confirm "View Job" button
 async function loadAndOpenJob(jobId) {
   switchView('jobs');
@@ -442,6 +473,9 @@ function renderJobDetail(job) {
   html += '<a href="https://crc-supplements-portal.onrender.com/#job-' + jid + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
     + '<span style="font-size:20px">&#128187;</span><span style="font-size:11px;color:var(--gray)">Portal</span></a>';
   html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
+  var hoverAddr = encodeURIComponent(job.address || '');
+  var hoverName = encodeURIComponent(homeownerName || '');
+  html += '<a href="https://app.hover.to/new?address=' + hoverAddr + '&name=' + hoverName + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0"><span style="font-size:20px">&#128016;</span><span style="font-size:11px;color:var(--gray)">Hover</span></a>';
   html += '</div>';
 
   // ── Workflow action row (Section 8) ──
@@ -461,9 +495,9 @@ function renderJobDetail(job) {
     signed ? '&#10003; Signed' : 'Not signed',
     signed ? '#16A34A' : '#94A3B8',
     'openSignatureScreen(\'' + jid + '\',\'' + _sigAddr + '\',\'' + _sigName + '\')');
-  html += _workflowChip('&#128207;', 'Measure',
-    squares ? '&#10003; ' + squares + ' SQ' : 'Not measured',
-    squares ? '#16A34A' : '#94A3B8',
+  html += _workflowChip('&#127968;', 'Roof Overview',
+    squares ? '&#10003; ' + squares + ' SQ' : 'Open',
+    squares ? '#16A34A' : '#00B5CC',
     'runFieldMeasure(\'' + (job.address || '').replace(/\'/g,"\\'") + '\',\'' + jid + '\')');
   // Photos workflow chip removed — photos section below + camera button above handle this
   html += _workflowChip('&#128220;', 'Photo Report',
@@ -496,18 +530,29 @@ function renderJobDetail(job) {
   // Roof diagram is now rendered inside the CRC Measure bottom sheet — removed
   // the standalone Job Detail section 2026-04 to avoid duplicate surfaces.
 
-  // ── Job Info ──
+  // ── Job Info (collapsible) ──
+  var jobInfoExpanded = (window._jobInfoExpanded || {})[jid] !== false;
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
-  html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Job Info</div>';
-  var rows = [
-    ['Carrier', job.carrier||''],
-    ['Claim #', job.claimNumber||''],
-    ['Adjuster Meeting', job.adjusterDate ? new Date(job.adjusterDate).toLocaleDateString() : 'Not set'],
-    ['Created', job.created_at ? new Date(job.created_at).toLocaleDateString() : '']
-  ].filter(r => r[1]);
-  for (var i = 0; i < rows.length; i++) {
-    html += '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px' + (i<rows.length-1?';border-bottom:1px solid var(--bg)':'') + '">';
-    html += '<span style="color:var(--gray)">' + rows[i][0] + '</span><span style="color:var(--navy);font-weight:500">' + rows[i][1] + '</span></div>';
+  html += '<button onclick="toggleJobInfo(\'' + jid + '\')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:' + (jobInfoExpanded ? '12' : '0') + 'px">';
+  html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Job Info</span>';
+  html += '<span style="font-size:14px;color:var(--gray)">' + (jobInfoExpanded ? '▲' : '▼') + '</span></button>';
+  if (jobInfoExpanded) {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">CARRIER</label>'
+      + '<input type="text" id="ji-carrier" value="' + (job.carrier||'') + '" placeholder="e.g. State Farm" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">CLAIM #</label>'
+      + '<input type="text" id="ji-claim" value="' + (job.claimNumber||'') + '" placeholder="Claim number" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">ADJUSTER NAME</label>'
+      + '<input type="text" id="ji-adjname" value="' + (job.adjusterName||'') + '" placeholder="Adjuster name" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">ADJUSTER PHONE</label>'
+      + '<input type="tel" id="ji-adjphone" value="' + (job.adjusterPhone||'') + '" placeholder="Phone" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">ADJUSTER EMAIL</label>'
+      + '<input type="email" id="ji-adjemail" value="' + (job.adjusterEmail||'') + '" placeholder="Email" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">ADJUSTER MEETING</label>'
+      + '<input type="date" id="ji-adjdate" value="' + (job.adjusterDate ? job.adjusterDate.split("T")[0] : '') + '" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '</div>';
+    html += '<button onclick="saveJobInfo(\'' + jid + '\')" style="width:100%;padding:9px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Job Info</button>';
+    html += '<div style="font-size:11px;color:var(--gray);margin-top:6px">Created: ' + (job.created_at ? new Date(job.created_at).toLocaleDateString() : '—') + '</div>';
   }
   html += '</div>';
 

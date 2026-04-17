@@ -186,23 +186,20 @@ function toggleStormPanel() {
 let quickMarkPin = null;
 async function showQuickMarkPopup(lat, lng) {
   const addr = await reverseGeocode(lat, lng);
-  // Drop a temporary marker
   if (quickMarkPin) quickMarkPin.setMap(null);
   quickMarkPin = new google.maps.Marker({ position: { lat, lng }, map: gmap, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#00B5CC', fillOpacity: 1, strokeColor: '#FFF', strokeWeight: 3 }, zIndex: 100 });
-  // Show popup
   const modal = document.getElementById('knock-modal');
   modal.style.display = 'flex';
+  const safeAddr = addr.replace(/'/g, "\\'");
   modal.querySelector('#knock-options').innerHTML = `
-    <div style="font-size:13px;color:var(--gray);margin-bottom:8px;word-break:break-word">${addr}</div>
-    <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px">Quick Mark</div>
-    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','not_home')" style="background:var(--amber)">Not Home</button>
-    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','not_interested')" style="background:var(--red)">Not Interested</button>
-    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','contacted')" style="background:var(--teal)">Interested</button>
-    <button class="btn-add" onclick="quickMark(${lat},${lng},'${addr.replace(/'/g,"\\'")}','no_answer')" style="background:var(--gray)">No Answer</button>
-    <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px">
-      <button class="btn-add" onclick="quickMarkToFull(${lat},${lng},'${addr.replace(/'/g,"\\'")}')">Add Full Lead Instead</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:600;color:var(--navy);flex:1;word-break:break-word">${addr}</div>
+      <button onclick="cancelQuickMark()" style="background:none;border:none;font-size:24px;color:var(--gray);cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">&times;</button>
     </div>
-    <button onclick="cancelQuickMark()" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px;width:100%">Cancel</button>`;
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','not_home')" style="background:#F59E0B;color:#fff;width:100%;margin-bottom:6px">Not Home</button>
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','not_interested')" style="background:#DC2626;color:#fff;width:100%;margin-bottom:6px">Not Interested</button>
+    <button class="btn-add" onclick="quickMarkToFull(${lat},${lng},'${safeAddr}')" style="background:#00B5CC;color:#fff;width:100%;margin-bottom:6px">Add New Lead</button>
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','pinned')" style="background:#001A4D;color:#fff;width:100%">Drop Pin</button>`;
 }
 async function quickMark(lat, lng, addr, status) {
   document.getElementById('knock-modal').style.display = 'none';
