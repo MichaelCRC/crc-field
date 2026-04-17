@@ -894,3 +894,108 @@ html, body { overflow-x: hidden; }
   font-family: inherit;
 }
 .ir-cell-label:focus { outline: none; background: #fff; border-top-color: #00B5CC; }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   TABLET BREAKPOINT  (iPad / 768-1199px)
+   Every view should breathe on iPad. The single-column phone layout would
+   otherwise stretch to fill the whole viewport — too wide for comfortable
+   reading or thumb reach. We cap content width, bump touch targets, and
+   switch to multi-column grids where appropriate. Bottom nav stays visible
+   at tablet size (no desktop sidebar until 1200px).
+   ══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1199px) {
+  /* Center main views at a comfortable reading width */
+  #view-leads #leads-main,
+  #view-jobs,
+  #view-feed,
+  #view-stats,
+  #view-resources,
+  #view-brain,
+  #view-booking,
+  #view-notes {
+    max-width: 820px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Job detail + lead detail: panels scroll inside, center content */
+  #job-detail > div,
+  #lead-detail > div,
+  #field-obs-panel > div {
+    max-width: 720px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Touch targets */
+  .btn-add, .nav-item, .map-btn, .chip, .feed-post-btn {
+    min-height: 48px;
+  }
+  .input-lg, .input-md, input[type="text"], input[type="tel"], input[type="email"], input[type="date"], textarea, select {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  /* Jobs: 2-column grid for job cards on tablet list view */
+  #view-jobs .job-card { width: 100%; }
+
+  /* Leads list */
+  #leads-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  #leads-list .lead-card { margin: 0; }
+
+  /* Feed list cards — centered with readable line length */
+  #feed-list { max-width: 620px; margin: 0 auto; }
+
+  /* Map view: keep map full width but contain toolbar */
+  .map-controls { flex-wrap: wrap; justify-content: center; }
+
+  /* Measure sheet + signature overlay + IR overlay — centered cards */
+  #measure-sheet {
+    max-width: 780px;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    border-radius: 16px !important;
+    max-height: 90vh !important;
+    bottom: 20px !important;
+  }
+  #sig-auth-overlay > div:nth-child(2),
+  #ir-overlay > div:nth-child(2) {
+    /* Body area already scrollable; cap width via inner wrapper selectors */
+  }
+  /* Center the inner content columns for form overlays */
+  #sig-auth-body > div { max-width: 720px; margin-left: auto; margin-right: auto; }
+  #ir-body { max-width: 900px; margin-left: auto; margin-right: auto; }
+
+  /* Job detail photo grid goes 3-col (already in main selector) */
+  .job-photo-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  /* IR builder grid (3-col) — already in main selector */
+
+  /* Forms: wider inputs + more padding */
+  .quick-add { padding: 20px; }
+  textarea { padding: 12px 14px; }
+
+  /* Notes view canvas area */
+  #notes-draw-canvas { min-height: 560px; }
+
+  /* Admin / stats tables full width */
+  #view-stats table, #view-admin table { width: 100%; }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   DESKTOP (>=1200px) — keep the mobile-style shell but widen the content
+   columns a touch and allow multi-col grids to breathe.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1200px) {
+  #view-leads #leads-main,
+  #view-jobs,
+  #view-feed,
+  #view-stats {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #leads-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  #job-detail > div { max-width: 900px !important; margin-left: auto !important; margin-right: auto !important; }
+}
