@@ -415,8 +415,8 @@ function renderJobDetail(job) {
   html += '<button onclick="openJobActionMenu(\'' + jid + '\')" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer;flex-shrink:0;margin-left:8px;line-height:1">&#8943;</button>';
   html += '</div></div>';
 
-  // ── Quick Actions ──
-  html += '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px;padding-bottom:4px">';
+  // ── Contact actions (phone / text / portal / camera) ──
+  html += '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">';
   if (phone) {
     html += '<a href="tel:' + phone + '" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
       + '<span style="font-size:20px">&#128222;</span><span style="font-size:11px;color:var(--gray)">Call</span></a>';
@@ -425,13 +425,43 @@ function renderJobDetail(job) {
   }
   html += '<a href="https://crc-supplements-portal.onrender.com/#job-' + jid + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
     + '<span style="font-size:20px">&#128187;</span><span style="font-size:11px;color:var(--gray)">Portal</span></a>';
+  html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
+  html += '</div>';
+
+  // ── Workflow action row (Section 8) ──
+  // Five steps shown as chips with status. Photo count uses the same
+  // aggregator as the grid so it stays in sync.
+  var wfPhotos = collectJobPhotos(job);
   var _sigAddr = (job.address || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   var _sigName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  html += '<button onclick="openSignatureScreen(\'' + jid + '\',\'' + _sigAddr + '\',\'' + _sigName + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer">'
-    + '<span style="font-size:20px">\u270D\uFE0F</span><span style="font-size:11px;color:var(--gray)">Sign</span></button>';
-  html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
-  html += '<button onclick="startReport(\'inspection\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128203;</span><span style="font-size:11px;color:var(--gray)">Report</span></button>';
-  html += '<button onclick="runFieldMeasure(\'' + (job.address || '').replace(/'/g, "\\'") + '\',\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128207;</span><span style="font-size:11px;color:var(--gray)">Measure</span></button>';
+  var signed = !!(job.authorizations && job.authorizations.claim && job.authorizations.claim.signed) || !!(job.selections && job.selections.authorized);
+  var squares = job.measurements && job.measurements.measurements && job.measurements.measurements.totalSquares;
+  var claimReady = !!job.claimFilingReady;
+  var claimSent = (job.uploadedDocs || []).some(function(d){ return d.docType === 'claim-filing-package'; });
+  var photoReportBuilt = (job.uploadedDocs || []).some(function(d){ return d.docType === 'photo-inspection-report'; });
+
+  html += '<div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px;padding-bottom:4px">';
+  html += _workflowChip('&#128221;', 'Authorization',
+    signed ? '&#10003; Signed' : 'Not signed',
+    signed ? '#16A34A' : '#94A3B8',
+    'openSignatureScreen(\'' + jid + '\',\'' + _sigAddr + '\',\'' + _sigName + '\')');
+  html += _workflowChip('&#128207;', 'Measure',
+    squares ? '&#10003; ' + squares + ' SQ' : 'Not measured',
+    squares ? '#16A34A' : '#94A3B8',
+    'runFieldMeasure(\'' + (job.address || '').replace(/\'/g,"\\'") + '\',\'' + jid + '\')');
+  html += _workflowChip('&#128248;', 'Photos',
+    wfPhotos.length ? (wfPhotos.length + ' photos') : 'No photos',
+    wfPhotos.length ? '#16A34A' : '#94A3B8',
+    'jobTakePhoto(\'' + jid + '\')');
+  html += _workflowChip('&#128220;', 'Photo Report',
+    photoReportBuilt ? '&#10003; Built' : (wfPhotos.length ? 'Build' : 'No photos yet'),
+    photoReportBuilt ? '#16A34A' : '#94A3B8',
+    wfPhotos.length ? ('openPhotoInspectionReport(\'' + jid + '\')') : '');
+  var claimLabel = claimSent ? '&#10003; Sent' : (claimReady ? 'Build' : 'Mark ready');
+  var claimColor = claimSent ? '#16A34A' : (claimReady ? '#F59E0B' : '#94A3B8');
+  html += _workflowChip('&#128203;', 'File Claim',
+    claimLabel, claimColor,
+    claimReady ? ('openClaimFilingPackage(\'' + jid + '\')') : ('toggleClaimReady(\'' + jid + '\')'));
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
@@ -604,6 +634,31 @@ function renderJobTasks(tasks, jobId) {
       + (t.dueDate ? '<div style="font-size:11px;color:' + (overdue?'#DC2626;font-weight:600':'var(--gray)') + '">' + (overdue?'Overdue - ':'Due ') + new Date(t.dueDate).toLocaleDateString() + '</div>' : '')
       + '</div></div>';
   }).join('');
+}
+
+// Workflow chip (Section 8) — icon + title + status line.
+function _workflowChip(icon, title, status, statusColor, onclick) {
+  var click = onclick ? (' onclick="' + onclick + '"') : '';
+  var cursor = onclick ? 'cursor:pointer' : 'cursor:default;opacity:0.7';
+  return '<button type="button"' + click + ' style="' + cursor + ';background:var(--white);border:1px solid var(--border);border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:112px;flex-shrink:0;text-align:left">'
+    + '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px">' + icon + '</span>'
+    + '<span style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:0.3px;text-transform:uppercase">' + title + '</span></div>'
+    + '<div style="font-size:11px;font-weight:700;color:' + statusColor + '">' + status + '</div>'
+    + '</button>';
+}
+
+// Toggle "Ready to File" — flips the flag then reopens job detail so the
+// File Claim chip offers Build instead of Mark ready.
+async function toggleClaimReady(jobId) {
+  try {
+    var r = await fetch('/api/field/jobs/' + jobId, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ claimFilingReady: true })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    showToast('Ready to file — tap "Build" to assemble the package');
+    openJobDetail(jobId);
+  } catch (e) { showToast('Error: ' + e.message, true); }
 }
 
 // Collect every photo attached to a portal job, de-duplicated by URL.

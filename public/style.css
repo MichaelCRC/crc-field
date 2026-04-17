@@ -847,3 +847,50 @@ html, body { overflow-x: hidden; }
 @media (min-width: 1200px) {
   .job-photo-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
 }
+
+/* ── Inspection Reports + Claim Filing Package builder ─────────────────── */
+.ir-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 768px) { .ir-photo-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1200px) { .ir-photo-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.ir-cell {
+  position: relative;
+  background: #fff;
+  border: 2px solid #CBD5E1;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+  display: flex;
+  flex-direction: column;
+}
+.ir-cell:active { transform: scale(0.99); }
+.ir-cell-on { border-color: #00B5CC; box-shadow: 0 0 0 3px rgba(0,181,204,0.15); }
+.ir-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.ir-cell-check {
+  position: absolute; top: 8px; right: 8px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #00B5CC; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ir-cell-on .ir-cell-check { opacity: 1; }
+.ir-cell-label {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #E5E7EB;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #001A4D;
+  background: #F8FAFC;
+  min-height: 36px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.ir-cell-label:focus { outline: none; background: #fff; border-top-color: #00B5CC; }

@@ -218,6 +218,36 @@ router.post('/:id/photos', upload.single('photo'), async (req, res) => {
   }
 });
 
+// POST /api/field/jobs/:id/photo-inspection-report — proxy PDF build
+router.post('/:id/photo-inspection-report', async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/photo-inspection-report`, {
+      method: 'POST',
+      body: JSON.stringify(req.body)
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json(data);
+  } catch (e) {
+    console.error('[FieldJobs] photo-report error:', e.message);
+    res.status(500).json({ error: 'Failed to build Photo Inspection Report' });
+  }
+});
+
+// POST /api/field/jobs/:id/claim-filing-package — proxy PDF build
+router.post('/:id/claim-filing-package', async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/claim-filing-package`, {
+      method: 'POST',
+      body: JSON.stringify(req.body)
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json(data);
+  } catch (e) {
+    console.error('[FieldJobs] claim-filing error:', e.message);
+    res.status(500).json({ error: 'Failed to build Claim Filing Package' });
+  }
+});
+
 // GET /api/field/jobs/:id/next-steps-pdf — proxy to portal
 router.get('/:id/next-steps-pdf', async (req, res) => {
   try {
