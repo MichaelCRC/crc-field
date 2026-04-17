@@ -205,15 +205,12 @@
     <!-- MAP VIEW (combined with Storms) -->
     <div id="view-map" class="app-view">
       <div class="map-controls">
-        <button class="map-btn" onclick="centerOnMe()">My Location</button>
-        <button class="map-btn" id="btn-knock-mode" onclick="toggleKnockMode()">Door Knock</button>
-        <button class="map-btn" id="btn-drop-pin" onclick="toggleDropPin()">Drop Pin</button>
         <button class="map-btn" id="btn-storm-overlay" onclick="toggleStormOverlay()">&#9928; Storms</button>
         <button class="map-btn" id="btn-builds" onclick="toggleBuildsOverlay()">&#127968; Builds</button>
-        <button class="map-btn" onclick="openMeasureFromMap()">&#128207; Measure</button>
       </div>
       <div id="builds-color-filters" style="display:none;padding:6px 12px;background:rgba(27,35,96,0.9);overflow-x:auto;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,0.1)"></div>
       <div id="map-container" class="map-container" style="position:relative">
+        <button class="map-location-btn" onclick="centerOnMe()" title="My Location" aria-label="Center on my location">&#10148;</button>
         <div id="storm-panel" class="storm-panel collapsed" style="display:none">
           <div class="storm-panel-handle" onclick="toggleStormPanel()"></div>
           <div class="storm-panel-header">
@@ -358,7 +355,19 @@
       </div>
     </div>
 
-    <!-- Bottom Nav (4 primary tabs) -->
+    <!-- FAB Quick Access (bottom-left) -->
+    <div id="fab-container" class="fab-container">
+      <div id="fab-menu" class="fab-menu" style="display:none">
+        <button class="fab-item" onclick="closeFab();reportBug()" title="Report Bug">&#128027;<span>Bug</span></button>
+        <button class="fab-item" onclick="closeFab();switchView('notes')" title="Notes">&#128221;<span>Notes</span></button>
+        <button class="fab-item" onclick="closeFab();switchView('booking')" title="Booking">&#128197;<span>Booking</span></button>
+        <button class="fab-item" onclick="closeFab();switchView('brain')" title="Brain">&#129504;<span>Brain</span></button>
+        <button class="fab-item" onclick="closeFab();window.open('/rep-card/'+repCode+'?auth='+repCode,'_blank')" title="Rep Card">&#127183;<span>Rep Card</span></button>
+      </div>
+      <button class="fab-main" id="fab-main-btn" onclick="toggleFab()" aria-label="Quick access">&#10010;</button>
+    </div>
+
+    <!-- Bottom Nav (5 primary tabs, no Notes) -->
     <nav class="bottom-nav">
       <button class="nav-item active" onclick="switchView('leads')" id="nav-leads">
         <span class="nav-icon">&#127968;</span><span class="nav-label">Home</span>
@@ -371,9 +380,6 @@
       </button>
       <button class="nav-item" onclick="switchView('feed')" id="nav-feed">
         <span class="nav-icon">&#128240;</span><span class="nav-label">Feed</span>
-      </button>
-      <button class="nav-item" onclick="switchView('notes')" id="nav-notes">
-        <span class="nav-icon">&#128221;</span><span class="nav-label">Notes</span>
       </button>
       <button class="nav-item" onclick="toggleMoreMenu()" id="nav-more">
         <span class="nav-icon">&#9776;</span><span class="nav-label">More</span>

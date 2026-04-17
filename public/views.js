@@ -25,8 +25,10 @@ async function initMap() {
       if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { gmap.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }); gmap.setZoom(13); }, () => {}, { timeout: 5000 });
       loadMapPins();
       gmap.addListener('click', async (e) => {
-        if (knockMode) { pendingKnock = { lat: e.latLng.lat(), lng: e.latLng.lng() }; document.getElementById('knock-modal').style.display = 'flex'; return; }
-        if (dropPinMode) { showQuickMarkPopup(e.latLng.lat(), e.latLng.lng()); }
+        const lat = e.latLng.lat(), lng = e.latLng.lng();
+        if (knockMode) { pendingKnock = { lat, lng }; document.getElementById('knock-modal').style.display = 'flex'; return; }
+        // Always show quick mark popup when zoomed in enough (zoom >= 15)
+        if (gmap.getZoom() >= 15) { showQuickMarkPopup(lat, lng); }
       });
     };
     document.head.appendChild(script);
@@ -91,21 +93,47 @@ function filterStormList(val, all) {
 
 function addStormMarkersToMap(events) {
   if (!gmap || typeof google === 'undefined') return;
-  // Clear existing storm markers
   stormMarkers.forEach(m => m.setMap(null));
   stormMarkers = [];
   const sevColors = { severe: '#7F1D1D', significant: '#DC2626', moderate: '#EA580C', minor: '#F59E0B' };
+  const sevOpacity = { severe: 0.35, significant: 0.28, moderate: 0.22, minor: 0.18 };
+  // Radius in meters based on hail size (bigger hail = larger affected area shown)
+  const hailRadius = size => Math.max(6000, Math.min(20000, 5000 + size * 5000));
+
   events.forEach(e => {
     if (!e.lat || !e.lng) return;
     const sev = e.hailSize >= 2.0 ? 'severe' : e.hailSize >= 1.5 ? 'significant' : e.hailSize >= 1.0 ? 'moderate' : 'minor';
-    const m = new google.maps.Marker({
-      position: { lat: e.lat, lng: e.lng }, map: stormOverlayVisible ? gmap : null,
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10 + (e.hailSize * 4), fillColor: sevColors[sev], fillOpacity: 0.6, strokeColor: '#FFF', strokeWeight: 1 },
-      zIndex: 1
+    const color = sevColors[sev];
+    const radius = hailRadius(e.hailSize);
+
+    // Area polygon (circle overlay) — visible affected zone
+    const circle = new google.maps.Circle({
+      center: { lat: e.lat, lng: e.lng },
+      radius,
+      map: stormOverlayVisible ? gmap : null,
+      fillColor: color,
+      fillOpacity: sevOpacity[sev],
+      strokeColor: color,
+      strokeOpacity: 0.6,
+      strokeWeight: 1.5,
+      zIndex: 1,
+      clickable: true,
     });
-    const info = new google.maps.InfoWindow({ content: `<div style="font-size:13px"><strong>${e.hailSize}" Hail</strong><br>${e.location}, ${e.county} Co.<br>${e.date}<br><span style="color:${sevColors[sev]};font-weight:700">${sev}</span></div>` });
-    m.addListener('click', () => info.open(gmap, m));
-    stormMarkers.push(m);
+
+    // Small center marker for click target
+    const marker = new google.maps.Marker({
+      position: { lat: e.lat, lng: e.lng },
+      map: stormOverlayVisible ? gmap : null,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: color, fillOpacity: 1, strokeColor: '#FFF', strokeWeight: 1.5 },
+      zIndex: 2,
+    });
+
+    const infoContent = `<div style="font-size:13px;min-width:160px"><strong>${e.hailSize}" Hail</strong><br>${e.location}, ${e.county} Co.<br>${e.date}<br><span style="color:${color};font-weight:700;text-transform:uppercase">${sev}</span></div>`;
+    const info = new google.maps.InfoWindow({ content: infoContent });
+    circle.addListener('click', (ev) => { info.setPosition(ev.latLng); info.open(gmap); });
+    marker.addListener('click', () => info.open(gmap, marker));
+
+    stormMarkers.push(circle, marker);
   });
 }
 

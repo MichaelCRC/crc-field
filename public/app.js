@@ -86,6 +86,10 @@ function getSource() { return document.querySelector('#source-chips .chip.active
 // --- More Menu ---
 function toggleMoreMenu() { document.getElementById('more-menu').classList.toggle('open'); }
 function closeMoreMenu() { document.getElementById('more-menu').classList.remove('open'); }
+// --- FAB Quick Access ---
+function toggleFab() { const m = document.getElementById('fab-menu'); const btn = document.getElementById('fab-main-btn'); const open = m.style.display === 'none' || m.style.display === ''; m.style.display = open ? 'flex' : 'none'; btn.classList.toggle('open', open); }
+function closeFab() { const m = document.getElementById('fab-menu'); const btn = document.getElementById('fab-main-btn'); if (m) m.style.display = 'none'; if (btn) btn.classList.remove('open'); }
+document.addEventListener('click', function(e) { if (!e.target.closest('#fab-container')) closeFab(); });
 
 // --- View Switching ---
 function switchView(name) {
@@ -136,7 +140,8 @@ async function addLead() {
     document.getElementById('lead-confirm').style.display = 'block';
     document.getElementById('lead-confirm').innerHTML = `<div class="checkmark">&#10003;</div><p>Job created in portal &mdash; ${homeownerName} at ${body.address}</p>
       <button onclick="clearLeadForm()" style="background:var(--teal);color:white">Add Another</button>
-      <button onclick="switchView('jobs')" style="background:var(--navy);color:white">My Jobs</button>`;
+      <button onclick="switchView('jobs')" style="background:var(--navy);color:white">My Jobs</button>
+      ${jobId ? `<button onclick="loadAndOpenJob('${jobId}')" style="background:var(--green,#16a34a);color:white">View Job</button>` : ''}`;
     ['lead-address','lead-name','lead-phone','lead-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     document.getElementById('street-view-preview').innerHTML = ''; selectedAddress = '';
     loadLeads();
@@ -555,13 +560,12 @@ async function saveFieldPhotoMarkup(leadId, photoIndex, category) {
 var _sigAuthCtx = null, _sigAuthDrawing = false, _sigAuthHasStrokes = false;
 
 var AUTH_ITEMS = [
-  'I authorize Columbus Roofing Company ("CRC") to access my property for the purpose of conducting a visual inspection of the roof and exterior.',
-  'I understand this inspection is provided at no cost and does not obligate me to purchase any services from CRC.',
-  'I authorize CRC to photograph and document the condition of my property, including the roof, siding, gutters, and any visible damage, for the sole purpose of assessment and reporting.',
-  'I acknowledge that CRC is not responsible for any pre-existing damage, deterioration, or conditions present on the property prior to inspection.',
-  'I release CRC and its representatives from liability for any injury sustained during the inspection, provided CRC exercises reasonable care and follows standard safety protocols.',
-  'If I choose to file an insurance claim, I authorize CRC to be present during the adjuster\'s inspection to assist with documentation and scope review on my behalf.',
-  'I understand that CRC\'s findings and recommendations are professional opinions based on visual inspection only, and that final determination of damage and coverage is made by my insurance carrier.'
+  'I grant Columbus Roofing Company ("CRC") permission to access my property for a complimentary visual inspection of the roof and exterior. This is not a commitment to any service or claim.',
+  'I understand that CRC representatives are licensed, insured, and trained professionals. CRC is not liable for any pre-existing damage, prior vandalism, or conditions discovered during the inspection.',
+  'I release CRC from any liability for personal injury or property damage that may occur during the inspection, provided CRC follows standard safety practices.',
+  'I authorize CRC to photograph and document the condition of my property for the sole purpose of assessment and reporting to me as the property owner.',
+  'If I choose to file an insurance claim, I may invite CRC to be present during the adjuster\'s inspection as my advocate. This is my choice and creates no financial obligation.',
+  'I understand this document is an inspection authorization only — not a contract, not an assignment of benefits, and not a commitment to use CRC for any repair work.',
 ];
 
 function openSignatureScreen(jobId, jobAddress, homeownerName) {

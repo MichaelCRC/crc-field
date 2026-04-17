@@ -47,8 +47,8 @@ async function openLiveViewfinder() {
   const tags = (activePhotoTab === 'inspection' ? INSPECTION_TAGS : BUILD_TAGS).filter(t => t !== 'all');
 
   // HAAG report sections as tags for inspection, build tags for build
-  const haagTags = ['Overview', 'North Slope', 'South Slope', 'East Slope', 'West Slope', 'Soft Metals', 'Test Squares', 'Components', 'Interior'];
-  const haagKeys = ['overview', 'north-slope', 'south-slope', 'east-slope', 'west-slope', 'soft-metal', 'test-squares', 'components', 'interior'];
+  const haagTags = ['Overview', 'North Slope', 'South Slope', 'East Slope', 'West Slope', 'Soft Metals', 'Components', 'Interior', 'General'];
+  const haagKeys = ['overview', 'north-slope', 'south-slope', 'east-slope', 'west-slope', 'soft-metal', 'components', 'interior', 'general'];
   const camTags = activePhotoTab === 'inspection' ? haagKeys : tags;
   const camLabels = activePhotoTab === 'inspection' 
     ? Object.fromEntries(haagKeys.map((k, i) => [k, haagTags[i]]))
