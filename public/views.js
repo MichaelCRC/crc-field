@@ -182,20 +182,123 @@ function toggleStormPanel() {
   if (panel) panel.classList.toggle('collapsed');
 }
 
+// --- Parcel Data Lookup (Franklin County Auditor GIS) ---
+// Free public ArcGIS REST API -- no key needed, CORS allowed.
+// Falls back gracefully if outside Franklin County or API unavailable.
+async function fetchParcelData(lat, lng) {
+  const FIELDS = 'OWNERNME1,OWNERNME2,MAILNME1,MAILNME2,SITEADDRESS,SALEDATE,SALEPRICE,RESYRBLT,RESFLRAREA_AG,ACRES,OWNEROCCUPIED,BEDRMS,BATHS,CLASSDSCRP,TOTVALUEBASE,PSTLADDRES,PSTLCITYSTZIP';
+  const url = `https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features_WebMercator/FeatureServer/0/query`
+    + `?geometry=${lng},${lat}&geometryType=esriGeometryPoint&inSR=4326`
+    + `&spatialRel=esriSpatialRelIntersects&outFields=${FIELDS}&returnGeometry=false&f=json`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const feat = data.features && data.features[0];
+    return feat ? feat.attributes : null;
+  } catch (e) {
+    console.warn('[Parcel] lookup failed:', e.message);
+    return null;
+  }
+}
+
+function _fmtParcelDate(ms) {
+  if (!ms) return null;
+  return new Date(ms).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+}
+function _fmtMoney(n) {
+  if (!n) return null;
+  return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+function _fmtSqft(n) {
+  if (!n) return null;
+  return Number(n).toLocaleString('en-US') + ' sq ft';
+}
+
+function _buildParcelCard(p, addr) {
+  if (!p) return '';
+  const owner = [p.OWNERNME1, p.OWNERNME2].filter(Boolean).map(n => _titleCase(n)).join(' & ');
+  const mailLine1 = p.MAILNME1 ? _titleCase(p.MAILNME1) : null;
+  const mailLine2 = p.MAILNME2 ? _titleCase(p.MAILNME2) : null;
+  const nonOwnerOccupied = p.OWNEROCCUPIED === 'N';
+  const saleDate = _fmtParcelDate(p.SALEDATE);
+  const salePrice = _fmtMoney(p.SALEPRICE);
+  const assessed = _fmtMoney(p.TOTVALUEBASE);
+  const sqft = _fmtSqft(p.RESFLRAREA_AG);
+  const acres = p.ACRES ? Number(p.ACRES).toFixed(2) + ' ac' : null;
+  const yearBuilt = p.RESYRBLT || null;
+  const beds = p.BEDRMS || null;
+  const baths = p.BATHS || null;
+
+  const rows = [];
+  if (owner) rows.push(['Owner', owner + (nonOwnerOccupied ? ' <span style="background:#F59E0B;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle">Non-OO</span>' : '')]);
+  if (mailLine1 && nonOwnerOccupied) rows.push(['Mailing', [mailLine1, mailLine2].filter(Boolean).join(', ')]);
+  if (yearBuilt) rows.push(['Year Built', yearBuilt]);
+  const details = [sqft, beds ? beds + ' bed' : null, baths ? baths + ' bath' : null].filter(Boolean).join(' · ');
+  if (details) rows.push(['Home', details]);
+  if (acres) rows.push(['Lot Size', acres]);
+  if (saleDate && salePrice) rows.push(['Last Sale', `${salePrice} (${saleDate})`]);
+  if (assessed) rows.push(['Assessed', assessed]);
+
+  if (!rows.length) return '';
+
+  return `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;margin-bottom:10px" data-parcel-owner="${owner.replace(/"/g,'&quot;')}">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span style="font-size:10px;font-weight:700;color:#fff;background:#001A4D;padding:2px 7px;border-radius:4px;letter-spacing:0.4px">PROPERTY INFO</span>
+      <span style="font-size:10px;color:#94A3B8">Franklin Co. Auditor</span>
+    </div>
+    ${rows.map(([label, val]) => `
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid #F1F5F9">
+        <span style="font-size:11px;color:#64748B;flex-shrink:0;margin-right:8px">${label}</span>
+        <span style="font-size:12px;font-weight:600;color:#1e293b;text-align:right">${val}</span>
+      </div>`).join('')}
+  </div>`;
+}
+
+function _titleCase(str) {
+  return (str || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // --- Quick Mark (drop pin without full lead form) ---
 let quickMarkPin = null;
 async function showQuickMarkPopup(lat, lng) {
-  const addr = await reverseGeocode(lat, lng);
+  const modal = document.getElementById('knock-modal');
+  const opts = modal.querySelector('#knock-options');
+  modal.style.display = 'flex';
+
   if (quickMarkPin) quickMarkPin.setMap(null);
   quickMarkPin = new google.maps.Marker({ position: { lat, lng }, map: gmap, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#00B5CC', fillOpacity: 1, strokeColor: '#FFF', strokeWeight: 3 }, zIndex: 100 });
-  const modal = document.getElementById('knock-modal');
-  modal.style.display = 'flex';
-  const safeAddr = addr.replace(/'/g, "\\'");
-  modal.querySelector('#knock-options').innerHTML = `
+
+  // Show loading state immediately so popup appears fast
+  opts.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:13px;font-weight:600;color:var(--navy);flex:1;word-break:break-word">${addr}</div>
+      <div style="font-size:12px;color:#64748B">Loading property data...</div>
       <button onclick="cancelQuickMark()" style="background:none;border:none;font-size:24px;color:var(--gray);cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">&times;</button>
     </div>
+    <div style="height:4px;background:#E2E8F0;border-radius:2px;margin-bottom:10px">
+      <div style="height:4px;background:#00B5CC;border-radius:2px;width:60%;animation:none"></div>
+    </div>`;
+
+  // Fetch address + parcel data in parallel
+  const [addr, parcel] = await Promise.all([
+    reverseGeocode(lat, lng),
+    fetchParcelData(lat, lng)
+  ]);
+
+  const safeAddr = addr.replace(/'/g, "\\'");
+  const parcelCard = _buildParcelCard(parcel, addr);
+
+  // Use parcel address if we got one (more accurate than reverse geocode)
+  const displayAddr = (parcel && parcel.SITEADDRESS)
+    ? _titleCase(parcel.SITEADDRESS) + (parcel.ZIPCD ? ', ' + parcel.ZIPCD : '')
+    : addr;
+
+  opts.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);flex:1;word-break:break-word;line-height:1.3">${displayAddr}</div>
+      <button onclick="cancelQuickMark()" style="background:none;border:none;font-size:24px;color:var(--gray);cursor:pointer;padding:0 4px 0 8px;line-height:1;flex-shrink:0">&times;</button>
+    </div>
+    ${parcelCard}
     <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','not_home')" style="background:#F59E0B;color:#fff;width:100%;margin-bottom:6px">Not Home</button>
     <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','not_interested')" style="background:#DC2626;color:#fff;width:100%;margin-bottom:6px">Not Interested</button>
     <button class="btn-add" onclick="quickMarkToFull(${lat},${lng},'${safeAddr}')" style="background:#00B5CC;color:#fff;width:100%;margin-bottom:6px">Add New Lead</button>
@@ -218,9 +321,15 @@ function quickMarkToFull(lat, lng, addr) {
   selectedAddress = addr;
   document.getElementById('lead-address').dataset.lat = lat;
   document.getElementById('lead-address').dataset.lng = lng;
+  // Pre-fill owner name if parcel card was showing
+  const ownerEl = document.querySelector('#knock-options [data-parcel-owner]');
+  if (ownerEl) {
+    const nameEl = document.getElementById('lead-name');
+    if (nameEl && !nameEl.value) nameEl.value = ownerEl.dataset.parcelOwner;
+  }
   switchView('leads');
   dropPinMode = false;
-  document.getElementById('btn-drop-pin').classList.remove('active');
+  document.getElementById('btn-drop-pin')?.classList.remove('active');
 }
 function cancelQuickMark() {
   document.getElementById('knock-modal').style.display = 'none';

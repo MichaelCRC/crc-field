@@ -198,8 +198,9 @@
     </div>
 
     <!-- Property Tap Popup (tap on map at zoom 15+) -->
-    <div id="knock-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center">
-      <div style="background:var(--white);border-radius:16px;padding:20px;width:300px;max-width:90vw">
+    <div id="knock-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:flex-end;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)">
+      <div style="background:var(--white);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+        <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
         <div style="display:flex;flex-direction:column;gap:8px" id="knock-options"></div>
       </div>
     </div>
