@@ -216,7 +216,7 @@ function renderJobCard(job, showSwipeHint) {
   html += '<div class="job-card-inner" style="position:relative;z-index:1">';
   // Row 1: name + pipeline
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">';
-  html += '<span style="font-size:15px;font-weight:800;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:6px">' + (job.homeownerName || 'Unknown') + '</span>';
+  html += '<span style="font-size:15px;font-weight:800;color:#0D0D0D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:6px">' + (job.homeownerName || 'Unknown') + '</span>';
   html += pipelineBadge(job.pipeline);
   html += '</div>';
   // Row 2: address
@@ -449,10 +449,10 @@ function renderJobDetail(job) {
   // readable in light mode regardless of CSS-variable cascade quirks. The
   // address line stays muted (steel mid) — readable but visually secondary.
   html += '<div style="margin-bottom:16px">';
-  html += '<button onclick="closeJobDetail()" style="background:none;border:none;color:#001A4D;font-size:14px;font-weight:700;cursor:pointer;padding:0;margin-bottom:10px;display:inline-flex;align-items:center;gap:4px">&larr; <u>My Jobs</u></button>';
+  html += '<button onclick="closeJobDetail()" style="background:none;border:none;color:#00B5CC;font-size:14px;font-weight:700;cursor:pointer;padding:0;margin-bottom:10px;display:inline-flex;align-items:center;gap:4px">&larr; <u>My Jobs</u></button>';
   html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
   html += '<div style="flex:1;min-width:0">';
-  html += '<h2 style="font-size:20px;font-weight:700;color:#0D0D0D;margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</h2>';
+  html += '<h2 style="font-size:20px;font-weight:700;color:#FFFFFF;margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</h2>';
   html += '<div style="font-size:13px;color:#6B7280;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (job.address||'') + '</div>';
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">';
   html += pipelineBadge(job.pipeline || job.jobCategory || 'insurance');
