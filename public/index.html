@@ -212,7 +212,6 @@
       </div>
       <div id="builds-color-filters" style="display:none;padding:6px 12px;background:rgba(27,35,96,0.9);overflow-x:auto;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,0.1)"></div>
       <div id="map-container" class="map-container" style="position:relative">
-        <button class="map-location-btn" onclick="centerOnMe()" title="My Location" aria-label="Center on my location">&#10148;</button>
         <div id="storm-panel" class="storm-panel collapsed" style="display:none">
           <div class="storm-panel-handle" onclick="toggleStormPanel()"></div>
           <div class="storm-panel-header">
@@ -431,6 +430,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Map Location Button — fixed overlay, only visible when map view is active -->
+  <button id="map-location-btn" class="map-location-btn" onclick="centerOnMe()" title="My Location" aria-label="Center on my location">&#10148;</button>
 
   <!-- Photo Modal (viewer) -->
   <div id="photo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;align-items:center;justify-content:center"></div>
