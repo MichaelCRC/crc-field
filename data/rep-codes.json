@@ -9,7 +9,8 @@
       "showOnLeaderboard": true,
       "canFileClaims": true,
       "active": true,
-      "createdAt": "2026-04-01"
+      "createdAt": "2026-04-01",
+      "email": "michael@columbusroofingco.com"
     },
     {
       "code": "LANE",
@@ -20,62 +21,48 @@
       "showOnLeaderboard": false,
       "canFileClaims": false,
       "active": true,
-      "createdAt": "2026-04-01"
+      "createdAt": "2026-04-01",
+      "email": "lane@columbusroofingco.com"
     },
     {
-      "code": "TSHINGLE",
-      "name": "Tom Davidson",
+      "code": "NICK",
+      "name": "Nick",
       "role": "rep",
-      "title": "Sales Representative",
-      "department": "Sales",
-      "showOnLeaderboard": true,
-      "canFileClaims": true,
       "active": true,
-      "createdAt": "2026-04-01"
+      "phone": "",
+      "email": "",
+      "photo_url": "",
+      "createdAt": "2026-04-13"
     },
     {
-      "code": "RHYSB",
-      "name": "Rhys Bennett",
-      "role": "staff",
-      "title": "Marketing Manager",
-      "department": "Marketing",
-      "showOnLeaderboard": true,
-      "canFileClaims": false,
-      "active": true,
-      "createdAt": "2026-04-01"
-    },
-    {
-      "code": "DCHRIS",
-      "name": "Donny Christiansen",
-      "role": "staff",
-      "title": "COO",
-      "department": "Operations",
-      "showOnLeaderboard": true,
-      "canFileClaims": false,
-      "active": true,
-      "createdAt": "2026-04-01"
-    },
-    {
-      "code": "RONDO",
-      "name": "Nick Rondon",
+      "code": "DOM",
+      "name": "Dom",
       "role": "rep",
-      "title": "Sales Representative",
-      "department": "Sales",
-      "showOnLeaderboard": true,
-      "canFileClaims": true,
       "active": true,
-      "createdAt": "2026-04-01"
+      "phone": "",
+      "email": "",
+      "photo_url": "",
+      "createdAt": "2026-04-13"
     },
     {
-      "code": "DOMG",
-      "name": "Dom G",
+      "code": "RHYS",
+      "name": "Rhys",
       "role": "rep",
-      "title": "Sales Representative",
-      "department": "Sales",
-      "showOnLeaderboard": true,
-      "canFileClaims": true,
       "active": true,
-      "createdAt": "2026-04-01"
+      "phone": "",
+      "email": "",
+      "photo_url": "",
+      "createdAt": "2026-04-13"
+    },
+    {
+      "code": "HOLLY",
+      "name": "Holly Rodgers",
+      "role": "operator",
+      "active": true,
+      "phone": "",
+      "email": "holly@columbusroofingco.com",
+      "photo_url": "",
+      "createdAt": "2026-04-17"
     }
   ]
 }

@@ -170,7 +170,7 @@ function feedEventClass(e) {
 
 function renderFeedCard(e) {
   const cls = feedEventClass(e);
-  const REP_NAMES = { MCG: 'Michael McGovern', LANE: 'Lane Campbell', NICK: 'Nick' };
+  const REP_NAMES = { MCG: 'Michael McGovern', LANE: 'Lane Campbell', NICK: 'Nick', DOM: 'Dom', RHYS: 'Rhys', HOLLY: 'Holly Rodgers' };
   const displayName = e.repName || (e.repId && REP_NAMES[e.repId.toUpperCase()]) || e.repId || 'CRC';
   const initials = feedInitials(displayName);
   const when = feedRelativeTime(e.timestamp);
