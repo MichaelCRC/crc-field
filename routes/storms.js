@@ -61,7 +61,7 @@ async function fetchNOAAStorms() {
     // Try the NOAA Storm Events search API
     const searchUrl = `https://www.ncdc.noaa.gov/stormevents/csv?eventType=Hail&beginDate_mm=${String(yearAgo.getMonth()+1).padStart(2,'0')}&beginDate_dd=${String(yearAgo.getDate()).padStart(2,'0')}&beginDate_yyyy=${yearAgo.getFullYear()}&endDate_mm=${String(now.getMonth()+1).padStart(2,'0')}&endDate_dd=${String(now.getDate()).padStart(2,'0')}&endDate_yyyy=${now.getFullYear()}&state=OHIO&county=FRANKLIN`;
 
-    const resp = await fetch(searchUrl, { timeout: 15000 });
+    const resp = await fetch(searchUrl, { signal: AbortSignal.timeout(15000) });
     if (resp.ok) {
       const text = await resp.text();
       return parseNOAACSV(text);

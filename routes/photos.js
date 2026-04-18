@@ -112,7 +112,7 @@ router.post('/:id/sync-homeowner-portal', async (req, res) => {
   if (lead.portalJobId && process.env.SUPPLEMENT_PORTAL_URL) {
     try {
       const allPhotos = [...photos.inspection, ...photos.build];
-      await fetch(`${process.env.SUPPLEMENT_PORTAL_URL}/api/jobs/${lead.portalJobId}`, {
+      await fetch(`${process.env.SUPPLEMENT_PORTAL_URL}/api/jobs/${lead.portalJobId}/fields`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fieldPhotos: allPhotos }),
