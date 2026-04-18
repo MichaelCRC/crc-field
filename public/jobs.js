@@ -459,7 +459,7 @@ function renderJobDetail(job) {
   html += ' <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:' + sc + ';color:#fff;font-weight:600">' + stageLabel(job.stage) + '</span>';
   html += '</div></div>';
   // Action menu button
-  html += '<button onclick="openJobActionMenu(\'' + jid + '\')" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer;flex-shrink:0;margin-left:8px;line-height:1">&#8943;</button>';
+  html += '<button onclick="openJobActionMenu(\'' + jid + '\')" style="background:#1C2333;border:1px solid #00B5CC;border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer;flex-shrink:0;margin-left:8px;line-height:1;color:#FFFFFF">&#8943;</button>';
   html += '</div></div>';
 
   // ── Contact actions (phone / text / portal / camera) ──
