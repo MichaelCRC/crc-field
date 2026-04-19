@@ -171,7 +171,9 @@ function feedEventClass(e) {
 function renderFeedCard(e) {
   const cls = feedEventClass(e);
   const REP_NAMES = { MCG: 'Michael McGovern', LANE: 'Lane Campbell', NICK: 'Nick', DOM: 'Dom', RHYS: 'Rhys', HOLLY: 'Holly Rodgers' };
-  const displayName = e.repName || (e.repId && REP_NAMES[e.repId.toUpperCase()]) || e.repId || 'CRC';
+  // For system events with no repId, fall back to the job's repCode if available
+  const effectiveRepId = e.repId || (e.type === 'system_event' ? e.jobRepCode : null);
+  const displayName = e.repName || (effectiveRepId && REP_NAMES[effectiveRepId.toUpperCase()]) || effectiveRepId || 'CRC';
   const initials = feedInitials(displayName);
   const when = feedRelativeTime(e.timestamp);
   const jobPill = e.jobId
