@@ -605,6 +605,7 @@ async function deleteNote() {
     await notesFetch('/api/notes/' + encodeURIComponent(id) + '?hard=true', { method: 'DELETE' });
     notesState.notes = notesState.notes.filter(n => n.id !== id);
     notesState.selectedId = null;
+    document.body.classList.remove('notes-editing'); // return to list on mobile
     persistNotesCache();
     refreshNotebookCounts();
     renderNotesView();
