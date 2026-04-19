@@ -108,3 +108,25 @@
 
 /* Google Places Autocomplete dropdown — must float above modals/dropdowns */
 .pac-container { z-index: 10000 !important; }
+
+/* ── Z-index scale (official) ───────────────────────────────────────
+   Reference these tokens for any new fixed/absolute/sticky element.
+   Migration of existing hard-coded z-index values is a separate pass. */
+:root {
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-header: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-fab: 600;
+  --z-toast: 700;
+  --z-tooltip: 800;
+}
+
+/* ── Header + nav height tokens ─────────────────────────────────────
+   Field app uses sticky positioning with dynamic height; these tokens
+   are for any new rule that needs to reserve header/nav space. */
+:root {
+  --header-height: calc(36px + env(safe-area-inset-top, 0px));
+  --bottom-nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
+}
