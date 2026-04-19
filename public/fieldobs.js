@@ -185,6 +185,14 @@ function _foRenderForm(fn) {
     checked: fn.existingDripEdge
   });
 
+  // Valley Metal (conditional — drives RFG VMTLW inclusion). Woven / closed-cut
+  // valleys have no metal, so this must be an explicit observation.
+  roof += _foCheckRow({
+    id: 'valleyMetalRequired',
+    label: 'Metal valley installed / required',
+    checked: fn.valleyMetalRequired
+  });
+
   // Eave Depth select
   roof += '<div style="display:flex;align-items:center;justify-content:space-between;'
         + 'padding:11px 0;border-bottom:1px solid var(--bg)">';
@@ -296,6 +304,7 @@ function _collectFieldObs() {
     pipeJacks:           _foInt('pipeJacks'),
     twoStory:            _foChk('twoStory'),
     existingDripEdge:    _foChk('existingDripEdge'),
+    valleyMetalRequired: _foChk('valleyMetalRequired'),
     eaveDepth:           _foVal('eaveDepth') || 'standard',
     replaceGutters:      _foChk('replaceGutters'),
     existingGutters:     _foChk('existingGutters'),
