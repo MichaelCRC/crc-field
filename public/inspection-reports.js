@@ -83,9 +83,9 @@ function _renderBuilder() {
   overlay.id = 'ir-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:1100;background:#F8FAFC;display:flex;flex-direction:column;overflow:hidden';
 
-  var title = s.mode === 'claim-filing' ? 'Claim Filing Package' : 'Photo Inspection Report';
+  var title = s.mode === 'claim-filing' ? 'Next Steps Packet' : 'Photo Inspection Report';
   var subtitle = s.mode === 'claim-filing'
-    ? 'Select photos and details for the homeowner\'s Next Steps packet.'
+    ? 'Select photos and fill in details for the homeowner packet.'
     : 'Select photos to include. Add a label and (optionally) markup to each.';
 
   overlay.innerHTML = ''
@@ -99,7 +99,7 @@ function _renderBuilder() {
     + '</div>'
     + '<div style="background:#fff;border-top:1px solid #E5E7EB;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-shrink:0">'
     +   '<div style="flex:1;font-size:12px;color:#64748B"><span id="ir-count">' + s.selected.size + ' of ' + s.photos.length + ' photos selected</span></div>'
-    +   '<button id="ir-generate" onclick="_irGenerate()" style="padding:11px 18px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;min-height:44px">' + (s.mode === 'claim-filing' ? 'Generate Package' : 'Generate Report') + '</button>'
+    +   '<button id="ir-generate" onclick="_irGenerate()" style="padding:11px 18px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;min-height:44px">' + (s.mode === 'claim-filing' ? 'Generate Packet' : 'Generate Report') + '</button>'
     + '</div>';
 
   document.body.appendChild(overlay);
@@ -242,7 +242,7 @@ async function _irGenerate() {
     if (!r.ok || !data.success) throw new Error(data.error || 'PDF build failed');
     _irShowSuccess(data, s.mode);
   } catch (e) {
-    if (btn) { btn.disabled = false; btn.textContent = s.mode === 'claim-filing' ? 'Generate Package' : 'Generate Report'; }
+    if (btn) { btn.disabled = false; btn.textContent = s.mode === 'claim-filing' ? 'Generate Packet' : 'Generate Report'; }
     alert('Error: ' + e.message);
   }
 }
@@ -254,7 +254,7 @@ function _irShowSuccess(data, mode) {
   body.innerHTML = ''
     + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center">'
     +   '<div style="font-size:64px;margin-bottom:12px">&#9989;</div>'
-    +   '<div style="font-size:20px;font-weight:800;color:#001A4D;margin-bottom:8px">' + (mode === 'claim-filing' ? 'Package ready' : 'Report ready') + '</div>'
+    +   '<div style="font-size:20px;font-weight:800;color:#001A4D;margin-bottom:8px">' + (mode === 'claim-filing' ? 'Packet ready' : 'Report ready') + '</div>'
     +   '<div style="font-size:13px;color:#64748B;margin-bottom:24px;max-width:420px">Saved to this job\'s documents in the portal. You can open or share it below.</div>'
     +   '<div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">'
     +     '<a href="' + url + '" download target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#001A4D;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">&#11015;&#65039; Download PDF</a>'

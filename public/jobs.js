@@ -506,7 +506,7 @@ function renderJobDetail(job) {
     wfPhotos.length ? ('openPhotoInspectionReport(\'' + jid + '\')') : '');
   var claimLabel = claimSent ? '&#10003; Sent' : (claimReady ? 'Build' : 'Mark ready');
   var claimColor = claimSent ? '#16A34A' : (claimReady ? '#F59E0B' : '#94A3B8');
-  html += _workflowChip('&#128203;', 'File Claim',
+  html += _workflowChip('&#128203;', 'Next Steps Packet',
     claimLabel, claimColor,
     claimReady ? ('openClaimFilingPackage(\'' + jid + '\')') : ('toggleClaimReady(\'' + jid + '\')'));
   html += '</div>';
