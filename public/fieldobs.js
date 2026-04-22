@@ -68,13 +68,21 @@ function _foSizeSelect(id, val) {
 }
 
 // Generic enum select: pass [{value, label}, ...]
+// Always prepends an empty "--" option as the default so an untouched
+// dropdown reads as null (not the first real enum value). This is load-
+// bearing for the inspection-complete hard gate -- callers of this helper
+// are all gated fields (chimneyType, valleyType, osbRedeck,
+// atticVentilationType). Auto-selecting the first enum option would bypass
+// the gate since the saved value would look "answered".
 function _foEnumSelect(id, val, options) {
+  var empty = '<option value=""' + (!val ? ' selected' : '') + '>--</option>';
   var o = options.map(function(opt) {
     return '<option value="' + opt.value + '"' + (val === opt.value ? ' selected' : '') + '>'
       + opt.label + '</option>';
   }).join('');
   return '<select id="' + id + '" style="padding:6px 10px;border:1px solid var(--border);'
-    + 'border-radius:6px;font-size:14px;background:#fff;color:var(--navy)">' + o + '</select>';
+    + 'border-radius:6px;font-size:14px;background:#fff;color:var(--navy)">'
+    + empty + o + '</select>';
 }
 
 // Show/hide downspout row whenever either gutter checkbox changes
