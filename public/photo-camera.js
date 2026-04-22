@@ -15,6 +15,21 @@ let liveThumbnails = []; // data URLs for bottom strip
 
 function openCameraMode() {
   cameraActive = true;
+  // Auto-route uploads to job context when a Job Detail panel is open.
+  // Without this, if the rep opens the camera from anywhere other than
+  // jobTakePhoto() the upload endpoint falls back to /api/leads/:id/photos
+  // via currentLeadId -- photos end up on the lead record instead of the
+  // portal job, and collectJobPhotos() on the job returns empty.
+  //
+  // Precedence: open Job Detail > open Lead Detail > standalone.
+  // Clearing _jobPhotoUploadId when no job is open prevents stale values
+  // from a prior session from mis-routing new uploads.
+  if (typeof _currentJobDetail !== 'undefined' && _currentJobDetail && _currentJobDetail.id) {
+    window._jobPhotoUploadId = _currentJobDetail.id;
+    if (typeof currentLeadId !== 'undefined') currentLeadId = _currentJobDetail.id;
+  } else {
+    window._jobPhotoUploadId = null;
+  }
   // Hide the FAB — not needed while taking photos
   var fab = document.querySelector('.crc-fab-root');
   if (fab) fab.style.display = 'none';
@@ -435,23 +450,10 @@ async function processQueue() {
       setTimeout(() => { uploadQueue.push(item); processQueue(); }, 1000 * item.retries);
     } else {
       console.error('[Camera] Upload permanently failed after 3 attempts:', item.file.name);
-      // Store locally as fallback
-      try {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const localPhoto = {
-            id: 'failed-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
-            url: reader.result, thumbnail: reader.result,
-            tag: item.tag, category: activePhotoTab,
-            caption: '', repCode, jobId: item.leadId,
-            source: 'local-fallback', uploadedBy: repCode,
-            uploadedAt: new Date().toISOString(), uploadFailed: true
-          };
-          if (!currentLeadPhotos[activePhotoTab]) currentLeadPhotos[activePhotoTab] = [];
-          currentLeadPhotos[activePhotoTab].push(localPhoto);
-        };
-        reader.readAsDataURL(item.file);
-      } catch (fe) { console.error('[Camera] Local fallback also failed:', fe); }
+      // Persist to localStorage-backed retry queue so the photo survives
+      // navigation and refresh. The retry banner (_renderUploadRetryBanner)
+      // reads from this queue and offers Retry + Dismiss.
+      _persistFailedUpload(item);
     }
   }
   uploadsInFlight--;
@@ -709,4 +711,160 @@ function handleCompass(e) {
   if (degEl) degEl.textContent = compassHeading + '°';
   if (ringEl) ringEl.style.transform = `rotate(${-compassHeading}deg)`;
   if (nEl) nEl.style.transform = `rotate(${compassHeading}deg)`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Local-fallback retry queue + banner
+//
+// Uploads that fail after 3 in-session retries were previously stored only in
+// the in-memory currentLeadPhotos dict, which gets wiped on navigation. Photos
+// were effectively lost. Now we persist them to localStorage as base64, render
+// a visible red banner at the top of every view ("⚠️ N photos need to sync."),
+// and offer Retry + Dismiss. Retry re-POSTs each entry using the same routing
+// (portal job vs legacy lead) it was originally destined for.
+// ═══════════════════════════════════════════════════════════════════════════
+
+var _UPLOAD_QUEUE_KEY = 'crc_failed_uploads';
+
+function _getFailedUploads() {
+  try { return JSON.parse(localStorage.getItem(_UPLOAD_QUEUE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function _setFailedUploads(arr) {
+  try { localStorage.setItem(_UPLOAD_QUEUE_KEY, JSON.stringify(arr)); }
+  catch (e) {
+    // localStorage quota exceeded. Keep only the most recent 20 entries.
+    console.error('[Upload] localStorage quota hit, trimming queue:', e.message);
+    try { localStorage.setItem(_UPLOAD_QUEUE_KEY, JSON.stringify(arr.slice(-20))); }
+    catch (e2) { console.error('[Upload] Could not persist queue at all:', e2.message); }
+  }
+}
+
+function _persistFailedUpload(item) {
+  try {
+    const reader = new FileReader();
+    reader.onload = function() {
+      const stored = _getFailedUploads();
+      const isPortalJob = !!(window._jobPhotoUploadId && window._jobPhotoUploadId === item.leadId);
+      stored.push({
+        id: 'failed-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        base64: reader.result,
+        mimeType: (item.file && item.file.type) || 'image/jpeg',
+        filename: (item.file && item.file.name) || 'photo.jpg',
+        tag: item.tag,
+        leadId: item.leadId,
+        isPortalJob: isPortalJob,
+        activePhotoTab: typeof activePhotoTab !== 'undefined' ? activePhotoTab : 'inspection',
+        repCode: typeof repCode !== 'undefined' ? repCode : '',
+        timestamp: Date.now(),
+      });
+      _setFailedUploads(stored);
+      _renderUploadRetryBanner();
+    };
+    reader.readAsDataURL(item.file);
+  } catch (e) {
+    console.error('[Upload] Persist failed:', e);
+  }
+}
+
+function checkLocalFallbackPhotos() { return _getFailedUploads().length; }
+
+async function retryLocalFallbackUploads() {
+  const stored = _getFailedUploads();
+  if (!stored.length) return;
+  const banner = document.getElementById('upload-retry-banner');
+  const btn = banner && banner.querySelector('button[data-retry]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Retrying…'; }
+
+  const remaining = [];
+  for (const item of stored) {
+    try {
+      // Recreate Blob from base64
+      const parts = (item.base64 || '').split(',');
+      if (parts.length !== 2) { remaining.push(item); continue; }
+      const binary = atob(parts[1]);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: item.mimeType || 'image/jpeg' });
+      const file = new File([blob], item.filename || 'photo.jpg', { type: item.mimeType || 'image/jpeg' });
+
+      const fd = new FormData();
+      let url;
+      if (item.isPortalJob) {
+        fd.append('photo', file);
+        fd.append('label', item.tag || 'Job Photo');
+        url = '/api/field/jobs/' + encodeURIComponent(item.leadId) + '/photos';
+      } else {
+        fd.append('photos', file);
+        fd.append('repCode', item.repCode || '');
+        fd.append('tag', item.tag || '');
+        fd.append('category', item.activePhotoTab || '');
+        url = '/api/leads/' + encodeURIComponent(item.leadId) + '/photos';
+      }
+      const resp = await fetch(url, { method: 'POST', body: fd });
+      if (!resp.ok) { remaining.push(item); continue; }
+      // Success -- drop from queue
+    } catch (e) {
+      console.error('[Upload] retry error for', item.id, e);
+      remaining.push(item);
+    }
+  }
+  _setFailedUploads(remaining);
+  _renderUploadRetryBanner();
+
+  if (typeof showToast === 'function') {
+    if (!remaining.length) showToast('All photos synced');
+    else showToast(remaining.length + ' photo(s) still failing', true);
+  }
+}
+
+function _dismissUploadRetryBanner() {
+  const b = document.getElementById('upload-retry-banner');
+  if (b) b.style.display = 'none';
+}
+
+function _renderUploadRetryBanner() {
+  let banner = document.getElementById('upload-retry-banner');
+  const count = checkLocalFallbackPhotos();
+  if (count === 0) {
+    if (banner) banner.remove();
+    return;
+  }
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'upload-retry-banner';
+    banner.style.cssText =
+      'position:fixed;top:env(safe-area-inset-top, 0px);left:0;right:0;z-index:550;' +
+      'background:#DC2626;color:#FFFFFF;padding:10px 14px;display:flex;align-items:center;gap:10px;' +
+      'font-size:13px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
+    document.body.appendChild(banner);
+  }
+  banner.style.display = 'flex';
+  banner.innerHTML =
+    '<span style="flex:1">&#9888;&#65039; ' + count + ' photo' + (count > 1 ? 's' : '') +
+    ' need' + (count > 1 ? '' : 's') + ' to sync</span>' +
+    '<button data-retry onclick="retryLocalFallbackUploads()" ' +
+    'style="background:#FFFFFF;color:#DC2626;border:none;padding:6px 12px;border-radius:6px;' +
+    'font-size:12px;font-weight:700;cursor:pointer">Retry</button>' +
+    '<button onclick="_dismissUploadRetryBanner()" aria-label="Dismiss" ' +
+    'style="background:none;border:none;color:#FFFFFF;font-size:18px;cursor:pointer;padding:4px 6px;line-height:1">&times;</button>';
+}
+
+// Render on page load so reps returning to the app see pending failures.
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _renderUploadRetryBanner);
+  } else {
+    // DOM already ready -- render immediately.
+    setTimeout(_renderUploadRetryBanner, 0);
+  }
+}
+
+// Expose to window so other modules + inline onclicks can reach these.
+if (typeof window !== 'undefined') {
+  window.checkLocalFallbackPhotos = checkLocalFallbackPhotos;
+  window.retryLocalFallbackUploads = retryLocalFallbackUploads;
+  window._renderUploadRetryBanner = _renderUploadRetryBanner;
+  window._dismissUploadRetryBanner = _dismissUploadRetryBanner;
 }
