@@ -98,9 +98,10 @@ async function openLiveViewfinder() {
         </div>
       </div>
 
-      <div class="cam-upload-float"><span class="cam-upload-status"></span></div>
-
-      <!-- Thumbnails removed — photos auto-save silently. Count shown in cam-count. -->
+      <!-- Thumbnails removed — photos auto-save silently. Count shown in cam-count.
+           Previously had a .cam-upload-float "Saved ✓" pill here; removed in 3.3.1
+           because it persisted after each successful upload (Build 3.3 fixed
+           uploads, exposing the pill). Counter top-right is the only success cue. -->
       <canvas id="cam-live-canvas" style="display:none"></canvas>
       <input type="file" id="cam-lib-live" accept="image/*" multiple style="display:none">
     </div>`;

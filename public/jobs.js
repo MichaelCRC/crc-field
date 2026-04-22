@@ -689,6 +689,16 @@ function renderJobDetail(job) {
   // De-dupe by URL so a photo present in more than one bucket only renders
   // once.
   var allPhotos = collectJobPhotos(job);
+  // Diagnostic (Build 3.3.1): photos upload successfully post-3.3 but render
+  // as "Photo unavailable" placeholders. Log the shape the gallery receives
+  // so we can see whether URLs are malformed, missing, or require a base URL.
+  try {
+    console.log('[photo-gallery-fetch]', {
+      photoCount: allPhotos && allPhotos.length,
+      firstPhoto: allPhotos && allPhotos[0],
+      sampleUrls: allPhotos && allPhotos.slice(0, 3).map(function(p) { return p.url || p.thumbnail || p.src; }),
+    });
+  } catch (e) { /* logging must not break render */ }
   var photosExpanded = (window._jobPhotosExpanded || {})[jid] !== false; // default expanded
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;' + (photosExpanded && allPhotos.length ? 'margin-bottom:10px' : '') + '">';
@@ -711,7 +721,7 @@ function renderJobDetail(job) {
         var caption = p.caption || p.tag || '';
         if (!url) return;
         html += '<div class="job-photo-cell" onclick="openJobPhotoLightboxFor(\'' + jid + '\',' + i + ')">'
-          + '<img src="' + url + '" loading="lazy" onerror="this.parentElement.classList.add(\'job-photo-bad\');this.src=\'\';this.style.display=\'none\'" alt="Photo ' + (i+1) + '">'
+          + '<img src="' + url + '" loading="lazy" onerror="console.log(\'[photo-img-failed]\', { src: this.src, index: ' + i + ' });this.parentElement.classList.add(\'job-photo-bad\');this.src=\'\';this.style.display=\'none\'" alt="Photo ' + (i+1) + '">'
           + '<span class="job-photo-bad-label">Photo unavailable</span>'
           + (caption ? '<div class="job-photo-caption">' + caption + '</div>' : '')
           + '</div>';
