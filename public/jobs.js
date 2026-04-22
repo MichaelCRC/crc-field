@@ -558,9 +558,11 @@ function renderJobDetail(job) {
     html += '<a href="sms:' + phone + '" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
       + '<span style="font-size:20px">&#128172;</span><span style="font-size:11px;color:var(--gray)">Text</span></a>';
   }
-  // Portal tile is admin/owner only -- reps don't need direct portal access
-  // from the field app. Role comes from rep-codes validation at login (app.js).
-  var _isPortalUser = (typeof repRole !== 'undefined') && (repRole === 'admin' || repRole === 'owner');
+  // Portal tile is admin / ceo / operator only -- reps don't need direct portal
+  // access from the field app. Valid roles come from rep-codes validation at
+  // login (app.js). 'owner' is not a real role in this codebase.
+  var _isPortalUser = (typeof repRole !== 'undefined') &&
+    (repRole === 'admin' || repRole === 'ceo' || repRole === 'operator');
   if (_isPortalUser) {
     html += '<a href="https://crc-supplements-portal.onrender.com/#job-' + jid + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
       + '<span style="font-size:20px">&#128187;</span><span style="font-size:11px;color:var(--gray)">Portal</span></a>';
