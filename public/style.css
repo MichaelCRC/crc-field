@@ -34,7 +34,10 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
 .app-view.active { display: block; }
 
 /* Detail panels — fixed overlay, always above content, always below bottom nav.
-   Nav stays visible on all screens. Panel scrolls internally. */
+   Nav stays visible on all screens. Panel scrolls internally.
+   padding-top: env(safe-area-inset-top) reserves space for the iPhone notch /
+   status bar so back buttons and sticky headers aren't clipped. Matches
+   .app-header + .cam-topbar pattern. */
 .detail-panel {
   position: fixed;
   top: 0;
@@ -45,6 +48,7 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
   z-index: 100;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top);
   padding-bottom: 16px;
   display: none;
 }

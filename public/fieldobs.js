@@ -147,9 +147,16 @@ function _foGroupBox(title, content) {
 function _foRenderForm(fn) {
   var h = '';
 
-  /* ── Sticky Header ── */
+  /* ── Sticky Header ──
+     Top padding compensates for the iPhone notch / status bar (belt-and-
+     suspenders with .detail-panel's padding-top). The sticky header stays
+     pinned to the top of the scroll container, so it lands at the panel's
+     content origin which already clears the safe area -- the extra padding
+     here protects against iOS versions where position:sticky in a padded
+     container doesn't consistently respect the padding offset. */
   h += '<div style="position:sticky;top:0;z-index:10;background:var(--navy);'
-     + 'padding:12px 16px;display:flex;align-items:center;gap:10px;'
+     + 'padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;'
+     + 'display:flex;align-items:center;gap:10px;'
      + 'box-shadow:0 2px 6px rgba(0,0,0,0.25)">';
   h += '<button onclick="closeFieldObs()" style="background:none;border:none;color:var(--teal);'
      + 'font-size:14px;font-weight:600;cursor:pointer;padding:4px 0;flex-shrink:0">'
