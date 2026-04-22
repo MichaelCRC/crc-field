@@ -89,9 +89,6 @@ async function openLiveViewfinder() {
       <button id="cam-tag-btn" onclick="event.stopPropagation();openCamTagPicker()" style="position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.65);border:1.5px solid rgba(255,255,255,0.35);color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;white-space:nowrap;min-height:36px;letter-spacing:0.5px">
         📷 <span id="cam-tag-label">${camLabels[cameraTag] || 'Overview'}</span> ▾
       </button>
-      <button onclick="event.stopPropagation();openCamFieldObs()" style="position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));right:12px;z-index:10;background:rgba(0,181,204,0.85);border:none;color:#fff;font-size:11px;font-weight:700;padding:6px 11px;border-radius:20px;min-height:36px;white-space:nowrap">
-        📋 Field Obs
-      </button>
 
       <div class="cam-compass-float" id="cam-compass">
         <div class="compass-ring-sm">

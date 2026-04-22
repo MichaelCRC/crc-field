@@ -558,8 +558,13 @@ function renderJobDetail(job) {
     html += '<a href="sms:' + phone + '" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
       + '<span style="font-size:20px">&#128172;</span><span style="font-size:11px;color:var(--gray)">Text</span></a>';
   }
-  html += '<a href="https://crc-supplements-portal.onrender.com/#job-' + jid + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
-    + '<span style="font-size:20px">&#128187;</span><span style="font-size:11px;color:var(--gray)">Portal</span></a>';
+  // Portal tile is admin/owner only -- reps don't need direct portal access
+  // from the field app. Role comes from rep-codes validation at login (app.js).
+  var _isPortalUser = (typeof repRole !== 'undefined') && (repRole === 'admin' || repRole === 'owner');
+  if (_isPortalUser) {
+    html += '<a href="https://crc-supplements-portal.onrender.com/#job-' + jid + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0">'
+      + '<span style="font-size:20px">&#128187;</span><span style="font-size:11px;color:var(--gray)">Portal</span></a>';
+  }
   html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
   var hoverAddr = encodeURIComponent(job.address || '');
   var hoverName = encodeURIComponent(name || '');
@@ -717,7 +722,7 @@ function renderJobDetail(job) {
   }
   html += '</div>';
 
-  html += '<button onclick="closeJobDetail()" style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:20px">Back to My Jobs</button>';
+  html += '<button onclick="closeJobDetail()" style="width:100%;padding:12px;background:transparent;border:1.5px solid var(--teal);border-radius:8px;font-size:14px;font-weight:700;color:var(--teal);cursor:pointer;margin-bottom:20px;-webkit-tap-highlight-color:transparent">Back to My Jobs</button>';
   html += '</div>';
   detail.innerHTML = html;
 }
