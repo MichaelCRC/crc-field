@@ -263,8 +263,17 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 .cam-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; }
 /* Minimal camera overlay elements */
 .cam-x { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 10; background: rgba(0,0,0,0.65); border: 2px solid rgba(255,255,255,0.3); color: white; font-size: 22px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.cam-count { position: absolute; top: 12px; right: 12px; z-index: 10; background: var(--teal); color: white; font-size: 14px; font-weight: 800; min-width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: pointer; }
-.cam-count:empty { display: none; }
+/* Camera photo counter — semi-transparent dark chip, white label + teal count.
+   Shifts down when the upload retry banner is present so the two don't stack.
+   The [data-count="0"] selector hides the chip when no photos taken yet. */
+.cam-count { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 10; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); color: #fff; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 14px; cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.cam-count-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #fff; }
+.cam-count-num { font-size: 14px; font-weight: 800; color: var(--teal); min-width: 12px; text-align: center; }
+.cam-count[data-count="0"] { display: none; }
+body.has-retry-banner .cam-count { top: calc(48px + env(safe-area-inset-top, 0px)); }
+/* Hide upload-status pill when empty (prevents the tiny stray dark chip at
+   bottom-left of the viewfinder near the FAB when there's no upload activity). */
+.cam-upload-status:empty { display: none; }
 .cam-tag-strip-min { position: absolute; top: 54px; left: 0; right: 0; z-index: 10; display: flex; gap: 4px; padding: 4px 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .cam-tag-strip-min::-webkit-scrollbar { display: none; }
 .cam-tag-pill-min { background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; cursor: pointer; flex-shrink: 0; }

@@ -84,7 +84,7 @@ async function openLiveViewfinder() {
 
       <button class="cam-x" onclick="event.stopPropagation();closeLiveCamera()">&times;</button>
       
-      <div class="cam-count" id="cam-count" onclick="event.stopPropagation();closeLiveCamera()">${cameraSessionCount || ''}</div>
+      <div class="cam-count" id="cam-count" onclick="event.stopPropagation();closeLiveCamera()" data-count="${cameraSessionCount || 0}"><span class="cam-count-label">PHOTOS</span><span class="cam-count-num">${cameraSessionCount || 0}</span></div>
 
       <button id="cam-tag-btn" onclick="event.stopPropagation();openCamTagPicker()" style="position:absolute;top:calc(14px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.65);border:1.5px solid rgba(255,255,255,0.35);color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;white-space:nowrap;min-height:36px;letter-spacing:0.5px">
         📷 <span id="cam-tag-label">${camLabels[cameraTag] || 'Overview'}</span> ▾
@@ -259,9 +259,15 @@ function createThumbnailFromCanvas(srcCanvas) {
 }
 
 function updateThumbStrip() {
-  // Thumbnails removed — photos auto-save silently, count shown in cam-count badge
+  // Thumbnails removed — photos auto-save silently, count shown in cam-count badge.
+  // Update both the live number child and the data-count attribute (CSS hides
+  // the whole badge when data-count="0").
   const countEl = document.getElementById('cam-count');
-  if (countEl && cameraSessionCount > 0) countEl.textContent = cameraSessionCount;
+  if (!countEl) return;
+  const n = cameraSessionCount || 0;
+  countEl.dataset.count = String(n);
+  const numEl = countEl.querySelector('.cam-count-num');
+  if (numEl) numEl.textContent = n;
 }
 
 function updateLiveHUD() {
@@ -731,6 +737,7 @@ async function retryLocalFallbackUploads() {
 function _dismissUploadRetryBanner() {
   const b = document.getElementById('upload-retry-banner');
   if (b) b.style.display = 'none';
+  document.body.classList.remove('has-retry-banner');
 }
 
 function _renderUploadRetryBanner() {
@@ -738,15 +745,23 @@ function _renderUploadRetryBanner() {
   const count = checkLocalFallbackPhotos();
   if (count === 0) {
     if (banner) banner.remove();
+    document.body.classList.remove('has-retry-banner');
     return;
   }
   if (!banner) {
     banner = document.createElement('div');
     banner.id = 'upload-retry-banner';
+    // Banner spans y=0 (including the notch) with padding-top clearing the
+    // safe area so content sits BELOW the iPhone status bar. Prior version
+    // used top:env(...) which positioned the whole banner at the safe-area
+    // boundary; on iPads / older iOS that returns 0 and the banner ended
+    // up under the status bar. Content is trimmed ~30% vs Build 3 for a
+    // slimmer strip on the camera view where vertical space is tight.
     banner.style.cssText =
-      'position:fixed;top:env(safe-area-inset-top, 0px);left:0;right:0;z-index:550;' +
-      'background:#DC2626;color:#FFFFFF;padding:10px 14px;display:flex;align-items:center;gap:10px;' +
-      'font-size:13px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
+      'position:fixed;top:0;left:0;right:0;z-index:550;' +
+      'padding:6px 14px 7px;padding-top:calc(env(safe-area-inset-top, 0px) + 6px);' +
+      'background:#DC2626;color:#FFFFFF;display:flex;align-items:center;gap:8px;' +
+      'font-size:12px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3)';
     document.body.appendChild(banner);
   }
   banner.style.display = 'flex';
@@ -754,10 +769,12 @@ function _renderUploadRetryBanner() {
     '<span style="flex:1">&#9888;&#65039; ' + count + ' photo' + (count > 1 ? 's' : '') +
     ' need' + (count > 1 ? '' : 's') + ' to sync</span>' +
     '<button data-retry onclick="retryLocalFallbackUploads()" ' +
-    'style="background:#FFFFFF;color:#DC2626;border:none;padding:6px 12px;border-radius:6px;' +
-    'font-size:12px;font-weight:700;cursor:pointer">Retry</button>' +
+    'style="background:#FFFFFF;color:#DC2626;border:none;padding:4px 10px;border-radius:5px;' +
+    'font-size:11px;font-weight:700;cursor:pointer">Retry</button>' +
     '<button onclick="_dismissUploadRetryBanner()" aria-label="Dismiss" ' +
-    'style="background:none;border:none;color:#FFFFFF;font-size:18px;cursor:pointer;padding:4px 6px;line-height:1">&times;</button>';
+    'style="background:none;border:none;color:#FFFFFF;font-size:16px;cursor:pointer;padding:2px 6px;line-height:1">&times;</button>';
+  // Flag body so other surfaces (photo counter) can shift down while banner is up.
+  document.body.classList.add('has-retry-banner');
 }
 
 // Render on page load so reps returning to the app see pending failures.
