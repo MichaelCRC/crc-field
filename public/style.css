@@ -532,6 +532,18 @@ body { font-family: var(--font-body); }
 .field-brand-name { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.12em; color: var(--white); }
 .field-brand-sub  { font-family: var(--font-display); font-size: 10px; letter-spacing: 0.2em; color: var(--teal); text-transform: uppercase; margin-top: 2px; }
 
+/* Desktop header clears the 92px left sidebar rail. Build 3.1 originally set
+   this inside the @media (min-width: 1200px) block earlier in the file, but
+   the .app-header redeclaration at line ~528 uses `padding: 12px 16px` shorthand
+   which silently resets padding-left back to 16px on every viewport. Reassert
+   the desktop override AFTER that base rule so cascade order lets it win. */
+@media (min-width: 1200px) {
+  .app-header { padding-left: calc(92px + 16px); }
+  /* Defensive: also pad the job-detail inner wrapper so its content clears
+     the rail even if the panel's margin-left fails somewhere. */
+  #job-detail > div { padding-left: calc(16px + 16px); }
+}
+
 /* ── Field app account dropdown (header rep-badge) ── */
 .app-header-right { display: inline-flex; align-items: center; gap: 8px; }
 .field-user-wrap { position: relative; display: inline-flex; }

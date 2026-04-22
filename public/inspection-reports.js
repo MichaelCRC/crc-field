@@ -257,7 +257,7 @@ function _irShowSuccess(data, mode) {
     +   '<div style="font-size:20px;font-weight:800;color:#001A4D;margin-bottom:8px">' + (mode === 'claim-filing' ? 'Packet ready' : 'Report ready') + '</div>'
     +   '<div style="font-size:13px;color:#64748B;margin-bottom:24px;max-width:420px">Saved to this job\'s documents in the portal. You can open or share it below.</div>'
     +   '<div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">'
-    +     '<a href="' + url + '" download target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#001A4D;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">&#11015;&#65039; Download PDF</a>'
+    +     '<button onclick="_irDownloadPdf(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#001A4D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">&#11015;&#65039; Download PDF</button>'
     +     '<button onclick="_irCopyLink(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#128279; Copy Link</button>'
     +     '<button onclick="_irShowQR(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#fff;color:#001A4D;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#9638; QR Code</button>'
     +     '<button onclick="_irClose()" style="padding:10px;background:none;color:#64748B;border:none;font-size:13px;cursor:pointer">Close</button>'
@@ -320,6 +320,24 @@ function _irShare(url) {
   if (navigator.share) navigator.share({ title: 'CRC Report', url: url }).catch(function(){});
   else _irCopyLink(url);
 }
+// Download via temp anchor -- no window.open, no target="_blank". Previous
+// <a download target="_blank"> pattern opened a blank navy-chromed Safari
+// tab alongside the download on iOS. This triggers ONLY the download.
+function _irDownloadPdf(url) {
+  if (!url) return;
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    // Derive a sensible filename from the URL tail.
+    const tail = (url.split('/').pop() || 'download.pdf').split('?')[0];
+    a.download = tail || 'download.pdf';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { if (a.parentNode) a.parentNode.removeChild(a); }, 0);
+  } catch (e) { console.error('[Download] failed:', e); }
+}
+
 function _irCopyLink(url) {
   if (!url) return;
   if (navigator.clipboard) {
@@ -354,6 +372,7 @@ window._irClose = _irClose;
 window._irGenerate = _irGenerate;
 window._irShare = _irShare;
 window._irCopyLink = _irCopyLink;
+window._irDownloadPdf = _irDownloadPdf;
 window._irShowQR = _irShowQR;
 window._irManageLabels = _irManageLabels;
 window._irDeleteLabel = _irDeleteLabel;
