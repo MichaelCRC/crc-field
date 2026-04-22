@@ -276,13 +276,101 @@ function attachSwipeListeners() {
   });
 }
 
+// ─── Inspection Complete hard gate ────────────────────────────────────────
+// Returns { ok: true } or { ok: false, issues: [plain-english-string, ...] }.
+// Only checks fields with unambiguous null defaults + measurements + photo
+// count. Boolean observation fields are not gated (can't distinguish "No"
+// from "not answered" without a schema change — see Build 3 STEP 3 notes).
+function validateInspectionComplete(job) {
+  var issues = [];
+  var fn = (job && job.fieldNotes) || null;
+  var photos = collectJobPhotos(job || {});
+  var totalSq = job && job.measurements && job.measurements.measurements && job.measurements.measurements.totalSquares;
+
+  if (!totalSq || totalSq <= 0) {
+    issues.push('Pull Hover measurements');
+  }
+  if (photos.length < 5) {
+    issues.push('Upload at least 5 photos (currently: ' + photos.length + ')');
+  }
+  if (!fn || !Object.keys(fn).length) {
+    issues.push('Complete field observations form');
+    return { ok: issues.length === 0, issues: issues };
+  }
+  if (!fn.valleyType) {
+    issues.push('Select the valley type (California cut, closed cut, or open metal)');
+  }
+  if (!fn.osbRedeck) {
+    issues.push('Select decking condition (none, spot boards, or full redeck)');
+  }
+  if (fn.chimney && !fn.chimneyType) {
+    issues.push('Select chimney type (masonry or metal)');
+  }
+  if ((fn.replaceGutters || fn.existingGutters) &&
+      (fn.downspoutCount == null || fn.downspoutCount === '')) {
+    issues.push('Enter the downspout count');
+  }
+  if (fn.atticAccess && !fn.atticVentilationType) {
+    issues.push('Select attic intake ventilation type');
+  }
+  return { ok: issues.length === 0, issues: issues };
+}
+
+// Show a non-dismissible-on-overlay modal listing specific issues.
+function showInspectionIssues(issues) {
+  var existing = document.getElementById('_inspection-issues');
+  if (existing) existing.remove();
+  var wrap = document.createElement('div');
+  wrap.id = '_inspection-issues';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.55);' +
+    'display:flex;align-items:flex-end;justify-content:center';
+  var card = '<div style="background:#FFFFFF;width:100%;max-width:540px;border-radius:16px 16px 0 0;' +
+    'padding:20px 18px 24px;box-shadow:0 -8px 24px rgba(0,0,0,0.35)">' +
+    '<div style="font-size:16px;font-weight:700;color:#0D0D0D;margin-bottom:6px">' +
+    'Can’t complete inspection yet</div>' +
+    '<div style="font-size:12px;color:#555;margin-bottom:14px">Fix these before advancing:</div>' +
+    '<ul style="list-style:none;padding:0;margin:0 0 16px">' +
+    issues.map(function(it) {
+      return '<li style="padding:10px 0;border-bottom:1px solid #F0F0F0;' +
+        'font-size:14px;color:#0D0D0D;display:flex;align-items:flex-start;gap:10px">' +
+        '<span style="color:#DC2626;font-size:16px;flex-shrink:0;line-height:1">•</span>' +
+        '<span>' + it + '</span></li>';
+    }).join('') +
+    '</ul>' +
+    '<button onclick="document.getElementById(\'_inspection-issues\').remove()" ' +
+    'style="width:100%;padding:12px;background:#00B5CC;color:#FFFFFF;border:none;' +
+    'border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">OK, got it</button>' +
+    '</div>';
+  wrap.innerHTML = card;
+  document.body.appendChild(wrap);
+}
+
+// Single entry point for advancing a job to 'inspected'. Runs validation
+// first and blocks with plain-English issues if anything is missing.
+async function markInspectionComplete(jobId) {
+  var job = _jobsCache.find(j => j.id === jobId);
+  // Cache may be stale for fieldNotes; prefer _currentJobDetail if same job.
+  if (_currentJobDetail && _currentJobDetail.id === jobId) job = _currentJobDetail;
+  if (!job) { showToast('Job not found', true); return; }
+  var v = validateInspectionComplete(job);
+  if (!v.ok) { showInspectionIssues(v.issues); return; }
+  await updateJobField(jobId, { stage: 'inspected' }, 'Inspection complete. Scope builds when claim # is filed.');
+  setTimeout(function() { openJobDetail(jobId); }, 400);
+}
+
 // ─── Stage picker (swipe right action) ────────────────────────────────────
 function openStagePickerForJob(jobId) {
   var job = _jobsCache.find(j => j.id === jobId);
   if (!job) return;
   showActionSheet('Move Stage', JOB_STAGES.filter(s => s.key !== 'follow_up' && s.key !== 'lost').map(s => ({
     label: s.label, color: s.color,
-    action: function() { updateJobField(jobId, { stage: s.key }, 'Stage: ' + s.label); }
+    action: function() {
+      // Hard-gate: picking "Inspected" on an insurance job runs validation.
+      if (s.key === 'inspected' && (job.pipeline || 'insurance') === 'insurance') {
+        return markInspectionComplete(jobId);
+      }
+      updateJobField(jobId, { stage: s.key }, 'Stage: ' + s.label);
+    }
   })));
 }
 
@@ -524,8 +612,21 @@ function renderJobDetail(job) {
   html += '</div>';
   html += '<button onclick="openFieldObs(\'' + jid + '\', _currentJobDetail && _currentJobDetail.fieldNotes)" '
     + 'style="width:100%;padding:9px;background:#10B981;color:#fff;border:none;border-radius:8px;'
-    + 'font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px">'
+    + 'font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px">'
     + '&#128203; Fill Field Observations</button>';
+
+  // Mark Inspection Complete -- hard-gate button. Insurance pipeline only,
+  // visible at pre-inspected stages (new_lead, appointment_set). Validation
+  // runs on click; fail -> issue sheet with plain-English items.
+  var pipelineKey = job.pipeline || 'insurance';
+  var preInspected = !job.stage || job.stage === 'new_lead' || job.stage === 'appointment_set';
+  if (pipelineKey === 'insurance' && preInspected) {
+    html += '<button onclick="markInspectionComplete(\'' + jid + '\')" '
+      + 'style="width:100%;padding:14px;background:#16A34A;color:#FFFFFF;border:none;border-radius:10px;'
+      + 'font-size:15px;font-weight:700;letter-spacing:0.02em;cursor:pointer;margin-bottom:16px;'
+      + 'box-shadow:0 2px 6px rgba(22,163,74,0.3);min-height:48px">'
+      + '&#10003; Mark Inspection Complete</button>';
+  }
 
   // Roof diagram is now rendered inside the CRC Measure bottom sheet — removed
   // the standalone Job Detail section 2026-04 to avoid duplicate surfaces.
@@ -623,9 +724,16 @@ function renderJobDetail(job) {
 
 // ─── In-detail stage / pipeline pickers ────────────────────────────────────
 function openStagePickerInDetail(jobId) {
+  var job = _currentJobDetail && _currentJobDetail.id === jobId
+    ? _currentJobDetail
+    : _jobsCache.find(j => j.id === jobId);
   showActionSheet('Move to Stage', JOB_STAGES.map(s => ({
     label: s.label, color: s.color,
     action: function() {
+      // Hard-gate: picking "Inspected" on an insurance job runs validation.
+      if (s.key === 'inspected' && job && (job.pipeline || 'insurance') === 'insurance') {
+        return markInspectionComplete(jobId);
+      }
       updateJobField(jobId, { stage: s.key }, 'Stage: ' + s.label);
       // Refresh detail header without full reload
       setTimeout(function() { openJobDetail(jobId); }, 400);
@@ -750,6 +858,18 @@ function collectJobPhotos(job) {
   ((job && job.photos && job.photos.rawPhotos) || []).forEach(function(p){ push(p,'companycam'); });
   (job && job.simplePhotos || []).forEach(function(p){ push(p,'simple'); });
   (job && job.fieldPhotos || []).forEach(function(p){ push(p,'field'); });
+  // Markup photos are annotations on existing photos; push with the markup
+  // dataURL so unique annotations count, while references back to an original
+  // url naturally dedupe against the companycam/simple/field entry.
+  (job && job.markupPhotos || []).forEach(function(p){
+    push({
+      url: p.markupData || p.originalUrl || '',
+      thumbnail: p.markupData || p.originalUrl || '',
+      caption: p.caption || 'Markup',
+      id: p.id || '',
+      createdAt: p.createdAt || null,
+    }, 'markup');
+  });
   return out;
 }
 

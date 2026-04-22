@@ -67,6 +67,24 @@ function _foSizeSelect(id, val) {
     + 'border-radius:6px;font-size:14px;background:#fff;color:var(--navy)">' + o + '</select>';
 }
 
+// Generic enum select: pass [{value, label}, ...]
+function _foEnumSelect(id, val, options) {
+  var o = options.map(function(opt) {
+    return '<option value="' + opt.value + '"' + (val === opt.value ? ' selected' : '') + '>'
+      + opt.label + '</option>';
+  }).join('');
+  return '<select id="' + id + '" style="padding:6px 10px;border:1px solid var(--border);'
+    + 'border-radius:6px;font-size:14px;background:#fff;color:var(--navy)">' + o + '</select>';
+}
+
+// Show/hide downspout row whenever either gutter checkbox changes
+function foGutterChanged() {
+  var r = document.getElementById('replaceGutters');
+  var d = document.getElementById('existingGutters');
+  var wrap = document.getElementById('downspoutCount-row');
+  if (wrap) wrap.style.display = ((r && r.checked) || (d && d.checked)) ? 'flex' : 'none';
+}
+
 // Checkbox row — plain or with inline qty/size extras on the right
 // cfg: { id, label, checked, onchange, qtyId, qtyVal, qtyMax, sizeId, sizeVal }
 function _foCheckRow(cfg) {
@@ -83,11 +101,12 @@ function _foCheckRow(cfg) {
 
   if (cfg.qtyId) {
     row += '<div id="' + cfg.id + '-extra" '
-         + 'style="display:' + (cfg.checked ? 'flex' : 'none') + ';align-items:center;gap:6px" '
+         + 'style="display:' + (cfg.checked ? 'flex' : 'none') + ';align-items:center;gap:6px;flex-wrap:wrap" '
          + 'onclick="event.stopPropagation()">';
     row += '<span style="font-size:12px;color:var(--gray)">Qty</span>';
     row += _foQtySelect(cfg.qtyId, cfg.qtyVal, cfg.qtyMax || 20);
     if (cfg.sizeId) row += _foSizeSelect(cfg.sizeId, cfg.sizeVal);
+    if (cfg.typeId && cfg.typeOptions) row += _foEnumSelect(cfg.typeId, cfg.typeVal, cfg.typeOptions);
     row += '</div>';
   }
 
@@ -151,7 +170,12 @@ function _foRenderForm(fn) {
     id: 'chimney', label: 'Chimney', checked: fn.chimney,
     onchange: 'foChimneyChanged(this)',
     qtyId: 'chimneyQty', qtyVal: fn.chimneyQty || 1, qtyMax: 10,
-    sizeId: 'chimneySize', sizeVal: fn.chimneySize
+    sizeId: 'chimneySize', sizeVal: fn.chimneySize,
+    typeId: 'chimneyType', typeVal: fn.chimneyType,
+    typeOptions: [
+      { value: 'masonry', label: 'Masonry' },
+      { value: 'metal',   label: 'Metal'   }
+    ]
   });
 
   // Skylights
@@ -193,6 +217,31 @@ function _foRenderForm(fn) {
     checked: fn.valleyMetalRequired
   });
 
+  // Valley type (detailed classification — keep valleyMetalRequired for backwards
+  // compatibility with existing scope logic; this adds protocol-required detail.)
+  roof += '<div style="display:flex;align-items:center;justify-content:space-between;'
+        + 'padding:11px 0;border-bottom:1px solid var(--bg)">';
+  roof += '<label for="valleyType" style="font-size:14px;color:var(--navy);cursor:pointer">'
+        + 'Valley Type</label>';
+  roof += _foEnumSelect('valleyType', fn.valleyType, [
+    { value: 'california_cut', label: 'California Cut' },
+    { value: 'closed_cut',     label: 'Closed Cut'     },
+    { value: 'open_metal',     label: 'Open Metal'     }
+  ]);
+  roof += '</div>';
+
+  // OSB redeck (none / spot / full) — drives decking supplement math
+  roof += '<div style="display:flex;align-items:center;justify-content:space-between;'
+        + 'padding:11px 0;border-bottom:1px solid var(--bg)">';
+  roof += '<label for="osbRedeck" style="font-size:14px;color:var(--navy);cursor:pointer">'
+        + 'OSB Redeck</label>';
+  roof += _foEnumSelect('osbRedeck', fn.osbRedeck, [
+    { value: 'none', label: 'None' },
+    { value: 'spot', label: 'Spot' },
+    { value: 'full', label: 'Full' }
+  ]);
+  roof += '</div>';
+
   // Eave Depth select
   roof += '<div style="display:flex;align-items:center;justify-content:space-between;'
         + 'padding:11px 0;border-bottom:1px solid var(--bg)">';
@@ -221,12 +270,29 @@ function _foRenderForm(fn) {
   var gutters = '';
   gutters += _foCheckRow({
     id: 'replaceGutters', label: 'R&amp;R Gutters (Replace &amp; Reinstall)',
-    checked: fn.replaceGutters, onchange: 'foMutualExclude(this,"existingGutters")'
+    checked: fn.replaceGutters,
+    onchange: 'foMutualExclude(this,"existingGutters");foGutterChanged()'
   });
   gutters += _foCheckRow({
     id: 'existingGutters', label: 'D&amp;R Gutters (Detach &amp; Reset)',
-    checked: fn.existingGutters, onchange: 'foMutualExclude(this,"replaceGutters")'
+    checked: fn.existingGutters,
+    onchange: 'foMutualExclude(this,"replaceGutters");foGutterChanged()'
   });
+
+  // Downspout count — conditional reveal when either gutter option is checked
+  var hasGutters = !!(fn.replaceGutters || fn.existingGutters);
+  gutters += '<div id="downspoutCount-row" '
+           + 'style="display:' + (hasGutters ? 'flex' : 'none') + ';'
+           + 'align-items:center;justify-content:space-between;'
+           + 'padding:11px 0;border-bottom:1px solid var(--bg)">';
+  gutters += '<label for="downspoutCount" style="font-size:14px;color:var(--navy);cursor:pointer">'
+           + 'Downspouts (qty)</label>';
+  gutters += '<input type="number" id="downspoutCount" min="0" max="20" value="'
+           + (fn.downspoutCount != null ? fn.downspoutCount : '') + '" '
+           + 'placeholder="0" style="width:64px;padding:6px 8px;border:1px solid var(--border);'
+           + 'border-radius:6px;font-size:14px;text-align:center;color:var(--navy)">';
+  gutters += '</div>';
+
   h += _foGroupBox('Gutters', gutters);
 
   /* ══ SECTION: Gutter Guards (mutually exclusive R&R vs D&R) ══ */
@@ -240,6 +306,28 @@ function _foRenderForm(fn) {
     checked: fn.gutterGuards, onchange: 'foMutualExclude(this,"replaceGutterGuards")'
   });
   h += _foGroupBox('Gutter Guards', guards);
+
+  /* ══ SECTION: Attic ══ */
+  var attic = '';
+  attic += _foCheckRow({
+    id: 'atticAccess', label: 'Attic Access', checked: fn.atticAccess,
+    onchange: 'foToggleDetails(this,\'atticVent-row\')'
+  });
+  // Intake ventilation type — conditional on atticAccess
+  attic += '<div id="atticVent-row" '
+         + 'style="display:' + (fn.atticAccess ? 'flex' : 'none') + ';'
+         + 'align-items:center;justify-content:space-between;'
+         + 'padding:11px 0;border-bottom:1px solid var(--bg)">';
+  attic += '<label for="atticVentilationType" style="font-size:14px;color:var(--navy);cursor:pointer">'
+         + 'Intake Ventilation</label>';
+  attic += _foEnumSelect('atticVentilationType', fn.atticVentilationType, [
+    { value: 'soffit', label: 'Soffit' },
+    { value: 'gable',  label: 'Gable'  },
+    { value: 'none',   label: 'None'   },
+    { value: 'other',  label: 'Other'  }
+  ]);
+  attic += '</div>';
+  h += _foSection('Attic', attic);
 
   /* ══ SECTION: Other ══ */
   var other = '';
@@ -294,37 +382,46 @@ function _collectFieldObs() {
   var bxVent    = _foChk('boxVent');
   var tarp      = _foChk('tarpInstalled');
 
+  var atticAccess = _foChk('atticAccess');
+  var hasGutters  = _foChk('replaceGutters') || _foChk('existingGutters');
+
   return {
-    chimney:             chimney,
-    chimneyQty:          chimney   ? _foInt('chimneyQty')       : 0,
-    chimneySize:         chimney   ? _foVal('chimneySize')       : null,
-    skylights:           skylights,
-    skylightQty:         skylights ? _foInt('skylightQty')       : 0,
-    skylightSize:        skylights ? _foVal('skylightSize')      : null,
-    pipeJacks:           _foInt('pipeJacks'),
-    twoStory:            _foChk('twoStory'),
-    existingDripEdge:    _foChk('existingDripEdge'),
-    valleyMetalRequired: _foChk('valleyMetalRequired'),
-    eaveDepth:           _foVal('eaveDepth') || 'standard',
-    replaceGutters:      _foChk('replaceGutters'),
-    existingGutters:     _foChk('existingGutters'),
-    replaceGutterGuards: _foChk('replaceGutterGuards'),
-    gutterGuards:        _foChk('gutterGuards'),
-    satelliteDish:       satDish,
-    satelliteDishQty:    satDish   ? _foInt('satelliteDishQty') : 0,
-    exhaustVent:         exVent,
-    exhaustVentQty:      exVent    ? _foInt('exhaustVentQty')   : 0,
-    dryerVent:           drVent,
-    dryerVentQty:        drVent    ? _foInt('dryerVentQty')     : 0,
-    powerVent:           pwVent,
-    powerVentQty:        pwVent    ? _foInt('powerVentQty')     : 0,
-    boxVent:             bxVent,
-    boxVentQty:          bxVent    ? _foInt('boxVentQty')       : 0,
-    ridgeVent:           _foChk('ridgeVent'),
-    tarpInstalled:       tarp,
-    tarpQty:             tarp      ? _foInt('tarpQty')          : 0,
-    tarpSF:              tarp      ? _foNum('tarpSF')           : 0,
-    counterFlashing:     _foChk('counterFlashing')
+    chimney:              chimney,
+    chimneyQty:           chimney   ? _foInt('chimneyQty')       : 0,
+    chimneySize:          chimney   ? _foVal('chimneySize')      : null,
+    chimneyType:          chimney   ? (_foVal('chimneyType') || null) : null,
+    skylights:            skylights,
+    skylightQty:          skylights ? _foInt('skylightQty')      : 0,
+    skylightSize:         skylights ? _foVal('skylightSize')     : null,
+    pipeJacks:            _foInt('pipeJacks'),
+    twoStory:             _foChk('twoStory'),
+    existingDripEdge:     _foChk('existingDripEdge'),
+    valleyMetalRequired:  _foChk('valleyMetalRequired'),
+    valleyType:           _foVal('valleyType') || null,
+    osbRedeck:            _foVal('osbRedeck') || null,
+    eaveDepth:            _foVal('eaveDepth') || 'standard',
+    replaceGutters:       _foChk('replaceGutters'),
+    existingGutters:      _foChk('existingGutters'),
+    downspoutCount:       hasGutters ? _foInt('downspoutCount')  : 0,
+    replaceGutterGuards:  _foChk('replaceGutterGuards'),
+    gutterGuards:         _foChk('gutterGuards'),
+    atticAccess:          atticAccess,
+    atticVentilationType: atticAccess ? (_foVal('atticVentilationType') || null) : null,
+    satelliteDish:        satDish,
+    satelliteDishQty:     satDish   ? _foInt('satelliteDishQty') : 0,
+    exhaustVent:          exVent,
+    exhaustVentQty:       exVent    ? _foInt('exhaustVentQty')   : 0,
+    dryerVent:            drVent,
+    dryerVentQty:         drVent    ? _foInt('dryerVentQty')     : 0,
+    powerVent:            pwVent,
+    powerVentQty:         pwVent    ? _foInt('powerVentQty')     : 0,
+    boxVent:              bxVent,
+    boxVentQty:           bxVent    ? _foInt('boxVentQty')       : 0,
+    ridgeVent:            _foChk('ridgeVent'),
+    tarpInstalled:        tarp,
+    tarpQty:              tarp      ? _foInt('tarpQty')          : 0,
+    tarpSF:               tarp      ? _foNum('tarpSF')           : 0,
+    counterFlashing:      _foChk('counterFlashing')
   };
 }
 
