@@ -210,18 +210,25 @@ router.post('/:id/photos', upload.single('photo'), async (req, res) => {
       fileOriginalName: req.file?.originalname,
     });
     if (!req.file) return res.status(400).json({ error: 'No photo file' });
-    // Forward as multipart to portal
-    const FormData = (await import('form-data')).default || require('form-data');
-    const fd = new FormData();
-    fd.append('photo', req.file.buffer, {
-      filename: req.file.originalname || 'photo.jpg',
-      contentType: req.file.mimetype || 'image/jpeg',
-    });
-    if (req.body.label) fd.append('label', req.body.label);
+    // Forward as multipart to portal using WHATWG FormData + Blob. The
+    // form-data npm package (Node stream-based) does NOT serialize reliably
+    // through Node's native fetch (undici): undici consumes the stream but
+    // the boundary in fd.getHeaders() frequently doesn't match what actually
+    // ends up in the request body, so portal multer finds no 'photo' field
+    // and returns 400 "No file". Native FormData works natively with fetch,
+    // auto-sets Content-Type with the correct boundary. Portal expects
+    // field name 'photo' (confirmed at portal/server.js:1347).
+    const form = new FormData();
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
+    form.append('photo', blob, req.file.originalname || 'photo.jpg');
+    if (req.body.label) form.append('label', req.body.label);
     const response = await fetch(`${PORTAL_URL}/api/jobs/${req.params.id}/simple-photos`, {
       method: 'POST',
-      headers: { ...portalHeaders, ...fd.getHeaders() },
-      body: fd,
+      // Only include hermes auth -- do NOT spread portalHeaders (it contains
+      // Content-Type: application/json which would clobber the multipart
+      // boundary header that fetch adds automatically for FormData bodies).
+      headers: { 'x-hermes-secret': HERMES_SECRET },
+      body: form,
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
