@@ -198,6 +198,17 @@ router.post('/:id/tasks', async (req, res) => {
 // POST /api/field/jobs/:id/photos — upload photo to portal simple-photos
 router.post('/:id/photos', upload.single('photo'), async (req, res) => {
   try {
+    // Diagnostic: capture what reached this handler after multer ran. If
+    // hasFile is false while Content-Type is multipart, the field name or
+    // boundary is the issue. If Content-Type is wrong entirely, the client
+    // is sending the wrong body.
+    console.log('[photo-upload-incoming]', {
+      contentType: req.headers['content-type'],
+      hasFile: !!req.file,
+      fileMimeType: req.file?.mimetype,
+      fileSize: req.file?.size,
+      fileOriginalName: req.file?.originalname,
+    });
     if (!req.file) return res.status(400).json({ error: 'No photo file' });
     // Forward as multipart to portal
     const FormData = (await import('form-data')).default || require('form-data');
@@ -213,7 +224,13 @@ router.post('/:id/photos', upload.single('photo'), async (req, res) => {
       body: fd,
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return res.status(response.status).json(data);
+    if (!response.ok) {
+      console.log('[photo-upload-portal-rejected]', {
+        portalStatus: response.status,
+        portalBody: data,
+      });
+      return res.status(response.status).json(data);
+    }
     res.json(data);
   } catch (e) {
     console.error('[FieldJobs] Photo upload error:', e.message);
