@@ -79,11 +79,42 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Rewrite relative portal photo URLs to absolute so img tags in the field app
+// resolve against the portal origin instead of crc-field.onrender.com (where
+// /api/jobs/.../photo-file/... doesn't exist -> 404 -> "Photo unavailable").
+// Only rewrites paths that start with "/api/" -- CompanyCam CDN URLs,
+// base64 markup dataURLs, and anything already absolute pass through untouched.
+function _absolutizePhotoUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (url.startsWith('/api/')) return PORTAL_URL + url;
+  return url;
+}
+function _rewritePhotoArray(arr) {
+  if (!Array.isArray(arr)) return arr;
+  return arr.map(function(p) {
+    if (!p || typeof p !== 'object') return p;
+    return Object.assign({}, p, {
+      url: _absolutizePhotoUrl(p.url),
+      thumbnail: _absolutizePhotoUrl(p.thumbnail),
+      originalUrl: _absolutizePhotoUrl(p.originalUrl),
+    });
+  });
+}
+
 // GET /api/field/jobs/:id — full job detail
 router.get('/:id', async (req, res) => {
   try {
     const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}`);
     if (!ok) return res.status(status).json(data);
+    // Absolutize photo URLs across every bucket the field app aggregates from.
+    if (data && typeof data === 'object') {
+      if (data.simplePhotos) data.simplePhotos = _rewritePhotoArray(data.simplePhotos);
+      if (data.fieldPhotos)  data.fieldPhotos  = _rewritePhotoArray(data.fieldPhotos);
+      if (data.markupPhotos) data.markupPhotos = _rewritePhotoArray(data.markupPhotos);
+      if (data.photos && Array.isArray(data.photos.rawPhotos)) {
+        data.photos = Object.assign({}, data.photos, { rawPhotos: _rewritePhotoArray(data.photos.rawPhotos) });
+      }
+    }
     res.json(data);
   } catch (e) {
     console.error('[FieldJobs] GET /:id error:', e.message);
