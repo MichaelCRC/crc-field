@@ -1011,6 +1011,14 @@ html, body { overflow-x: hidden; }
   #job-detail > div { max-width: 900px !important; margin-left: auto !important; margin-right: auto !important; }
 }
 
+/* Google Maps InfoWindow elevation -- reps tap a pin and the popup must
+   render above the FAB (z:250) and bottom-nav (z:200). Google Maps builds
+   the InfoWindow inside the map-container with its own stacking, but
+   because #map-container has no z-index of its own its descendants render
+   at root-level z-auto -- below the FAB. Forcing the wrapper chain to a
+   higher z-index lifts the popup above FAB + nav. */
+.gm-style-iw, .gm-style-iw-a, .gm-style-iw-c, .gm-style-iw-d, .gm-style-iw-t { z-index: 300 !important; }
+
 /* ── FAB Quick Access ── */
 .fab-container { position: fixed; bottom: calc(76px + env(safe-area-inset-bottom)); left: 16px; z-index: 250; display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 8px; }
 .fab-main { width: 52px; height: 52px; border-radius: 50%; background: var(--teal); color: #fff; border: none; font-size: 26px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; -webkit-tap-highlight-color: transparent; }

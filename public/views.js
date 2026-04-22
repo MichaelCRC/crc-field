@@ -21,7 +21,19 @@ async function initMap() {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${keyData.key}&callback=onMapsLoaded`;
     script.async = true;
     window.onMapsLoaded = () => {
-      gmap = new google.maps.Map(document.getElementById('map-container'), { center: { lat: 39.96, lng: -82.99 }, zoom: 11, mapTypeControl: false, streetViewControl: false, fullscreenControl: false, styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }] });
+      gmap = new google.maps.Map(document.getElementById('map-container'), {
+        center: { lat: 39.9612, lng: -82.9988 },
+        zoom: 11,
+        // greedy = one-finger pan on mobile (no "use two fingers to move" overlay).
+        // Default 'auto' enables cooperative gestures on touch devices which
+        // requires two-finger pan; reps found that unusable while walking a
+        // neighborhood. Pinch-to-zoom still works with two fingers.
+        gestureHandling: 'greedy',
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
+      });
       if (navigator.geolocation) {
         // Use cached position if fresh (< 60s) to avoid repeated permission prompts
         const _cached = window._lastKnownPos;
