@@ -673,6 +673,16 @@ function renderJobDetail(job) {
   html += '<button onclick="addJobNote(\'' + jid + '\')" style="margin-top:6px;background:var(--teal);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;width:100%">Add Note</button>';
   html += '</div></div>';
 
+  // ── Storm History ──
+  // Populated async after render via loadJobStormHistory(). We key off the
+  // job address (portal side-of-the-house) and hit /api/storms/for-address
+  // so the server does the geocode. Falls back to lat/lng if the job has
+  // them already.
+  html += '<div id="job-storm-history" style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
+  html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Storm History</div>';
+  html += '<div id="job-storm-history-body" style="font-size:13px;color:var(--gray)">Loading storms near property...</div>';
+  html += '</div>';
+
   // ── Tasks ──
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
   html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Tasks</div>';
@@ -737,6 +747,84 @@ function renderJobDetail(job) {
   html += '<button onclick="closeJobDetail()" style="width:100%;padding:12px;background:transparent;border:1.5px solid var(--teal);border-radius:8px;font-size:14px;font-weight:700;color:var(--teal);cursor:pointer;margin-bottom:20px;-webkit-tap-highlight-color:transparent">Back to My Jobs</button>';
   html += '</div>';
   detail.innerHTML = html;
+
+  // Kick off storm history lookup after DOM is in place.
+  loadJobStormHistory(job);
+}
+
+function _stormTypeLabel(t) {
+  if (t === 'hail') return 'Hail';
+  if (t === 'thunderstorm_wind') return 'T-storm Wind';
+  if (t === 'high_wind') return 'High Wind';
+  return t;
+}
+
+async function loadJobStormHistory(job) {
+  var body = document.getElementById('job-storm-history-body');
+  if (!body || !job) return;
+  // Prefer lat/lng if the portal has them -- skips a geocode round-trip.
+  var hasCoords = Number.isFinite(Number(job.lat)) && Number.isFinite(Number(job.lng));
+  var url;
+  if (hasCoords) {
+    url = '/api/storms/near?lat=' + Number(job.lat) + '&lng=' + Number(job.lng);
+  } else if (job.address) {
+    url = '/api/storms/for-address?address=' + encodeURIComponent(job.address);
+  } else {
+    body.innerHTML = '<span style="color:var(--gray)">No address on this job</span>';
+    return;
+  }
+  try {
+    var res = await fetch(url);
+    if (res.status === 503) {
+      body.innerHTML = '<span style="color:var(--red)">Storm data temporarily unavailable</span>';
+      return;
+    }
+    if (!res.ok) {
+      body.innerHTML = '<span style="color:var(--red)">Could not load storms (HTTP ' + res.status + ')</span>';
+      return;
+    }
+    var data = await res.json();
+    var storms = data.storms || [];
+    if (!storms.length) {
+      body.innerHTML = '<div style="color:var(--gray)">No storms within 5 miles in the last 12 months.</div>'
+        + (data.notice ? '<div style="font-size:11px;color:var(--text-muted);margin-top:6px">' + data.notice + '</div>' : '');
+      return;
+    }
+    var rows = storms.slice(0, 10).map(function(s) {
+      var label = _stormTypeLabel(s.eventType);
+      var mapLink = (s.lat != null && s.lng != null)
+        ? '<a href="#" onclick="viewStormOnMap(' + s.lat + ',' + s.lng + ');return false" style="color:#00B5CC;text-decoration:none;font-weight:600">View on map</a>'
+        : '';
+      return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #F1F5F9">'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-weight:600;font-size:13px;color:#1e293b">' + s.magnitude + ' ' + label + '</div>'
+        + '<div style="font-size:11px;color:var(--gray)">' + s.date + ' &middot; ' + s.distanceMiles + ' mi away</div>'
+        + '</div>'
+        + '<div style="font-size:12px;margin-left:8px">' + mapLink + '</div>'
+        + '</div>';
+    }).join('');
+    var header = '<div style="font-size:12px;color:var(--gray);margin-bottom:6px">'
+      + storms.length + ' storm' + (storms.length === 1 ? '' : 's')
+      + ' within 5 mi in last 12 months</div>';
+    var notice = data.notice ? '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">' + data.notice + '</div>' : '';
+    body.innerHTML = header + rows + notice;
+  } catch (e) {
+    body.innerHTML = '<span style="color:var(--red)">' + e.message + '</span>';
+  }
+}
+
+function viewStormOnMap(lat, lng) {
+  if (typeof switchView !== 'function') return;
+  switchView('map');
+  setTimeout(function() {
+    if (typeof showStormOverlay === 'function' && typeof stormOverlayVisible !== 'undefined' && !stormOverlayVisible) {
+      showStormOverlay();
+    }
+    if (typeof gmap !== 'undefined' && gmap) {
+      gmap.panTo({ lat: lat, lng: lng });
+      gmap.setZoom(14);
+    }
+  }, 300);
 }
 
 // ─── In-detail stage / pipeline pickers ────────────────────────────────────

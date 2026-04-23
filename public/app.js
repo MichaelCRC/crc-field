@@ -101,6 +101,7 @@ function switchView(name) {
   if (name === 'leads') { document.getElementById('lead-detail').classList.remove('open'); document.getElementById('leads-main').style.display = ''; loadLeads(); }
   if (name === 'jobs') { document.getElementById('job-detail').classList.remove('open'); loadJobs(); }
   if (name === 'map' && !mapInitialized) initMap();
+  if (name === 'map' && typeof initMapSearch === 'function') initMapSearch();
   // Show/hide the fixed map location button
   const locBtn = document.getElementById('map-location-btn');
   if (locBtn) locBtn.classList.toggle('visible', name === 'map');
