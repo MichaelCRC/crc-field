@@ -38,10 +38,13 @@ Mobile-first PWA for CRC sales reps in the field. It is a thin Express server (s
 | GET | /api/leads/:id/report/:reportId | Serve stored report HTML | WIRED |
 
 ### `routes/storms.js` (mounted `/api/storms`)
-| GET | /api/storms | 24h-cached Central Ohio hail events from NCEI bulk CSV; returns `{ storms, source, fetchedAt, cacheAge? }`; `?source=reference` for curated list | WORKING |
+| GET | /api/storms | 24h-cached Ohio hail + thunderstorm-wind + high-wind events from NCEI bulk CSV; returns `{ storms, source, fetchedAt, cacheAge? }`; `?source=reference` for curated list | WORKING (filtered: 5mi radius, 12mo, Hail + Wind, thresholds enforced) |
 | GET | /api/storms/refresh | Force live NCEI refresh | WORKING |
+| GET | /api/storms/near?lat=&lng=&radius=&months= | Storms within radius (max 25mi / 24mo) of a point. Applies 0.75in hail / 58mph wind magnitude thresholds, max 20 results | WORKING |
+| GET | /api/storms/for-address?address=... | Server-side geocode + near lookup. Returns storms plus resolved lat/lng | WORKING |
+| GET | /api/storms/for-lead/:leadId | Storms near a lead's lat/lng (geocodes `lead.address` if coords missing) | WORKING |
 
-On NOAA failure both endpoints return **HTTP 503** with `{ error, retryAfter, source: "NOAA", message }` — never stale hardcoded data presented as live. Cache TTL 24h, held in-memory and mirrored to `data/storm-cache.json`.
+On NOAA failure every endpoint returns **HTTP 503** with `{ error, retryAfter, source: "NOAA", message }` — never stale hardcoded data presented as live. Cache TTL 24h, schema v2, held in-memory and mirrored to `data/storm-cache.json`.
 
 ### `routes/admin.js` (mounted `/api/admin`)
 | GET | /api/admin/data-core | Master contacts/properties | WIRED |
@@ -172,7 +175,7 @@ On NOAA failure both endpoints return **HTTP 503** with `{ error, retryAfter, so
 | ABC-delivery Builds Map | LIVE | CSV auto-import + background geocode on startup |
 | JN Builds Map (`/api/builds`) | LIVE but ORPHANED | Route + data exist; frontend doesn't call it |
 | Claims Dashboard | PARTIAL | Reads static `jobs-2026-ytd.json` — not a live JN feed |
-| Storm layer (hail events) | LIVE | Real NCEI bulk CSV pull (Central Ohio counties, Hail only), 24h cache, honest 503 on failure |
+| Storm layer (hail + wind events) | LIVE | Real NCEI bulk CSV pull (all Ohio, Hail + T-storm Wind + High Wind), 24h cache, honest 503 on failure. Map view renders event-type pins (hail circle / wind arrow) with viewport-based fetch via `/api/storms/near` and a HailRecon-style address search. Job Detail shows a Storm History section. |
 | Hover photo pull | BROKEN | `HOVER_ACCESS_TOKEN` not set; endpoint returns "not configured" |
 | Inbound Hover webhook | LIVE | `/api/hover/sync` ready for Hermes |
 | Storm zones | NOT STARTED | Routes + store exist, `zones.json` empty, no UI |
@@ -192,7 +195,7 @@ On NOAA failure both endpoints return **HTTP 503** with `{ error, retryAfter, so
 | Cloudinary | Photo + rep headshot storage | WORKING (cloud `dtrzdisoc`) |
 | Anthropic (Claude) | Ask Brain chat (`claude-sonnet-4-6`) | WORKING (key set in `.env`) |
 | Google Maps | Autocomplete, Place Details, Street View, Geocoding | WORKING |
-| NOAA Storm Events | Hail event pull | WORKING — `lib/noaaStorms.js` pulls annual CSVs from `ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/`, filters to Central Ohio + Hail, caches 24h. Returns HTTP 503 on NOAA failure instead of silent fallback |
+| NOAA Storm Events | Hail + severe wind event pull | WORKING — `lib/noaaStorms.js` pulls annual CSVs from `ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/`, filters to Ohio (all counties) + Hail + Thunderstorm Wind + High Wind, caches 24h with schema v2. Exposes `getStormsNearPoint()` for radius+threshold filtering. NCEI publishes with ~60 day lag — surfaced via `notice` in responses. Returns HTTP 503 on NOAA failure instead of silent fallback |
 | Hover API | Pull photos for a lead | NOT CONFIGURED (`HOVER_ACCESS_TOKEN` missing) |
 | CompanyCam | Photo source | NOT CONFIGURED here — field app consumes CompanyCam URLs indirectly via portal responses; no direct integration in this repo |
 | JobNimbus | Job data for claims-dashboard + builds | NOT CONFIGURED — only reads a static JSON snapshot (`data/jobs-2026-ytd.json`) |
