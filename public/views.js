@@ -90,8 +90,14 @@ async function loadStorms() {
   stormsLoaded = true;
   const list = document.getElementById('storm-list');
   try {
-    const data = await fetch('/api/storms').then(r => r.json());
-    const events = data.events || [];
+    const res = await fetch('/api/storms');
+    if (res.status === 503) {
+      const err = await res.json().catch(() => ({}));
+      if (list) list.innerHTML = `<p style="padding:16px;color:var(--red)">${err.message || 'Storm data temporarily unavailable'}</p>`;
+      return;
+    }
+    const data = await res.json();
+    const events = data.storms || data.events || [];
     allStormEvents = events;
     const weekAgo = Date.now() - 7*86400000;
     const recent = events.filter(e => new Date(e.date).getTime() > weekAgo && e.hailSize >= 1.0);
