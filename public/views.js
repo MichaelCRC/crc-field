@@ -456,7 +456,7 @@ function _buildParcelCard(p, addr) {
 
   return `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;margin-bottom:10px" data-parcel-owner="${owner.replace(/"/g,'&quot;')}">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-      <span style="font-size:10px;font-weight:700;color:#fff;background:#001A4D;padding:2px 7px;border-radius:4px;letter-spacing:0.4px">PROPERTY INFO</span>
+      <span style="font-size:10px;font-weight:700;color:#fff;background:#1B2360;padding:2px 7px;border-radius:4px;letter-spacing:0.4px">PROPERTY INFO</span>
       <span style="font-size:10px;color:#94A3B8">Franklin Co. Auditor</span>
     </div>
     ${rows.map(([label, val]) => `
@@ -514,7 +514,7 @@ async function showQuickMarkPopup(lat, lng) {
     <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','not_home')" style="background:#F59E0B;color:#fff;width:100%;margin-bottom:6px">Not Home</button>
     <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','not_interested')" style="background:#DC2626;color:#fff;width:100%;margin-bottom:6px">Not Interested</button>
     <button class="btn-add" onclick="quickMarkToFull(${lat},${lng},'${safeAddr}')" style="background:#00B5CC;color:#fff;width:100%;margin-bottom:6px">Add New Lead</button>
-    <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','pinned')" style="background:#001A4D;color:#fff;width:100%">Drop Pin</button>`;
+    <button class="btn-add" onclick="quickMark(${lat},${lng},'${safeAddr}','pinned')" style="background:#1B2360;color:#fff;width:100%">Drop Pin</button>`;
 }
 async function quickMark(lat, lng, addr, status) {
   document.getElementById('knock-modal').style.display = 'none';
@@ -845,7 +845,7 @@ function showBuildsToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'builds-toast';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#001A4D;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;box-shadow:0 4px 14px rgba(0,0,0,0.25)';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B2360;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;box-shadow:0 4px 14px rgba(0,0,0,0.25)';
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -918,7 +918,7 @@ function plotBuildsPins() {
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
-        fillColor: '#001A4D',
+        fillColor: '#1B2360',
         fillOpacity: 0.85,
         strokeColor: '#FFFFFF',
         strokeWeight: 2

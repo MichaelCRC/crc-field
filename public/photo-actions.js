@@ -15,7 +15,7 @@ function showPhotoActions(idx) {
   modal.style.display = 'flex';
   modal.innerHTML = `
     <div class="action-sheet">
-      <div class="action-preview"><img src="${photo.thumbnail || photo.url}"></div>
+      <div class="action-preview"><img src="${photo.thumbnail || photo.url}" alt="Photo preview"></div>
       <div class="action-section-label">Change Tag</div>
       <div class="action-tags">
         ${tags.map(t => `<button class="action-tag ${photo.tag === t ? 'active' : ''}" onclick="changePhotoTag('${photo.id}','${t}')">${labels[t]}</button>`).join('')}

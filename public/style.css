@@ -110,7 +110,7 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 
 /* Chips */
 .chip-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-.chip { padding: 8px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-card); color: var(--text-secondary); cursor: pointer; min-height: 36px; -webkit-tap-highlight-color: transparent; }
+.chip { padding: 10px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 20px; background: var(--surface-card); color: var(--text-secondary); cursor: pointer; min-height: 44px; -webkit-tap-highlight-color: transparent; }
 .chip.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
 
 /* Add Lead button */
@@ -183,7 +183,7 @@ textarea.input-md { width: 100%; margin-top: 10px; resize: none; font-family: in
 /* Photo Filter Row */
 .photo-filter-row { display: flex; gap: 4px; padding: 8px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .photo-filter-row::-webkit-scrollbar { display: none; }
-.photo-filter { padding: 4px 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-card); color: var(--gray); cursor: pointer; white-space: nowrap; min-height: 28px; -webkit-tap-highlight-color: transparent; }
+.photo-filter { padding: 10px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-card); color: var(--gray); cursor: pointer; white-space: nowrap; min-height: 44px; -webkit-tap-highlight-color: transparent; }
 .photo-filter.active { background: var(--navy); color: white; border-color: var(--navy); }
 
 /* Photo Grid */
@@ -428,7 +428,7 @@ body.has-retry-banner .cam-count { top: calc(48px + env(safe-area-inset-top, 0px
 
 /* Reactions */
 .feed-rx-bar { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-.feed-rx-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); padding: 6px 12px; border-radius: 999px; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
+.feed-rx-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 14px; border-radius: 999px; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
 .feed-rx-btn span { font-size: 11px; color: var(--gray); font-weight: 600; }
 .feed-rx-btn:hover { background: var(--border); }
 .feed-rx-btn.mine { background: rgba(0,181,204,0.12); border-color: var(--teal); color: var(--teal); }
@@ -675,12 +675,12 @@ body { font-family: var(--font-body); }
   background: transparent;
   border: 1px solid var(--steel-mid);
   color: var(--text-secondary);
-  padding: 8px 14px;
+  padding: 10px 14px;
   font-size: 13px;
   font-weight: 600;
   border-radius: 20px;
   cursor: pointer;
-  min-height: 36px;
+  min-height: 44px;
   transition: border-color 0.15s, background 0.15s;
 }
 .chip:hover { border-color: var(--text-secondary); }
@@ -830,7 +830,7 @@ html, body { overflow-x: hidden; }
 
 /* ── Notes: type/draw mode toggle ── */
 .notes-mode-toggle { display: inline-flex; gap: 4px; margin: 6px 0 8px; background: var(--surface-secondary); padding: 3px; border-radius: 999px; }
-.notes-mode-btn { background: transparent; border: none; color: var(--text-muted); font-family: var(--font-body); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; padding: 6px 14px; border-radius: 999px; cursor: pointer; min-height: 32px; }
+.notes-mode-btn { background: transparent; border: none; color: var(--text-muted); font-family: var(--font-body); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; padding: 10px 14px; border-radius: 999px; cursor: pointer; min-height: 44px; }
 .notes-mode-btn.active { background: var(--teal); color: var(--white); }
 
 /* Drawings strip (within editor) */
@@ -852,7 +852,7 @@ html, body { overflow-x: hidden; }
 .notes-draw-overlay { position: fixed; inset: 0; background: #FFFFFF; z-index: 1000; display: flex; flex-direction: column; }
 .notes-draw-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: var(--navy); color: var(--white); border-bottom: 1px solid var(--surface-border); }
 .notes-draw-tools { display: inline-flex; gap: 6px; }
-.notes-draw-tool { background: rgba(255,255,255,0.12); color: var(--white); border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 8px 12px; font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px; }
+.notes-draw-tool { background: rgba(255,255,255,0.12); color: var(--white); border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 10px 14px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; min-height: 44px; }
 .notes-draw-tool.active { background: var(--teal); border-color: var(--teal); }
 .notes-draw-btn { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 10px 16px; font-family: var(--font-body); font-size: 13px; font-weight: 700; cursor: pointer; min-height: 44px; }
 .notes-draw-btn.primary { background: var(--teal); border-color: var(--teal); }
@@ -945,7 +945,7 @@ html, body { overflow-x: hidden; }
   border-top: 1px solid #E5E7EB;
   padding: 8px 10px;
   font-size: 12px;
-  color: #001A4D;
+  color: #1B2360;
   background: #F8FAFC;
   min-height: 36px;
   box-sizing: border-box;
@@ -1075,7 +1075,7 @@ html, body { overflow-x: hidden; }
 .fab-item span { font-size: 13px; }
 /* Floating location arrow on map */
 /* Map location button — fixed overlay so it stays above Google Maps canvas */
-.map-location-btn { display: none; position: fixed; bottom: calc(88px + env(safe-area-inset-bottom)); right: 16px; z-index: 1200; width: 52px; height: 52px; border-radius: 50%; background: #001A4D; color: #00B5CC; border: 2.5px solid #00B5CC; font-size: 24px; cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.55); -webkit-tap-highlight-color: transparent; }
+.map-location-btn { display: none; position: fixed; bottom: calc(88px + env(safe-area-inset-bottom)); right: 16px; z-index: 1200; width: 52px; height: 52px; border-radius: 50%; background: #1B2360; color: #00B5CC; border: 2.5px solid #00B5CC; font-size: 24px; cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.55); -webkit-tap-highlight-color: transparent; }
 /* Only show when map view is active */
 #view-map.active ~ * #map-location-btn,
 body.map-active .map-location-btn { display: flex; }

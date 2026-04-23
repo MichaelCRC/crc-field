@@ -366,7 +366,7 @@ async function openHomeownerShareModal(leadId) {
         ${allPhotos.map((p, i) => {
           const isShared = shared.includes(p.url || p.thumbnail);
           return `<div class="hsm-thumb ${isShared ? 'selected' : ''}" onclick="hsToggle(this)" data-url="${p.url || p.thumbnail}">
-            <img src="${p.thumbnail || p.url}" loading="lazy">
+            <img src="${p.thumbnail || p.url}" loading="lazy" alt="Homeowner-shared photo">
             <div class="hsm-check">${isShared ? '&#10003;' : ''}</div>
             <span class="tag-badge">${(p.tag || 'photo').replace('-',' ')}</span>
           </div>`;
@@ -679,7 +679,7 @@ function openSignatureScreen(jobId, jobAddress, homeownerName) {
   }).join('');
 
   overlay.innerHTML = ''
-    + '<div style="background:#001A4D;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">'
+    + '<div style="background:#1B2360;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0">'
     + '<div style="font-weight:800;font-size:15px;letter-spacing:1.5px;color:#fff">CRC</div>'
     + '<div style="font-size:14px;font-weight:700;flex:1;text-align:center;letter-spacing:0.3px">Property Inspection Authorization</div>'
     + '<button onclick="document.getElementById(\'sig-auth-overlay\').remove()" style="background:none;border:none;color:#fff;font-size:26px;line-height:1;cursor:pointer;padding:0;flex-shrink:0">&times;</button>'
@@ -687,18 +687,18 @@ function openSignatureScreen(jobId, jobAddress, homeownerName) {
     + '<div style="flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch" id="sig-auth-body">'
     + '<div style="max-width:720px;margin:0 auto">'
     + '<div style="text-align:center;font-size:11px;font-weight:700;color:#64748B;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px">Columbus Roofing Company</div>'
-    + '<h2 style="text-align:center;font-size:20px;font-weight:800;color:#001A4D;margin:0 0 6px">Property Inspection Authorization</h2>'
+    + '<h2 style="text-align:center;font-size:20px;font-weight:800;color:#1B2360;margin:0 0 6px">Property Inspection Authorization</h2>'
     + '<div style="text-align:center;font-size:12px;color:#64748B;margin-bottom:14px">' + escHtml(jobAddress || '') + ' &middot; ' + today + '</div>'
-    + '<div style="font-size:12px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Please review and check each item</div>'
+    + '<div style="font-size:12px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Please review and check each item</div>'
     + itemsHtml
     + '<div style="margin-top:18px">'
-    + '<label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Printed Name</label>'
+    + '<label for="sig-auth-name" style="display:block;font-size:11px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Printed Name</label>'
     + '<input type="text" id="sig-auth-name" placeholder="Full name" value="' + escHtml(homeownerName) + '" '
-    + 'style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#001A4D">'
+    + 'style="width:100%;padding:12px 14px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;font-family:inherit;color:#1B2360">'
     + '</div>'
     + '<div style="margin-top:14px">'
-    + '<label style="display:block;font-size:11px;font-weight:700;color:#001A4D;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Signature</label>'
-    + '<canvas id="sig-auth-canvas" style="width:100%;height:200px;background:#fff;border:2px solid #001A4D;border-radius:8px;display:block;touch-action:none"></canvas>'
+    + '<label style="display:block;font-size:11px;font-weight:700;color:#1B2360;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Homeowner Signature</label>'
+    + '<canvas id="sig-auth-canvas" style="width:100%;height:200px;background:#fff;border:2px solid #1B2360;border-radius:8px;display:block;touch-action:none"></canvas>'
     + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:4px">'
     + '<span>Draw above with finger or Apple Pencil</span>'
     + '<button type="button" onclick="sigAuthClear()" style="background:none;border:none;color:#00B5CC;font-size:11px;font-weight:700;cursor:pointer;padding:0">Clear</button>'
@@ -741,7 +741,7 @@ function _onAuthItemToggle(cb) {
   if (btn) {
     if (allChecked) {
       btn.disabled = false;
-      btn.style.background = '#001A4D';
+      btn.style.background = '#1B2360';
       btn.style.cursor = 'pointer';
       btn.textContent = 'Complete & Sign';
     } else {
@@ -852,7 +852,7 @@ async function sigAuthSubmit(jobId, jobAddress) {
     if (body) {
       body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px;text-align:center">'
         + '<div style="font-size:72px;margin-bottom:16px">&#9989;</div>'
-        + '<div style="font-size:24px;font-weight:800;color:#001A4D;margin-bottom:8px">Authorization signed.</div>'
+        + '<div style="font-size:24px;font-weight:800;color:#1B2360;margin-bottom:8px">Authorization signed.</div>'
         + '<div style="font-size:14px;color:#64748B;max-width:340px">You may now begin the inspection. A signed PDF has been saved to this job.</div>'
         + '</div>';
     }

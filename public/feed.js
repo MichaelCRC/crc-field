@@ -130,7 +130,7 @@ function renderFeedJobOptions(jobs) {
       const name = (j.homeowner && (j.homeowner.firstName || j.homeowner.lastName))
         ? ((j.homeowner.firstName || '') + ' ' + (j.homeowner.lastName || '')).trim()
         : (j.homeownerName || j.address || j.id);
-      return '<option value="' + j.id + '">' + feedEscape(name + ' — ' + (j.address || '')) + '</option>';
+      return '<option value="' + j.id + '">' + feedEscape(name + ' - ' + (j.address || '')) + '</option>';
     })
   );
   sel.innerHTML = opts.join('');

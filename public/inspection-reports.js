@@ -89,7 +89,7 @@ function _renderBuilder() {
     : 'Select photos to include. Add a label and (optionally) markup to each.';
 
   overlay.innerHTML = ''
-    + '<div style="background:#001A4D;color:#fff;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top, 0px));display:flex;align-items:center;gap:10px;flex-shrink:0">'
+    + '<div style="background:#1B2360;color:#fff;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top, 0px));display:flex;align-items:center;gap:10px;flex-shrink:0">'
     +   '<button onclick="_irClose()" style="background:none;border:none;color:#fff;font-size:26px;cursor:pointer;padding:4px 8px;line-height:1;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">&times;</button>'
     +   '<div style="flex:1"><div style="font-weight:800;font-size:15px">' + title + '</div>'
     +     '<div style="font-size:11px;color:#94A3B8">' + subtitle + '</div></div>'
@@ -112,7 +112,7 @@ function _buildBody() {
   // Claim filing extras up top
   if (s.mode === 'claim-filing') {
     html += '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">'
-      + '<div style="font-size:12px;font-weight:800;color:#001A4D;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Claim Details</div>'
+      + '<div style="font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Claim Details</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
       + '<div><label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px">Date of Loss</label>'
       + '<input type="date" id="ir-dol" value="' + s.dateOfLoss + '" oninput="_irState.dateOfLoss=this.value" style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px"></div>'
@@ -128,15 +128,15 @@ function _buildBody() {
   // Photo report summary section
   if (s.mode === 'photo-report') {
     html += '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">'
-      + '<div style="font-size:12px;font-weight:800;color:#001A4D;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Inspection Summary</div>'
+      + '<div style="font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Inspection Summary</div>'
       + '<textarea id="ir-photo-summary" oninput="_irState.photoSummary=this.value" rows="3" placeholder="Describe the damage found, areas affected, recommended next steps..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.photoSummary || '') + '</textarea>'
       + '</div>';
   }
 
   // Options toolbar
   html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">'
-    + '<button onclick="_irSelectAll(true)" style="padding:7px 12px;background:#001A4D;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Select All</button>'
-    + '<button onclick="_irSelectAll(false)" style="padding:7px 12px;background:#fff;color:#001A4D;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Deselect All</button>';
+    + '<button onclick="_irSelectAll(true)" style="padding:7px 12px;background:#1B2360;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Select All</button>'
+    + '<button onclick="_irSelectAll(false)" style="padding:7px 12px;background:#fff;color:#1B2360;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">Deselect All</button>';
   var hasDiag = !!(s.job.roofDiagramMarkup || s.job.roofDiagramClean);
   if (hasDiag) {
     html += '<label style="margin-left:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:#334155;cursor:pointer">'
@@ -148,7 +148,7 @@ function _buildBody() {
   // Label chips
   html += '<div style="margin-bottom:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.4px">Quick Labels</span><button onclick="_irManageLabels()" style="font-size:11px;color:#00B5CC;background:none;border:none;cursor:pointer;font-weight:700">Edit Labels</button></div>'
     + '<div style="display:flex;flex-wrap:wrap;gap:6px" id="ir-label-chips">'
-    + IR_LABEL_CHIPS.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#001A4D;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('')
+    + IR_LABEL_CHIPS.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#1B2360;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('')
     + '</div>'
     + '<div style="font-size:11px;color:#94A3B8;margin-top:4px">Tap a chip to label all selected photos at once.</div></div>';
 
@@ -254,12 +254,12 @@ function _irShowSuccess(data, mode) {
   body.innerHTML = ''
     + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center">'
     +   '<div style="font-size:64px;margin-bottom:12px">&#9989;</div>'
-    +   '<div style="font-size:20px;font-weight:800;color:#001A4D;margin-bottom:8px">' + (mode === 'claim-filing' ? 'Packet ready' : 'Report ready') + '</div>'
+    +   '<div style="font-size:20px;font-weight:800;color:#1B2360;margin-bottom:8px">' + (mode === 'claim-filing' ? 'Packet ready' : 'Report ready') + '</div>'
     +   '<div style="font-size:13px;color:#64748B;margin-bottom:24px;max-width:420px">Saved to this job\'s documents in the portal. You can open or share it below.</div>'
     +   '<div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">'
-    +     '<button onclick="_irDownloadPdf(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#001A4D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">&#11015;&#65039; Download PDF</button>'
+    +     '<button onclick="_irDownloadPdf(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#1B2360;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">&#11015;&#65039; Download PDF</button>'
     +     '<button onclick="_irCopyLink(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#128279; Copy Link</button>'
-    +     '<button onclick="_irShowQR(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#fff;color:#001A4D;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#9638; QR Code</button>'
+    +     '<button onclick="_irShowQR(\'' + url + '\')" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;background:#fff;color:#1B2360;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">&#9638; QR Code</button>'
     +     '<button onclick="_irClose()" style="padding:10px;background:none;color:#64748B;border:none;font-size:13px;cursor:pointer">Close</button>'
     +   '</div>'
     + '</div>';
@@ -275,11 +275,11 @@ function _irManageLabels() {
     current = _irGetLabels();
     modal.innerHTML = '<div style="background:#fff;border-radius:14px;padding:20px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
-      + '<span style="font-size:15px;font-weight:800;color:#001A4D">Edit Labels</span>'
+      + '<span style="font-size:15px;font-weight:800;color:#1B2360">Edit Labels</span>'
       + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748B">&times;</button></div>'
       + current.map(function(l, i) {
           return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F1F5F9">'
-            + '<span style="flex:1;font-size:13px;color:#001A4D">' + l + '</span>'
+            + '<span style="flex:1;font-size:13px;color:#1B2360">' + l + '</span>'
             + '<button onclick="_irDeleteLabel(' + i + ')" style="background:none;border:none;color:#DC2626;font-size:18px;cursor:pointer;line-height:1">&times;</button></div>';
         }).join('')
       + '<div style="display:flex;gap:6px;margin-top:12px">'
@@ -300,7 +300,7 @@ function _irDeleteLabel(idx) {
   if (modal) { modal.remove(); _irManageLabels(); }
   // Refresh chips in builder
   var chipsEl = document.getElementById('ir-label-chips');
-  if (chipsEl) chipsEl.innerHTML = labels.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#001A4D;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('');
+  if (chipsEl) chipsEl.innerHTML = labels.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#1B2360;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('');
 }
 function _irAddLabel() {
   var input = document.getElementById('ir-new-label');
@@ -312,7 +312,7 @@ function _irAddLabel() {
   var modal = document.querySelector('div[style*="position:fixed"][style*="2000"]');
   if (modal) { modal.remove(); _irManageLabels(); }
   var chipsEl = document.getElementById('ir-label-chips');
-  if (chipsEl) chipsEl.innerHTML = labels.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#001A4D;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('');
+  if (chipsEl) chipsEl.innerHTML = labels.map(function(l){ return '<button onclick="_irApplyChip(\'' + l.replace(/\'/g,"&#39;") + '\')" style="padding:5px 10px;background:#F1F5F9;color:#1B2360;border:1px solid #CBD5E1;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer">' + l + '</button>'; }).join('');
 }
 
 function _irShare(url) {
@@ -355,9 +355,9 @@ function _irShowQR(url) {
   var qrDiv = document.createElement('div');
   qrDiv.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
   qrDiv.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;text-align:center">'
-    + '<div style="font-size:13px;font-weight:700;color:#001A4D;margin-bottom:12px">Scan to open PDF</div>'
-    + '<img src="' + qrUrl + '" style="width:200px;height:200px;display:block">'
-    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:16px;padding:10px 24px;background:#001A4D;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Close</button>'
+    + '<div style="font-size:13px;font-weight:700;color:#1B2360;margin-bottom:12px">Scan to open PDF</div>'
+    + '<img src="' + qrUrl + '" alt="QR code to PDF" style="width:200px;height:200px;display:block">'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:16px;padding:10px 24px;background:#1B2360;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Close</button>'
     + '</div>';
   document.body.appendChild(qrDiv);
 }

@@ -357,7 +357,7 @@ function renderCameraHUD() {
     const idx = recentOffset + i;
     const url = (p.url || p.thumbnail || '').replace(/'/g, "\\'");
     return `<div style="position:relative;display:inline-block">` +
-      `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb">` +
+      `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb" alt="Recent photo">` +
       `<button style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.65);color:#fff;border:none;width:20px;height:20px;border-radius:3px;font-size:11px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center" ` +
       `onclick="event.stopPropagation();openFieldPhotoMarkup('${url}','${currentLeadId}',${idx},'${activePhotoTab}')">&#9998;</button>` +
       `</div>`;
@@ -487,7 +487,7 @@ function updateUploadStatus() {
       const idx = rOffset + i;
       const url = (p.url || p.thumbnail || '').replace(/'/g, "\\'");
       return `<div style="position:relative;display:inline-block">` +
-        `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb">` +
+        `<img src="${p.thumbnail || p.url}" class="cam-recent-thumb" alt="Recent photo">` +
         `<button style="position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.65);color:#fff;border:none;width:20px;height:20px;border-radius:3px;font-size:11px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;justify-content:center" ` +
         `onclick="event.stopPropagation();openFieldPhotoMarkup('${url}','${currentLeadId}',${idx},'${activePhotoTab}')">&#9998;</button>` +
         `</div>`;

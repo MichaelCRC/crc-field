@@ -57,7 +57,7 @@ function measureMountDrawing(container, opts) {
 function _roofSectionHtml() {
   return ''
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-    + '<div style="font-size:12px;font-weight:800;color:#001A4D;letter-spacing:0.4px;text-transform:uppercase">Roof Diagram</div>'
+    + '<div style="font-size:12px;font-weight:800;color:#1B2360;letter-spacing:0.4px;text-transform:uppercase">Roof Diagram</div>'
     + '<div id="md-roof-save" style="font-size:11px;color:#64748B"></div>'
     + '</div>'
     // Toolbar
@@ -77,13 +77,13 @@ function _roofSectionHtml() {
     + '</div>'
     // Canvas wrapper
     + '<div id="md-roof-wrap" style="position:relative;width:100%;border:1px solid #CBD5E1;border-radius:8px;overflow:hidden;background:#F8FAFC;min-height:240px"></div>'
-    + '<div id="md-roof-empty" style="display:none;padding:40px 20px;text-align:center;font-size:13px;color:#64748B">No satellite image available — skip to field notes below.</div>';
+    + '<div id="md-roof-empty" style="display:none;padding:40px 20px;text-align:center;font-size:13px;color:#64748B">No satellite image available. Skip to field notes below.</div>';
 }
 
 function _notesSectionHtml() {
   return ''
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-    + '<div style="font-size:12px;font-weight:800;color:#001A4D;letter-spacing:0.4px;text-transform:uppercase">Field Notes</div>'
+    + '<div style="font-size:12px;font-weight:800;color:#1B2360;letter-spacing:0.4px;text-transform:uppercase">Field Notes</div>'
     + '<div id="md-notes-save" style="font-size:11px;color:#64748B"></div>'
     + '</div>'
     + '<div style="display:flex;gap:6px;margin-bottom:8px">'
@@ -94,12 +94,12 @@ function _notesSectionHtml() {
     + _toolbarBtn('md-notes-clear','Clear','background:#fff;color:#DC2626;border-color:#DC2626', 'mdNotesClear()')
     + '</div>'
     + '<canvas id="md-notes-canvas" style="width:100%;height:280px;background:#fff;border:1px solid #CBD5E1;border-radius:8px;touch-action:none;display:block"></canvas>'
-    + '<div style="margin-top:4px;font-size:11px;color:#94A3B8">Black ink — sketch measurements, jot numbers, take notes. Auto-saves 2s after you stop drawing.</div>';
+    + '<div style="margin-top:4px;font-size:11px;color:#94A3B8">Black ink. Sketch measurements, jot numbers, take notes. Auto-saves 2s after you stop drawing.</div>';
 }
 
 function _toolbarBtn(id, label, extraStyle, onclick, active) {
-  var base = 'padding:6px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:#001A4D;cursor:pointer;min-height:32px';
-  var act  = active ? ';background:#001A4D;color:#fff;border-color:#001A4D' : '';
+  var base = 'padding:6px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:#1B2360;cursor:pointer;min-height:32px';
+  var act  = active ? ';background:#1B2360;color:#fff;border-color:#1B2360' : '';
   return '<button id="' + id + '" onclick="' + onclick + '" style="' + base + act + ';' + (extraStyle||'') + '">' + label + '</button>';
 }
 
@@ -352,10 +352,10 @@ function _groupActive(btn, ids) {
     var el = document.getElementById(id);
     if (!el) return;
     el.style.background = '#fff';
-    el.style.color = '#001A4D';
+    el.style.color = '#1B2360';
     el.style.borderColor = '#CBD5E1';
   });
-  if (btn) { btn.style.background = '#001A4D'; btn.style.color = '#fff'; btn.style.borderColor = '#001A4D'; }
+  if (btn) { btn.style.background = '#1B2360'; btn.style.color = '#fff'; btn.style.borderColor = '#1B2360'; }
 }
 
 // ── Persistence ─────────────────────────────────────────────────────────────
@@ -404,7 +404,7 @@ async function _doSave() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     _setSaveStatus('Saved', 'ok');
   } catch (e) {
-    _setSaveStatus('Save failed — retrying', 'err');
+    _setSaveStatus('Save failed. Retrying', 'err');
     setTimeout(_doSave, 10000);
   }
 }
