@@ -568,9 +568,11 @@ function renderJobDetail(job) {
       + '<span style="font-size:20px">&#128187;</span><span style="font-size:11px;color:var(--gray)">Portal</span></a>';
   }
   html += '<button onclick="jobTakePhoto(\'' + jid + '\')" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128247;</span><span style="font-size:11px;color:var(--gray)">Camera</span></button>';
-  var hoverAddr = encodeURIComponent(job.address || '');
-  var hoverName = encodeURIComponent(name || '');
-  html += '<a href="https://app.hover.to/new?address=' + hoverAddr + '&name=' + hoverName + '" target="_blank" style="text-decoration:none;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0"><span style="font-size:20px">&#128016;</span><span style="font-size:11px;color:var(--gray)">Hover</span></a>';
+  // Hover launch: pre-fill not supported (see HOVER_SPRINT_FINDINGS.md).
+  // Helper copies address+name to clipboard, tries hover://, falls back to web.
+  var _hAddr = (job.address || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  var _hName = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  html += '<button onclick="openHoverForJob({address:\'' + _hAddr + '\',homeowner:\'' + _hName + '\'})" style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;flex-shrink:0;cursor:pointer"><span style="font-size:20px">&#128016;</span><span style="font-size:11px;color:var(--gray)">Hover</span></button>';
   html += '</div>';
 
   // ── Workflow action row (Section 8) ──
