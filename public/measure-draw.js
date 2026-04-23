@@ -77,7 +77,7 @@ function _roofSectionHtml() {
     + '</div>'
     // Canvas wrapper
     + '<div id="md-roof-wrap" style="position:relative;width:100%;border:1px solid #CBD5E1;border-radius:8px;overflow:hidden;background:#F8FAFC;min-height:240px"></div>'
-    + '<div id="md-roof-empty" style="display:none;padding:40px 20px;text-align:center;font-size:13px;color:#64748B">No satellite image available — skip to field notes below.</div>';
+    + '<div id="md-roof-empty" style="display:none;padding:40px 20px;text-align:center;font-size:13px;color:#64748B">No satellite image available. Skip to field notes below.</div>';
 }
 
 function _notesSectionHtml() {
@@ -94,7 +94,7 @@ function _notesSectionHtml() {
     + _toolbarBtn('md-notes-clear','Clear','background:#fff;color:#DC2626;border-color:#DC2626', 'mdNotesClear()')
     + '</div>'
     + '<canvas id="md-notes-canvas" style="width:100%;height:280px;background:#fff;border:1px solid #CBD5E1;border-radius:8px;touch-action:none;display:block"></canvas>'
-    + '<div style="margin-top:4px;font-size:11px;color:#94A3B8">Black ink — sketch measurements, jot numbers, take notes. Auto-saves 2s after you stop drawing.</div>';
+    + '<div style="margin-top:4px;font-size:11px;color:#94A3B8">Black ink. Sketch measurements, jot numbers, take notes. Auto-saves 2s after you stop drawing.</div>';
 }
 
 function _toolbarBtn(id, label, extraStyle, onclick, active) {
@@ -404,7 +404,7 @@ async function _doSave() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     _setSaveStatus('Saved', 'ok');
   } catch (e) {
-    _setSaveStatus('Save failed — retrying', 'err');
+    _setSaveStatus('Save failed. Retrying', 'err');
     setTimeout(_doSave, 10000);
   }
 }

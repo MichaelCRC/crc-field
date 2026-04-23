@@ -148,7 +148,7 @@ function renderNotebookList() {
 function renderNoteList() {
   if (notesState.loading && !notesState.notes.length) return '<div class="notes-empty">Loading...</div>';
   if (!notesState.notes.length) {
-    return '<div class="notes-empty">' + (notesState.search ? 'No matches' : 'No notes yet — tap + to create one') + '</div>';
+    return '<div class="notes-empty">' + (notesState.search ? 'No matches' : 'No notes yet. Tap + to create one.') + '</div>';
   }
   return notesState.notes.map(n => {
     const meta = NOTEBOOK_META[n.notebook] || NOTEBOOK_META.operations;
@@ -184,10 +184,10 @@ function renderEditor() {
       <div>Select a note to edit, or tap "+ NEW NOTE" to start.</div>
     </div>`;
   }
-  const jobOptions = ['<option value="">— None —</option>'].concat(
+  const jobOptions = ['<option value="">- None -</option>'].concat(
     (notesState.jobsCache || []).map(j => {
       const name = (j.homeowner?.firstName || '') + ' ' + (j.homeowner?.lastName || '');
-      const label = (name.trim() || j.homeownerName || j.address || j.id) + ' — ' + (j.address || '');
+      const label = (name.trim() || j.homeownerName || j.address || j.id) + ' - ' + (j.address || '');
       const sel = j.id === n.jobId ? ' selected' : '';
       return `<option value="${escNotes(j.id)}"${sel}>${escNotes(label)}</option>`;
     })
@@ -354,7 +354,7 @@ async function commitSave() {
   } catch {
     // Queue for later flush.
     notesState.pendingPatches[id] = patch;
-    notesState.saveStatus = 'Offline — queued';
+    notesState.saveStatus = 'Offline. Queued';
   }
   const el = document.querySelector('.notes-save-status');
   if (el) el.textContent = notesState.saveStatus;
@@ -545,11 +545,11 @@ async function saveDrawCanvas() {
       Object.assign(note, body.note);
       persistNotesCache();
     } else {
-      notesState.saveStatus = 'Offline — drawing queued';
+      notesState.saveStatus = 'Offline. Drawing queued';
       notesState.pendingPatches[note.id] = { drawings: note.drawings };
     }
   } catch {
-    notesState.saveStatus = 'Offline — drawing queued';
+    notesState.saveStatus = 'Offline. Drawing queued';
     notesState.pendingPatches[note.id] = { drawings: note.drawings };
   }
   renderNotesView();
