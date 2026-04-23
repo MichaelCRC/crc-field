@@ -178,6 +178,7 @@ On NOAA failure every endpoint returns **HTTP 503** with `{ error, retryAfter, s
 | Storm layer (hail + wind events) | LIVE | Real NCEI bulk CSV pull (all Ohio, Hail + T-storm Wind + High Wind), 24h cache, honest 503 on failure. Map view renders event-type pins (hail circle / wind arrow) with viewport-based fetch via `/api/storms/near` and a HailRecon-style address search. Job Detail shows a Storm History section. |
 | Hover photo pull | BROKEN | `HOVER_ACCESS_TOKEN` not set; endpoint returns "not configured" |
 | Inbound Hover webhook | LIVE | `/api/hover/sync` ready for Hermes |
+| Hover deep link from Field App | LIVE | Job detail "Hover" button launches iOS app via `hover://`, web fallback to `https://hover.to`. Pre-fill: **launch-only** (Hover exposes no URL params — see `HOVER_SPRINT_FINDINGS.md`); address+homeowner copied to clipboard so rep pastes into Hover. Portal-side Hover photo pull continues to work unchanged. |
 | Storm zones | NOT STARTED | Routes + store exist, `zones.json` empty, no UI |
 | Referrals API | LIVE but ORPHANED | Endpoints exist, no frontend UI in `index.html` |
 | System Intelligence report | LIVE but ORPHANED | Admin-only, no UI |
