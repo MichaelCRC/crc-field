@@ -945,7 +945,7 @@ html, body { overflow-x: hidden; }
   border-top: 1px solid #E5E7EB;
   padding: 8px 10px;
   font-size: 12px;
-  color: #001A4D;
+  color: #1B2360;
   background: #F8FAFC;
   min-height: 36px;
   box-sizing: border-box;
@@ -1075,7 +1075,7 @@ html, body { overflow-x: hidden; }
 .fab-item span { font-size: 13px; }
 /* Floating location arrow on map */
 /* Map location button — fixed overlay so it stays above Google Maps canvas */
-.map-location-btn { display: none; position: fixed; bottom: calc(88px + env(safe-area-inset-bottom)); right: 16px; z-index: 1200; width: 52px; height: 52px; border-radius: 50%; background: #001A4D; color: #00B5CC; border: 2.5px solid #00B5CC; font-size: 24px; cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.55); -webkit-tap-highlight-color: transparent; }
+.map-location-btn { display: none; position: fixed; bottom: calc(88px + env(safe-area-inset-bottom)); right: 16px; z-index: 1200; width: 52px; height: 52px; border-radius: 50%; background: #1B2360; color: #00B5CC; border: 2.5px solid #00B5CC; font-size: 24px; cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.55); -webkit-tap-highlight-color: transparent; }
 /* Only show when map view is active */
 #view-map.active ~ * #map-location-btn,
 body.map-active .map-location-btn { display: flex; }

@@ -24,7 +24,7 @@
     const css = document.createElement('style');
     css.textContent = `
       #crc-issue-btn { position: fixed; right: 16px; bottom: 82px; z-index: 120; width: 44px; height: 44px;
-        border-radius: 50%; border: none; background: #001A4D; color: #fff; font-size: 20px; cursor: pointer;
+        border-radius: 50%; border: none; background: #1B2360; color: #fff; font-size: 20px; cursor: pointer;
         box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
       #crc-issue-btn:hover { background: #00B5CC; }
       .crc-issue-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; display:flex; align-items:flex-end; }

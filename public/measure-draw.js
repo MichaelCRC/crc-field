@@ -57,7 +57,7 @@ function measureMountDrawing(container, opts) {
 function _roofSectionHtml() {
   return ''
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-    + '<div style="font-size:12px;font-weight:800;color:#001A4D;letter-spacing:0.4px;text-transform:uppercase">Roof Diagram</div>'
+    + '<div style="font-size:12px;font-weight:800;color:#1B2360;letter-spacing:0.4px;text-transform:uppercase">Roof Diagram</div>'
     + '<div id="md-roof-save" style="font-size:11px;color:#64748B"></div>'
     + '</div>'
     // Toolbar
@@ -83,7 +83,7 @@ function _roofSectionHtml() {
 function _notesSectionHtml() {
   return ''
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-    + '<div style="font-size:12px;font-weight:800;color:#001A4D;letter-spacing:0.4px;text-transform:uppercase">Field Notes</div>'
+    + '<div style="font-size:12px;font-weight:800;color:#1B2360;letter-spacing:0.4px;text-transform:uppercase">Field Notes</div>'
     + '<div id="md-notes-save" style="font-size:11px;color:#64748B"></div>'
     + '</div>'
     + '<div style="display:flex;gap:6px;margin-bottom:8px">'
@@ -98,8 +98,8 @@ function _notesSectionHtml() {
 }
 
 function _toolbarBtn(id, label, extraStyle, onclick, active) {
-  var base = 'padding:6px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:#001A4D;cursor:pointer;min-height:32px';
-  var act  = active ? ';background:#001A4D;color:#fff;border-color:#001A4D' : '';
+  var base = 'padding:6px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:#1B2360;cursor:pointer;min-height:32px';
+  var act  = active ? ';background:#1B2360;color:#fff;border-color:#1B2360' : '';
   return '<button id="' + id + '" onclick="' + onclick + '" style="' + base + act + ';' + (extraStyle||'') + '">' + label + '</button>';
 }
 
@@ -352,10 +352,10 @@ function _groupActive(btn, ids) {
     var el = document.getElementById(id);
     if (!el) return;
     el.style.background = '#fff';
-    el.style.color = '#001A4D';
+    el.style.color = '#1B2360';
     el.style.borderColor = '#CBD5E1';
   });
-  if (btn) { btn.style.background = '#001A4D'; btn.style.color = '#fff'; btn.style.borderColor = '#001A4D'; }
+  if (btn) { btn.style.background = '#1B2360'; btn.style.color = '#fff'; btn.style.borderColor = '#1B2360'; }
 }
 
 // ── Persistence ─────────────────────────────────────────────────────────────

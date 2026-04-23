@@ -51,7 +51,7 @@ function _showMeasureSheet(address, loading) {
   sheet.id = 'measure-sheet';
   sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:900;background:#fff;border-top-left-radius:16px;border-top-right-radius:16px;box-shadow:0 -4px 20px rgba(0,0,0,0.15);max-height:92vh;overflow-y:auto;padding:0;transition:transform .25s ease;';
   sheet.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #E5E7EB;position:sticky;top:0;background:#fff;z-index:1;border-radius:16px 16px 0 0">'
-    + '<div style="font-weight:700;font-size:15px;color:#001A4D">CRC Measure</div>'
+    + '<div style="font-weight:700;font-size:15px;color:#1B2360">CRC Measure</div>'
     + '<button onclick="_closeMeasureSheet()" style="background:none;border:0;font-size:22px;color:#64748B;cursor:pointer;padding:0;line-height:1">&times;</button>'
     + '</div>'
     + '<div id="measure-body" style="padding:16px 18px">'
@@ -84,11 +84,11 @@ function _renderNoSolarCoverage(data) {
   if (!body) return;
   body.innerHTML = '<div style="text-align:center;padding:20px 0">'
     + '<div style="font-size:28px;margin-bottom:8px">&#127758;</div>'
-    + '<div style="font-weight:700;color:#001A4D;margin-bottom:6px">Satellite measurement unavailable</div>'
+    + '<div style="font-weight:700;color:#1B2360;margin-bottom:6px">Satellite measurement unavailable</div>'
     + '<div style="font-size:13px;color:#64748B;margin-bottom:16px">Google Solar API does not have coverage for this property. Common for newer subdivisions and rural areas.</div>'
     + '<div style="display:flex;flex-direction:column;gap:8px;max-width:260px;margin:0 auto">'
     + '<button onclick="_closeMeasureSheet()" style="padding:12px;background:#00B5CC;color:#fff;border:0;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Order Hover</button>'
-    + '<button onclick="_closeMeasureSheet()" style="padding:10px;background:#fff;color:#001A4D;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;cursor:pointer">Field Measure</button>'
+    + '<button onclick="_closeMeasureSheet()" style="padding:10px;background:#fff;color:#1B2360;border:1px solid #CBD5E1;border-radius:8px;font-size:13px;cursor:pointer">Field Measure</button>'
     + '<button onclick="_closeMeasureSheet();openMeasureFromMap()" style="padding:10px;background:none;color:#64748B;border:0;font-size:12px;cursor:pointer;text-decoration:underline">Retry with different address</button>'
     + '</div></div>';
 }
@@ -181,7 +181,7 @@ function _renderMeasureResults(data) {
       var bg = i % 2 === 0 ? '#fff' : '#F9FAFB';
       html += '<tr style="background:' + bg + '"><td style="padding:4px">' + f.id + '</td><td>' + f.direction + '</td><td>' + f.pitch + '</td><td style="text-align:right">' + _fmtN(f.areaSqFt) + '</td><td style="text-align:right">' + f.squares + '</td></tr>';
     });
-    html += '<tr style="font-weight:700;border-top:2px solid #001A4D"><td colspan="3">TOTAL</td><td style="text-align:right">' + _fmtN(Math.round(totalArea)) + '</td><td style="text-align:right">' + s.totalSquares + '</td></tr>';
+    html += '<tr style="font-weight:700;border-top:2px solid #1B2360"><td colspan="3">TOTAL</td><td style="text-align:right">' + _fmtN(Math.round(totalArea)) + '</td><td style="text-align:right">' + s.totalSquares + '</td></tr>';
     html += '</tbody></table>';
   }
 
@@ -190,7 +190,7 @@ function _renderMeasureResults(data) {
   // Comparison
   if (comp) {
     var ok = comp.diffPercent < 8;
-    html += '<div style="padding:10px;background:' + (ok ? '#D1FAE5' : '#FEF3C7') + ';border-radius:6px;font-size:12px;color:#001A4D;margin-bottom:12px">';
+    html += '<div style="padding:10px;background:' + (ok ? '#D1FAE5' : '#FEF3C7') + ';border-radius:6px;font-size:12px;color:#1B2360;margin-bottom:12px">';
     html += '<strong>Hover:</strong> ' + comp.hoverSquares + ' SQ | <strong>CRC:</strong> ' + comp.crcSquares + ' SQ | Diff: ' + (comp.diff >= 0 ? '+' : '') + comp.diff + ' SQ (' + comp.diffPercent + '%)';
     html += ok ? ' - Within range' : ' - Larger variance';
     html += '</div>';
@@ -215,7 +215,7 @@ function _renderMeasureResults(data) {
 
 function _summaryCard(value, label, sub) {
   return '<div style="flex:1;text-align:center;background:#F0F9FF;border-radius:8px;padding:10px 6px">'
-    + '<div style="font-size:26px;font-weight:800;color:#001A4D;line-height:1">' + (value != null ? value : '--') + '</div>'
+    + '<div style="font-size:26px;font-weight:800;color:#1B2360;line-height:1">' + (value != null ? value : '--') + '</div>'
     + '<div style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:1px;margin-top:2px">' + label + '</div>'
     + '<div style="font-size:10px;color:#94A3B8">' + (sub || '') + '</div>'
     + '</div>';
