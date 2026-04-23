@@ -64,6 +64,33 @@ router.get('/near', async (req, res) => {
   }
 });
 
+// ── GET /api/storms/recent?lat=X&lng=Y&radius=5&days=7 ─────────────────────
+// SPC-only fresh window — what fired in the last week. No NCEI 60-day lag.
+// Useful for "where did it hail yesterday" without sifting verified history.
+router.get('/recent', async (req, res) => {
+  const parsed = parseNearParams(req.query);
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  const days = req.query.days != null ? parseInt(req.query.days, 10) : 7;
+  if (!Number.isFinite(days) || days <= 0 || days > 30) {
+    return res.status(400).json({ error: 'days must be a positive integer <= 30' });
+  }
+  try {
+    const result = await getStormsNearPoint({
+      ...parsed.opts,
+      months: Math.max(1, Math.ceil(days / 30)),
+      spcDays: days,
+      spcOnly: true,
+      // Lower hail threshold for fresh window — reps want to see anything the
+      // moment it appears, not wait for it to clear 0.75".
+      minHailInches: 0.5,
+      minWindMph: 50,
+    });
+    res.json({ ...result, params: { ...result.params, days } });
+  } catch (e) {
+    handleStormError(res, e, '/api/storms/recent');
+  }
+});
+
 // ── GET /api/storms/for-address?address=... ────────────────────────────────
 router.get('/for-address', async (req, res) => {
   const address = (req.query.address || '').trim();
