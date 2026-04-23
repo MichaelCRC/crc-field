@@ -40,8 +40,64 @@ async function validateAndEnter(code) {
     if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
     loadLeads();
     initCheckin();
+    // Open the real-time event stream to the Portal. Reps receive events
+    // scoped to their repCode; admins receive everything (portal convention).
+    try {
+      if (typeof connectEventStream === 'function') {
+        connectEventStream(data.role === 'admin' ? 'ADMIN' : code);
+      }
+    } catch (e) { console.warn('[SSE] connect failed:', e); }
   } catch { document.getElementById('gate-error').textContent = 'Connection error'; }
 }
+
+// ── SSE wiring ─────────────────────────────────────────────────────────
+// The Portal pushes job/activity events over /api/events/stream. Listen
+// once and delegate to whichever view is currently active. Falls back to
+// existing polls if SSE drops.
+window.addEventListener('crc:sse.status', (e) => {
+  const dot = document.getElementById('sse-indicator');
+  if (!dot) return;
+  dot.classList.remove('sse-idle', 'sse-connected', 'sse-reconnecting', 'sse-failed');
+  dot.classList.add('sse-' + (e.detail?.status || 'idle'));
+  dot.title = 'Live connection: ' + (e.detail?.status || 'idle');
+});
+
+function _sseActiveView() {
+  const v = document.querySelector('.app-view.active');
+  return v ? v.id.replace(/^view-/, '') : null;
+}
+
+function _sseRefreshJobs() {
+  if (_sseActiveView() === 'jobs' && typeof loadJobs === 'function') {
+    // Small debounce so a burst of events (e.g. stage.changed + job.updated)
+    // collapses into a single refresh.
+    clearTimeout(window.__sseJobsTimer);
+    window.__sseJobsTimer = setTimeout(() => { try { loadJobs(); } catch {} }, 200);
+  }
+}
+
+function _sseFlashJobCard(jobId) {
+  if (!jobId) return;
+  const card = document.querySelector('[data-id="' + jobId + '"]');
+  if (card) {
+    card.classList.add('sse-flash');
+    setTimeout(() => card.classList.remove('sse-flash'), 1200);
+  }
+}
+
+['crc:job.updated', 'crc:stage.changed', 'crc:job.transferred',
+ 'crc:task.updated', 'crc:note.added', 'crc:activity.added',
+ 'crc:job.created', 'crc:job.deleted', 'crc:photo.added'].forEach((name) => {
+  window.addEventListener(name, (e) => {
+    const jobId = e.detail && e.detail.jobId;
+    _sseFlashJobCard(jobId);
+    _sseRefreshJobs();
+    // Feed view: if visible, prepend new activity without a full reload.
+    if (name === 'crc:activity.added' && _sseActiveView() === 'feed' && typeof pollFeed === 'function') {
+      try { pollFeed(); } catch {}
+    }
+  });
+});
 document.getElementById('gate-code')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitRepCode(); });
 
 // --- Address Autocomplete ---

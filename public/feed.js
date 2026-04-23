@@ -6,7 +6,16 @@ const FEED_PORTAL_URL = 'https://crc-supplements-portal.onrender.com';
 // to match process.env.FIELD_APP_KEY. Rotate in both places when it changes.
 const FEED_APP_KEY = 'crc-field-2026';
 const FEED_REACTIONS = ['🔥', '👍', '👏', '💪'];
-const FEED_POLL_MS = 60000;
+// Poll cadence: 60s while SSE is connected (SSE carries fresh events;
+// poll is a safety net). 30s when SSE is disconnected (emergency mode).
+const FEED_POLL_MS_SSE_ON  = 60000;
+const FEED_POLL_MS_SSE_OFF = 30000;
+function feedPollMs() {
+  try {
+    return (typeof getSSEStatus === 'function' && getSSEStatus() === 'connected')
+      ? FEED_POLL_MS_SSE_ON : FEED_POLL_MS_SSE_OFF;
+  } catch { return FEED_POLL_MS_SSE_ON; }
+}
 
 let _feedEntries = [];
 let _feedLoading = false;
@@ -46,7 +55,7 @@ function startFeedPolling() {
     } else {
       stopFeedPolling();
     }
-  }, FEED_POLL_MS);
+  }, feedPollMs());
 }
 function stopFeedPolling() { if (_feedPollTimer) { clearInterval(_feedPollTimer); _feedPollTimer = null; } }
 
