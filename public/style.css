@@ -633,6 +633,32 @@ body { font-family: var(--font-body); }
 }
 .field-theme-icon:hover { border-color: var(--teal); }
 
+/* SSE live-connection indicator dot (header). Green=live, Yellow=reconnecting, Red=failed, Grey=idle. */
+.sse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: #6B7280;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+  transition: background 200ms ease;
+}
+.sse-dot.sse-idle         { background: #6B7280; }
+.sse-dot.sse-connected    { background: #10B981; }
+.sse-dot.sse-reconnecting { background: #F59E0B; animation: sse-pulse 1.2s ease-in-out infinite; }
+.sse-dot.sse-failed       { background: #DC2626; }
+@keyframes sse-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* Brief highlight when an SSE event updates a job card. */
+.sse-flash { animation: sse-card-flash 1.2s ease-out; }
+@keyframes sse-card-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(0,181,204,0.55); }
+  40%  { box-shadow: 0 0 0 6px rgba(0,181,204,0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(0,181,204,0);    }
+}
+
 /* Section labels: brand spec — Inter Medium, uppercase, tracking 0.1em, steel-mid */
 .section-title {
   padding: 16px 16px 6px;

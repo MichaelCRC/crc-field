@@ -84,6 +84,7 @@
         </div>
       </div>
       <div class="app-header-right">
+        <button id="sse-indicator" class="sse-dot sse-idle" onclick="forceReconnectEventStream()" title="Live connection" aria-label="Live connection status"></button>
         <button id="field-theme-toggle" class="field-theme-icon" onclick="cycleFieldTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="field-theme-icon">🌙</span></button>
         <div class="field-user-wrap" id="field-user-wrap">
           <button id="rep-badge" class="rep-badge" onclick="toggleFieldUserMenu(event)" aria-label="Account"></button>
@@ -447,6 +448,7 @@
   <!-- Photo Capture/Tagging Modal -->
   <div id="photo-capture-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center"></div>
 
+  <script src="event-stream.js"></script>
   <script src="app.js"></script>
   <script src="photos.js"></script>
   <script src="camera.js"></script>

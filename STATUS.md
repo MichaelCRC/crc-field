@@ -1,5 +1,11 @@
 # crc-field — STATUS
-Generated: 2026-04-22
+Generated: 2026-04-23
+
+## REAL-TIME PUSH (Portal → Field App, SSE) — LIVE as of 2026-04-23
+- Client: `public/event-stream.js` — wraps EventSource, auto-reconnect with exponential backoff (2s → 30s cap), re-emits server events as `crc:job.updated`, `crc:stage.changed`, `crc:activity.added`, etc. on `window`.
+- Bootstrap: `app.js validateAndEnter()` opens the stream on login using `repCode` (or `ADMIN` for admins).
+- UI: green/yellow/red dot in the header (`#sse-indicator`), tap to force reconnect. Job cards flash on `crc:*` events, the jobs list auto-reloads (debounced 200ms), the activity feed prepends fresh entries without waiting for the poll.
+- Poll cadence: 60s while SSE is connected (safety net), 30s when disconnected (emergency fallback). Both cadences use the existing `/api/feed` poll — no new endpoints.
 
 ## 1. What This Repo Does
 Mobile-first PWA for CRC sales reps in the field. It is a thin Express server (single `server.js`, SPA in `public/`) that acts mostly as an authenticated proxy in front of the CRC Supplement Portal (Hermes bridge), plus a local store for leads, rep codes, chat, training progress, referrals, an ABC-deliveries builds map, and an Anthropic-powered Ask Brain assistant.
