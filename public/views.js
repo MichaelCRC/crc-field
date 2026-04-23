@@ -218,10 +218,14 @@ function renderStormList(events, data) {
   el.innerHTML = notice + events.map(e => {
     const severe = e.eventType === 'hail' ? e.magnitudeValue >= 1.5 : e.magnitudeValue >= 70;
     const color = stormPinColor(e);
+    const prelim = e.status === 'preliminary';
+    const prelimBadge = prelim
+      ? `<span title="SPC preliminary report — may be refined" style="display:inline-block;margin-left:6px;padding:1px 5px;font-size:9px;font-weight:700;letter-spacing:0.4px;border:1px solid #C2410C;color:#C2410C;border-radius:3px;background:#FFF7ED">PRELIM</span>`
+      : '';
     return `<div class="storm-card" style="cursor:pointer" onclick="zoomToStorm(${e.lat},${e.lng})">
       <div class="storm-size" style="background:${color};color:#fff;min-width:54px;text-align:center">${e.magnitude}</div>
       <div style="flex:1">
-        <div style="font-weight:600">${e.location}</div>
+        <div style="font-weight:600">${e.location}${prelimBadge}</div>
         <div style="font-size:12px;color:var(--gray)">${e.date} &middot; ${e.distanceMiles} mi</div>
       </div>
       <div style="font-size:11px;font-weight:700;color:${severe?'var(--red)':'var(--amber)'}">${stormTypeLabel(e.eventType).toUpperCase()}</div>
@@ -266,19 +270,32 @@ function renderStormPins(events) {
     const path = e.eventType === 'hail'
       ? google.maps.SymbolPath.CIRCLE
       : google.maps.SymbolPath.BACKWARD_CLOSED_ARROW;
+    // Preliminary (SPC) events get an orange dashed-look stroke + thinner fill
+    // so reps can tell at a glance the report is fresh-but-unverified.
+    const prelim = e.status === 'preliminary';
+    const strokeColor = prelim ? '#C2410C' : '#FFFFFF';
+    const strokeWeight = prelim ? 3 : 2;
+    const fillOpacity = prelim ? 0.65 : 0.9;
     const marker = new google.maps.Marker({
       position: { lat: e.lat, lng: e.lng },
       map: gmap,
-      icon: { path, scale, fillColor: color, fillOpacity: 0.9, strokeColor: '#FFFFFF', strokeWeight: 2 },
-      zIndex: 3,
-      title: `${e.magnitude} ${stormTypeLabel(e.eventType)} on ${e.date}`,
+      icon: { path, scale, fillColor: color, fillOpacity, strokeColor, strokeWeight },
+      zIndex: prelim ? 2 : 3,
+      title: `${e.magnitude} ${stormTypeLabel(e.eventType)} on ${e.date}${prelim ? ' (preliminary)' : ''}`,
     });
+    const prelimBadge = prelim
+      ? `<span style="display:inline-block;margin-left:6px;padding:1px 5px;font-size:9px;font-weight:700;letter-spacing:0.4px;border:1px solid #C2410C;color:#C2410C;border-radius:3px;background:#FFF7ED;vertical-align:middle">PRELIM</span>`
+      : '';
+    const sourceLine = e.source
+      ? `<div style="margin-top:4px;font-size:10px;color:#94A3B8">Source: ${e.source}</div>`
+      : '';
     const info = new google.maps.InfoWindow({
       content: `<div style="font-size:13px;min-width:180px">
-        <strong>${e.magnitude} ${stormTypeLabel(e.eventType).toUpperCase()}</strong><br>
+        <strong>${e.magnitude} ${stormTypeLabel(e.eventType).toUpperCase()}</strong>${prelimBadge}<br>
         ${e.location}<br>
         <span style="color:#64748B">${e.date} &middot; ${e.distanceMiles} mi from map center</span>
         ${e.narrative ? `<div style="margin-top:6px;font-size:12px;color:#475569;line-height:1.4">${e.narrative.replace(/</g,'&lt;')}</div>` : ''}
+        ${sourceLine}
       </div>`,
     });
     marker.addListener('click', () => info.open(gmap, marker));
