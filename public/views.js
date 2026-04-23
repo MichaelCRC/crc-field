@@ -84,107 +84,53 @@ function toggleKnockMode() { knockMode = !knockMode; dropPinMode = false; docume
 function toggleDropPin() { dropPinMode = !dropPinMode; knockMode = false; document.getElementById('btn-drop-pin').classList.toggle('active', dropPinMode); document.getElementById('btn-knock-mode').classList.remove('active'); }
 
 // --- Storms (integrated into Map view) ---
-let allStormEvents = [], stormMarkers = [], stormOverlayVisible = false;
+// Rewired to hit /api/storms/near with a viewport-based radius so reps see
+// pins only for storms that actually hit whatever area they're looking at
+// (HailRecon-style). Pin icon depends on eventType; size scales with
+// magnitude. Legacy hail-only list panel still renders -- now it just
+// reflects the viewport results rather than a fixed 25-event snapshot.
+let viewportStorms = [], stormMarkers = [], stormOverlayVisible = false;
+let stormIdleListener = null, stormRefreshTimer = null;
+let stormSearchMarker = null; // pin dropped at searched address
 
-async function loadStorms() {
-  stormsLoaded = true;
-  const list = document.getElementById('storm-list');
-  try {
-    const res = await fetch('/api/storms');
-    if (res.status === 503) {
-      const err = await res.json().catch(() => ({}));
-      if (list) list.innerHTML = `<p style="padding:16px;color:var(--red)">${err.message || 'Storm data temporarily unavailable'}</p>`;
-      return;
-    }
-    const data = await res.json();
-    const events = data.storms || data.events || [];
-    allStormEvents = events;
-    const weekAgo = Date.now() - 7*86400000;
-    const recent = events.filter(e => new Date(e.date).getTime() > weekAgo && e.hailSize >= 1.0);
-    if (recent.length) { const n = recent[0]; document.getElementById('storm-alert').style.display = 'block'; document.getElementById('storm-alert').innerHTML = `&#9928; Storm -- ${n.date}<br>${n.hailSize}" hail near ${n.location}`; }
-    renderStormList(events);
-    addStormMarkersToMap(events);
-    document.querySelectorAll('#storm-filter .chip').forEach(chip => chip.addEventListener('click', () => { document.querySelectorAll('#storm-filter .chip').forEach(c => c.classList.remove('active')); chip.classList.add('active'); filterStormList(chip.dataset.val, events); }));
-  } catch (e) { if (list) list.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`; }
+async function loadStorms() { stormsLoaded = true; await refreshStormsInViewport(); }
+
+// Map zoom → radius heuristic. At zoom 13+ reps are looking at a
+// neighborhood; zoomed way out, pull a larger radius so pins still appear.
+function stormRadiusForZoom(z) {
+  if (z == null) return 5;
+  if (z >= 14) return 2;
+  if (z >= 12) return 5;
+  if (z >= 10) return 12;
+  return 25;
 }
 
-function renderStormList(events) {
-  const el = document.getElementById('storm-list');
-  if (!el) return;
-  el.innerHTML = events.sort((a,b) => new Date(b.date)-new Date(a.date)).map(e => {
-    const sev = e.hailSize >= 2.0 ? 'severe' : e.hailSize >= 1.5 ? 'significant' : e.hailSize >= 1.0 ? 'moderate' : 'minor';
-    const hasCoords = e.lat && e.lng;
-    return `<div class="storm-card" style="cursor:${hasCoords?'pointer':'default'}" onclick="${hasCoords ? `zoomToStorm(${e.lat},${e.lng})` : ''}"><div class="storm-size hail-${sev}">${e.hailSize}"</div><div style="flex:1"><div style="font-weight:600">${e.location}, ${e.county} Co.</div><div style="font-size:12px;color:var(--gray)">${e.date}</div></div><div style="font-size:11px;font-weight:700;color:${sev==='minor'?'var(--amber)':'var(--red)'}">${sev}</div></div>`;
-  }).join('');
-}
-
-function filterStormList(val, all) {
-  let f = all;
-  if (val === '90')  f = all.filter(e => Date.now()-new Date(e.date).getTime() < 90*86400000);
-  else if (val === '180') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 180*86400000);
-  // 'all' = 12 months
-  else if (val === 'all') f = all.filter(e => Date.now()-new Date(e.date).getTime() < 365*86400000);
-  renderStormList(f);
-  addStormMarkersToMap(f);
-}
-
-function addStormMarkersToMap(events) {
-  if (!gmap || typeof google === 'undefined') return;
-  stormMarkers.forEach(m => m.setMap(null));
-  stormMarkers = [];
-  const sevColors = { severe: '#7F1D1D', significant: '#DC2626', moderate: '#EA580C', minor: '#F59E0B' };
-  const sevOpacity = { severe: 0.35, significant: 0.28, moderate: 0.22, minor: 0.18 };
-  // Radius in meters based on hail size (bigger hail = larger affected area shown)
-  const hailRadius = size => Math.max(6000, Math.min(20000, 5000 + size * 5000));
-
-  events.forEach(e => {
-    if (!e.lat || !e.lng) return;
-    const sev = e.hailSize >= 2.0 ? 'severe' : e.hailSize >= 1.5 ? 'significant' : e.hailSize >= 1.0 ? 'moderate' : 'minor';
-    const color = sevColors[sev];
-    const radius = hailRadius(e.hailSize);
-
-    // Area polygon (circle overlay) — visible affected zone
-    const circle = new google.maps.Circle({
-      center: { lat: e.lat, lng: e.lng },
-      radius,
-      map: stormOverlayVisible ? gmap : null,
-      fillColor: color,
-      fillOpacity: sevOpacity[sev],
-      strokeColor: color,
-      strokeOpacity: 0.6,
-      strokeWeight: 1.5,
-      zIndex: 1,
-      clickable: true,
-    });
-
-    // Small center marker for click target
-    const marker = new google.maps.Marker({
-      position: { lat: e.lat, lng: e.lng },
-      map: stormOverlayVisible ? gmap : null,
-      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: color, fillOpacity: 1, strokeColor: '#FFF', strokeWeight: 1.5 },
-      zIndex: 2,
-    });
-
-    const infoContent = `<div style="font-size:13px;min-width:160px"><strong>${e.hailSize}" Hail</strong><br>${e.location}, ${e.county} Co.<br>${e.date}<br><span style="color:${color};font-weight:700;text-transform:uppercase">${sev}</span></div>`;
-    const info = new google.maps.InfoWindow({ content: infoContent });
-    circle.addListener('click', (ev) => { info.setPosition(ev.latLng); info.open(gmap); });
-    marker.addListener('click', () => info.open(gmap, marker));
-
-    stormMarkers.push(circle, marker);
-  });
-}
-
-function toggleStormOverlay() {
-  if (stormOverlayVisible) { hideStormOverlay(); } else { showStormOverlay(); }
-}
+function toggleStormOverlay() { stormOverlayVisible ? hideStormOverlay() : showStormOverlay(); }
 
 function showStormOverlay() {
   stormOverlayVisible = true;
   document.getElementById('btn-storm-overlay')?.classList.add('active');
   const panel = document.getElementById('storm-panel');
   if (panel) panel.style.display = '';
-  stormMarkers.forEach(m => m.setMap(gmap));
-  if (!stormsLoaded) loadStorms();
+  // Bind viewport idle listener once. Debounce so panning doesn't hammer
+  // /api/storms/near while the user's still moving the map.
+  if (gmap && !stormIdleListener) {
+    stormIdleListener = gmap.addListener('idle', () => {
+      clearTimeout(stormRefreshTimer);
+      stormRefreshTimer = setTimeout(refreshStormsInViewport, 500);
+    });
+  }
+  // Wire period chips (12/6/3 mo) once.
+  document.querySelectorAll('#storm-filter .chip').forEach(chip => {
+    if (chip.dataset._wired) return;
+    chip.dataset._wired = '1';
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#storm-filter .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      refreshStormsInViewport();
+    });
+  });
+  refreshStormsInViewport();
 }
 
 function hideStormOverlay() {
@@ -192,7 +138,238 @@ function hideStormOverlay() {
   document.getElementById('btn-storm-overlay')?.classList.remove('active');
   const panel = document.getElementById('storm-panel');
   if (panel) panel.style.display = 'none';
+  clearStormMarkers();
+  if (stormIdleListener) { google.maps.event.removeListener(stormIdleListener); stormIdleListener = null; }
+  clearTimeout(stormRefreshTimer);
+}
+
+function clearStormMarkers() {
   stormMarkers.forEach(m => m.setMap(null));
+  stormMarkers = [];
+}
+
+function currentStormMonths() {
+  const active = document.querySelector('#storm-filter .chip.active');
+  const v = active?.dataset.val;
+  if (v === '90') return 3;
+  if (v === '180') return 6;
+  return 12;
+}
+
+async function refreshStormsInViewport() {
+  if (!gmap || !stormOverlayVisible) return;
+  const c = gmap.getCenter();
+  if (!c) return;
+  const lat = c.lat(), lng = c.lng();
+  const radius = stormRadiusForZoom(gmap.getZoom());
+  const months = currentStormMonths();
+  const url = `/api/storms/near?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}&radius=${radius}&months=${months}`;
+  const list = document.getElementById('storm-list');
+  try {
+    const res = await fetch(url);
+    if (res.status === 503) {
+      const err = await res.json().catch(() => ({}));
+      if (list) list.innerHTML = `<p style="padding:16px;color:var(--red)">${err.message || 'Storm data temporarily unavailable'}</p>`;
+      return;
+    }
+    const data = await res.json();
+    viewportStorms = data.storms || [];
+    renderStormPins(viewportStorms);
+    renderStormList(viewportStorms, data);
+    renderStormAlert(viewportStorms, data);
+  } catch (e) {
+    if (list) list.innerHTML = `<p style="padding:16px;color:var(--red)">${e.message}</p>`;
+  }
+}
+
+function renderStormAlert(events, data) {
+  const el = document.getElementById('storm-alert');
+  if (!el) return;
+  // Most-recent severe event (1in+ hail or 65+mph wind) within 30 days.
+  const thirtyDaysAgo = Date.now() - 30 * 86400000;
+  const severe = events.find(e => {
+    const ts = new Date(e.date).getTime();
+    if (ts < thirtyDaysAgo) return false;
+    if (e.eventType === 'hail') return e.magnitudeValue >= 1.0;
+    return e.magnitudeValue >= 65;
+  });
+  if (!severe) { el.style.display = 'none'; return; }
+  const icon = severe.eventType === 'hail' ? '&#9928;' : '&#128168;';
+  el.style.display = 'block';
+  el.innerHTML = `${icon} ${severe.date} -- ${severe.magnitude} ${stormTypeLabel(severe.eventType)} near ${severe.location}`;
+}
+
+function stormTypeLabel(t) {
+  if (t === 'hail') return 'hail';
+  if (t === 'thunderstorm_wind') return 'T-storm wind';
+  if (t === 'high_wind') return 'high wind';
+  return t;
+}
+
+function renderStormList(events, data) {
+  const el = document.getElementById('storm-list');
+  if (!el) return;
+  if (!events.length) {
+    const notice = data?.notice ? `<div style="padding:6px 16px;font-size:11px;color:var(--text-muted);background:rgba(0,0,0,0.03)">${data.notice}</div>` : '';
+    el.innerHTML = `${notice}<p style="padding:16px;color:var(--gray);font-size:13px">No storms in current viewport within ${currentStormMonths()} months.</p>`;
+    return;
+  }
+  const notice = data?.notice ? `<div style="padding:6px 16px;font-size:11px;color:var(--text-muted);background:rgba(0,0,0,0.03)">${data.notice}</div>` : '';
+  el.innerHTML = notice + events.map(e => {
+    const severe = e.eventType === 'hail' ? e.magnitudeValue >= 1.5 : e.magnitudeValue >= 70;
+    const color = stormPinColor(e);
+    return `<div class="storm-card" style="cursor:pointer" onclick="zoomToStorm(${e.lat},${e.lng})">
+      <div class="storm-size" style="background:${color};color:#fff;min-width:54px;text-align:center">${e.magnitude}</div>
+      <div style="flex:1">
+        <div style="font-weight:600">${e.location}</div>
+        <div style="font-size:12px;color:var(--gray)">${e.date} &middot; ${e.distanceMiles} mi</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:${severe?'var(--red)':'var(--amber)'}">${stormTypeLabel(e.eventType).toUpperCase()}</div>
+    </div>`;
+  }).join('');
+}
+
+// Pin color by event type. Hail = teal/navy gradient; Wind = orange/red.
+function stormPinColor(e) {
+  if (e.eventType === 'hail') {
+    if (e.magnitudeValue >= 2.0) return '#1B2360';
+    if (e.magnitudeValue >= 1.5) return '#0369A1';
+    if (e.magnitudeValue >= 1.0) return '#0891B2';
+    return '#00B5CC';
+  }
+  // wind
+  if (e.magnitudeValue >= 80) return '#7F1D1D';
+  if (e.magnitudeValue >= 70) return '#DC2626';
+  return '#EA580C';
+}
+
+// Pin scale (google.maps.Symbol.scale): small-to-large by magnitude.
+function stormPinScale(e) {
+  if (e.eventType === 'hail') {
+    // hail inches → scale 7-14
+    return Math.max(7, Math.min(14, 6 + e.magnitudeValue * 3));
+  }
+  // wind mph → scale 7-13
+  return Math.max(7, Math.min(13, 5 + (e.magnitudeValue - 55) / 5));
+}
+
+function renderStormPins(events) {
+  if (!gmap || typeof google === 'undefined') return;
+  clearStormMarkers();
+  events.forEach(e => {
+    if (e.lat == null || e.lng == null) return;
+    const color = stormPinColor(e);
+    const scale = stormPinScale(e);
+    // Hail = filled circle; wind = diamond (BACKWARD_CLOSED_ARROW approximates
+    // a wind-blown arrow). Distinct shapes so reps can tell them apart at a
+    // glance without reading the popup.
+    const path = e.eventType === 'hail'
+      ? google.maps.SymbolPath.CIRCLE
+      : google.maps.SymbolPath.BACKWARD_CLOSED_ARROW;
+    const marker = new google.maps.Marker({
+      position: { lat: e.lat, lng: e.lng },
+      map: gmap,
+      icon: { path, scale, fillColor: color, fillOpacity: 0.9, strokeColor: '#FFFFFF', strokeWeight: 2 },
+      zIndex: 3,
+      title: `${e.magnitude} ${stormTypeLabel(e.eventType)} on ${e.date}`,
+    });
+    const info = new google.maps.InfoWindow({
+      content: `<div style="font-size:13px;min-width:180px">
+        <strong>${e.magnitude} ${stormTypeLabel(e.eventType).toUpperCase()}</strong><br>
+        ${e.location}<br>
+        <span style="color:#64748B">${e.date} &middot; ${e.distanceMiles} mi from map center</span>
+        ${e.narrative ? `<div style="margin-top:6px;font-size:12px;color:#475569;line-height:1.4">${e.narrative.replace(/</g,'&lt;')}</div>` : ''}
+      </div>`,
+    });
+    marker.addListener('click', () => info.open(gmap, marker));
+    stormMarkers.push(marker);
+  });
+}
+
+// ── Map address search (HailRecon-style "pull up a property") ─────────────
+let _mapSearchTimer = null;
+function initMapSearch() {
+  const input = document.getElementById('map-address-input');
+  if (!input || input.dataset._wired) return;
+  input.dataset._wired = '1';
+  input.addEventListener('input', () => {
+    clearTimeout(_mapSearchTimer);
+    const v = input.value.trim();
+    document.getElementById('btn-map-search-clear').style.display = v ? '' : 'none';
+    if (v.length < 3) { hideMapSearchSuggestions(); return; }
+    _mapSearchTimer = setTimeout(() => fetchMapSearchSuggestions(v), 300);
+  });
+  input.addEventListener('blur', () => setTimeout(hideMapSearchSuggestions, 200));
+}
+
+async function fetchMapSearchSuggestions(input) {
+  try {
+    const data = await fetch(`/api/maps/autocomplete?input=${encodeURIComponent(input)}`).then(r => r.json());
+    const box = document.getElementById('map-address-suggestions');
+    if (!box) return;
+    if (!data.predictions?.length) { hideMapSearchSuggestions(); return; }
+    box.innerHTML = data.predictions.map(p => `<div class="suggestion-item" onmousedown="selectMapAddress('${p.place_id}','${p.description.replace(/'/g,"&#39;")}')">${p.description}</div>`).join('');
+    box.classList.add('show');
+  } catch { hideMapSearchSuggestions(); }
+}
+function hideMapSearchSuggestions() {
+  const b = document.getElementById('map-address-suggestions');
+  if (b) { b.classList.remove('show'); b.innerHTML = ''; }
+}
+
+async function selectMapAddress(placeId, desc) {
+  const input = document.getElementById('map-address-input');
+  if (input) input.value = desc;
+  hideMapSearchSuggestions();
+  const status = document.getElementById('map-search-status');
+  if (status) { status.style.display = ''; status.textContent = 'Loading storm history...'; }
+  try {
+    // Grab lat/lng up front so we can pan + drop a marker while /for-address
+    // is running. Drops a temp "searched" pin to anchor the view.
+    const details = await fetch(`/api/maps/place-details?place_id=${placeId}`).then(r => r.json());
+    if (!details.lat || !details.lng) throw new Error('Could not resolve address');
+    if (gmap) {
+      gmap.panTo({ lat: details.lat, lng: details.lng });
+      gmap.setZoom(13);
+    }
+    if (stormSearchMarker) stormSearchMarker.setMap(null);
+    stormSearchMarker = new google.maps.Marker({
+      position: { lat: details.lat, lng: details.lng },
+      map: gmap,
+      icon: { path: google.maps.SymbolPath.BACKWARD_POINTING_ARROW, scale: 6, fillColor: '#00B5CC', fillOpacity: 1, strokeColor: '#FFFFFF', strokeWeight: 2, rotation: 180 },
+      zIndex: 10,
+      title: details.address || desc,
+    });
+
+    // Make sure the storm overlay is on so pins actually show.
+    if (!stormOverlayVisible) showStormOverlay();
+
+    // Ask for address-specific storms with the canonical 5mi / 12mo defaults.
+    const addr = details.address || desc;
+    const data = await fetch(`/api/storms/for-address?address=${encodeURIComponent(addr)}`).then(r => r.json());
+    if (data.error) throw new Error(data.error);
+    viewportStorms = data.storms || [];
+    renderStormPins(viewportStorms);
+    renderStormList(viewportStorms, data);
+    renderStormAlert(viewportStorms, data);
+    if (status) {
+      status.textContent = `Found ${data.totalMatched} storm${data.totalMatched === 1 ? '' : 's'} within ${data.params.radiusMiles} miles in the last ${data.params.months} months`;
+    }
+  } catch (e) {
+    if (status) status.textContent = 'Storm search failed: ' + e.message;
+  }
+}
+
+function clearMapSearch() {
+  const input = document.getElementById('map-address-input');
+  if (input) input.value = '';
+  document.getElementById('btn-map-search-clear').style.display = 'none';
+  const status = document.getElementById('map-search-status');
+  if (status) status.style.display = 'none';
+  if (stormSearchMarker) { stormSearchMarker.setMap(null); stormSearchMarker = null; }
+  hideMapSearchSuggestions();
+  // Fall back to viewport-based storms.
+  if (stormOverlayVisible) refreshStormsInViewport();
 }
 
 function toggleStormPanel() {
