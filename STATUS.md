@@ -40,11 +40,22 @@ Mobile-first PWA for CRC sales reps in the field. It is a thin Express server (s
 ### `routes/storms.js` (mounted `/api/storms`)
 | GET | /api/storms | 24h-cached Ohio hail + thunderstorm-wind + high-wind events from NCEI bulk CSV; returns `{ storms, source, fetchedAt, cacheAge? }`; `?source=reference` for curated list | WORKING (filtered: 5mi radius, 12mo, Hail + Wind, thresholds enforced) |
 | GET | /api/storms/refresh | Force live NCEI refresh | WORKING |
-| GET | /api/storms/near?lat=&lng=&radius=&months= | Storms within radius (max 25mi / 24mo) of a point. Applies 0.75in hail / 58mph wind magnitude thresholds, max 20 results | WORKING |
-| GET | /api/storms/for-address?address=... | Server-side geocode + near lookup. Returns storms plus resolved lat/lng | WORKING |
+| GET | /api/storms/near?lat=&lng=&radius=&months= | Storms within radius (max 25mi / 24mo) of a point. **Now merges NCEI (verified) + SPC (preliminary, last 90d) with dedupe.** Each event carries `status: "verified" \| "preliminary"`; response includes `sources: ["NCEI","SPC"]` and `counts: { verified, preliminary }`. Applies 0.75in hail / 58mph wind thresholds, max 20 results. | WORKING |
+| GET | /api/storms/for-address?address=... | Server-side geocode + merged near lookup. Returns storms plus resolved lat/lng. | WORKING |
 | GET | /api/storms/for-lead/:leadId | Storms near a lead's lat/lng (geocodes `lead.address` if coords missing) | WORKING |
+| GET | /api/storms/recent?lat=&lng=&radius=&days= | **NEW.** SPC-only fresh window (default 7d, max 30d). Lowered thresholds (0.5in hail / 50mph wind). Returns only `status: "preliminary"` events. For "where did it hail yesterday" without sifting verified history. | WORKING |
 
-On NOAA failure every endpoint returns **HTTP 503** with `{ error, retryAfter, source: "NOAA", message }` — never stale hardcoded data presented as live. Cache TTL 24h, schema v2, held in-memory and mirrored to `data/storm-cache.json`.
+**Two-source design.** NCEI publishes Storm Events with a 60-180 day lag, so a hail event from this week is not yet visible via NCEI. We layer NOAA SPC preliminary reports on top:
+- SPC files (`https://www.spc.noaa.gov/climo/reports/YYMMDD_rpts_{hail,wind,torn}.csv`) land within hours of the storm. Fetched per-day, OH-filtered at parse time, cached in `data/spc-cache.json`.
+- Cache TTL tiered by date age: today **15 min**, within last 30 days **1 hour**, older than 30 days **indefinite** (the report list doesn't change after the date settles).
+- Magnitudes normalized: hail Size (hundredths of in) → inches; wind Speed mph; tornado F_Scale → EFx.
+- Each event gets a status: `"preliminary"` (SPC) or `"verified"` (NCEI).
+- Dedupe across sources: same eventType + date within ±1 day + coords within ~2 mi = same incident; NCEI wins. SPC events that don't overlap NCEI survive and stay tagged preliminary.
+- For the merged `/near` and `/for-address` endpoints, SPC is fetched for the trailing 90 days only — older dates rely on NCEI.
+
+On NCEI failure the merged endpoint serves SPC-only (does not 503). On full SPC outage the merged endpoint serves NCEI-only. The original `/api/storms` (24h NCEI snapshot) and `/api/storms/refresh` still 503 on NOAA failure — they have no SPC layer.
+
+UI: preliminary events render with an orange dashed-look pin stroke and a `PRELIM` badge in the storm list and popup so reps can tell fresh-but-unverified data at a glance.
 
 ### `routes/admin.js` (mounted `/api/admin`)
 | GET | /api/admin/data-core | Master contacts/properties | WIRED |
@@ -175,7 +186,7 @@ On NOAA failure every endpoint returns **HTTP 503** with `{ error, retryAfter, s
 | ABC-delivery Builds Map | LIVE | CSV auto-import + background geocode on startup |
 | JN Builds Map (`/api/builds`) | LIVE but ORPHANED | Route + data exist; frontend doesn't call it |
 | Claims Dashboard | PARTIAL | Reads static `jobs-2026-ytd.json` — not a live JN feed |
-| Storm layer (hail + wind events) | LIVE | Real NCEI bulk CSV pull (all Ohio, Hail + T-storm Wind + High Wind), 24h cache, honest 503 on failure. Map view renders event-type pins (hail circle / wind arrow) with viewport-based fetch via `/api/storms/near` and a HailRecon-style address search. Job Detail shows a Storm History section. |
+| Storm layer (hail + wind events) | LIVE | **Two NOAA sources**: NCEI bulk CSV (verified, all Ohio, ~60-180d lag, 24h cache) + SPC daily preliminary reports (within hours, tiered TTL, last 90d on merged endpoints). Merged via `/api/storms/near` + `/api/storms/for-address` with NCEI-wins dedupe. Each event tagged `status: "verified" \| "preliminary"`. Map renders event-type pins (hail circle / wind arrow) with a dashed orange outline + PRELIM badge for SPC-only events. New `/api/storms/recent` endpoint for SPC-only fresh window. Honest 503 on full NOAA outage. |
 | Hover photo pull | BROKEN | `HOVER_ACCESS_TOKEN` not set; endpoint returns "not configured" |
 | Inbound Hover webhook | LIVE | `/api/hover/sync` ready for Hermes |
 | Hover deep link from Field App | LIVE | Job detail "Hover" button launches iOS app via `hover://`, web fallback to `https://hover.to`. Pre-fill: **launch-only** (Hover exposes no URL params — see `HOVER_SPRINT_FINDINGS.md`); address+homeowner copied to clipboard so rep pastes into Hover. Portal-side Hover photo pull continues to work unchanged. |
@@ -196,7 +207,8 @@ On NOAA failure every endpoint returns **HTTP 503** with `{ error, retryAfter, s
 | Cloudinary | Photo + rep headshot storage | WORKING (cloud `dtrzdisoc`) |
 | Anthropic (Claude) | Ask Brain chat (`claude-sonnet-4-6`) | WORKING (key set in `.env`) |
 | Google Maps | Autocomplete, Place Details, Street View, Geocoding | WORKING |
-| NOAA Storm Events | Hail + severe wind event pull | WORKING — `lib/noaaStorms.js` pulls annual CSVs from `ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/`, filters to Ohio (all counties) + Hail + Thunderstorm Wind + High Wind, caches 24h with schema v2. Exposes `getStormsNearPoint()` for radius+threshold filtering. NCEI publishes with ~60 day lag — surfaced via `notice` in responses. Returns HTTP 503 on NOAA failure instead of silent fallback |
+| NOAA NCEI Storm Events | Verified hail + severe wind history | WORKING — `lib/noaaStorms.js` pulls annual CSVs from `ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/`, filters to Ohio (all counties) + Hail + Thunderstorm Wind + High Wind, caches 24h with schema v2. ~60-180 day publication lag — fresh window covered by SPC. |
+| NOAA SPC Storm Reports | Preliminary fresh hail/wind/tornado | WORKING — `lib/spcStorms.js` pulls per-day CSVs from `spc.noaa.gov/climo/reports/YYMMDD_rpts_*.csv`, OH-filtered, tiered-TTL cache in `data/spc-cache.json` (15m today / 1h within 30d / indefinite older). Layered into `getStormsNearPoint()` for the trailing 90 days; NCEI-wins dedupe. Each event tagged `status: "preliminary"`. Standalone `/api/storms/recent` endpoint for the fresh-only view. |
 | Hover API | Pull photos for a lead | NOT CONFIGURED (`HOVER_ACCESS_TOKEN` missing) |
 | CompanyCam | Photo source | NOT CONFIGURED here — field app consumes CompanyCam URLs indirectly via portal responses; no direct integration in this repo |
 | JobNimbus | Job data for claims-dashboard + builds | NOT CONFIGURED — only reads a static JSON snapshot (`data/jobs-2026-ytd.json`) |
