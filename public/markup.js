@@ -21,7 +21,7 @@ function renderRoofDiagramLegacy(job) {
     if (hoverWireframe) {
       // Auto-display Hover wireframe
       html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#00B5CC;color:#fff">Hover Wireframe</span></div>`;
-      html += `<div style="margin-bottom:12px"><img src="${hoverWireframe}" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px" crossorigin="anonymous"></div>
+      html += `<div style="margin-bottom:12px"><img src="${hoverWireframe}" alt="Hover wireframe" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px" crossorigin="anonymous"></div>
       <div style="display:flex;gap:8px">
         <button class="btn-primary btn-sm" onclick="useImageAsDiagram('${hoverWireframe.replace(/'/g, "\\'")}')">Use as Diagram</button>
         <button class="btn-secondary btn-sm" onclick="selectDiagramFromPhotos()">Select from Photos</button>
@@ -31,7 +31,7 @@ function renderRoofDiagramLegacy(job) {
     } else if (overheadPhoto) {
       // Offer overhead photo as diagram
       html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#1B2360;color:#fff">Overhead Photo Available</span></div>`;
-      html += `<div style="margin-bottom:12px"><img src="${overheadPhoto.url}" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
+      html += `<div style="margin-bottom:12px"><img src="${overheadPhoto.url}" alt="Overhead roof photo" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
       <div style="display:flex;gap:8px">
         <button class="btn-primary btn-sm" onclick="useImageAsDiagram('${overheadPhoto.url.replace(/'/g, "\\'")}')">Use as Diagram</button>
         <button class="btn-secondary btn-sm" onclick="selectDiagramFromPhotos()">Select Different Photo</button>
@@ -48,14 +48,14 @@ function renderRoofDiagramLegacy(job) {
       </div>`;
     }
   } else if (hasClean && !hasMarkup) {
-    html += `<div style="margin-bottom:12px"><img src="${job.roofDiagramClean}" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
+    html += `<div style="margin-bottom:12px"><img src="${job.roofDiagramClean}" alt="Roof diagram" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
     <div style="display:flex;gap:8px">
       <button class="btn-primary btn-sm" onclick="openMarkupCanvas('${job.roofDiagramClean}', currentJobId, 'roof')">Draw on Diagram</button>
       <button class="btn-sm" onclick="clearRoofDiagram()" style="background:none;border:1px solid var(--mid-gray);color:var(--dark-gray);font-size:11px">Clear Diagram</button>
     </div>`;
   } else {
     const displayImg = hasMarkup ? job.roofDiagramMarkup : job.roofDiagramClean;
-    html += `<div style="margin-bottom:12px;cursor:pointer" onclick="viewFullSizeDiagram()"><img src="${displayImg}" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
+    html += `<div style="margin-bottom:12px;cursor:pointer" onclick="viewFullSizeDiagram()"><img src="${displayImg}" alt="Roof diagram with markup" style="max-width:100%;max-height:300px;border:1px solid var(--mid-gray);border-radius:4px"></div>
     <div style="display:flex;gap:8px">
       <button class="btn-primary btn-sm" onclick="openMarkupCanvas('${job.roofDiagramClean || job.roofDiagramMarkup}', currentJobId, 'roof')">Edit Markup</button>
       <button class="btn-secondary btn-sm" onclick="clearRoofMarkup()">Clear Markup</button>
@@ -159,7 +159,7 @@ function viewFullSizeDiagram() {
         <h3 style="margin:0">Roof Diagram</h3>
         <button class="btn-secondary btn-sm" onclick="closeModal()">Close</button>
       </div>
-      <img src="${img}" style="max-width:100%">
+      <img src="${img}" alt="Roof diagram full size" style="max-width:100%">
     </div>`);
   });
 }

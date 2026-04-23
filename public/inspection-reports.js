@@ -356,7 +356,7 @@ function _irShowQR(url) {
   qrDiv.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
   qrDiv.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;text-align:center">'
     + '<div style="font-size:13px;font-weight:700;color:#1B2360;margin-bottom:12px">Scan to open PDF</div>'
-    + '<img src="' + qrUrl + '" style="width:200px;height:200px;display:block">'
+    + '<img src="' + qrUrl + '" alt="QR code to PDF" style="width:200px;height:200px;display:block">'
     + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:16px;padding:10px 24px;background:#1B2360;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Close</button>'
     + '</div>';
   document.body.appendChild(qrDiv);

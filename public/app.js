@@ -366,7 +366,7 @@ async function openHomeownerShareModal(leadId) {
         ${allPhotos.map((p, i) => {
           const isShared = shared.includes(p.url || p.thumbnail);
           return `<div class="hsm-thumb ${isShared ? 'selected' : ''}" onclick="hsToggle(this)" data-url="${p.url || p.thumbnail}">
-            <img src="${p.thumbnail || p.url}" loading="lazy">
+            <img src="${p.thumbnail || p.url}" loading="lazy" alt="Homeowner-shared photo">
             <div class="hsm-check">${isShared ? '&#10003;' : ''}</div>
             <span class="tag-badge">${(p.tag || 'photo').replace('-',' ')}</span>
           </div>`;

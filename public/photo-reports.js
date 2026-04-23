@@ -19,7 +19,7 @@ function renderPhotoViewer() {
   const modal = document.getElementById('photo-modal');
   modal.style.display = 'flex';
   modal.innerHTML = `
-    <img src="${p.url}" style="max-width:95%;max-height:85vh;object-fit:contain">
+    <img src="${p.url}" alt="Inspection photo" style="max-width:95%;max-height:85vh;object-fit:contain">
     <div class="viewer-info">
       <span class="tag-badge">${(p.tag || '').replace('-', ' ')}</span>
       ${p.source !== 'manual' ? `<span class="source-badge ${p.source}">${p.source}</span>` : ''}
@@ -55,7 +55,7 @@ function startReport(type) {
       <p style="font-size:13px;color:var(--gray);margin-bottom:12px">Select photos for the report</p>
       <div class="report-grid">
         ${photos.map((p, i) => `<div class="report-thumb" onclick="toggleReportPhoto(${i})">
-          <img src="${p.thumbnail || p.url}">
+          <img src="${p.thumbnail || p.url}" alt="Photo thumbnail">
           <div class="report-check">&#10003;</div>
           <span class="tag-badge">${(p.tag || '').replace('-', ' ')}</span>
         </div>`).join('')}
