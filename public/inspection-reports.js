@@ -251,6 +251,19 @@ function _irShowSuccess(data, mode) {
   var body = document.getElementById('ir-body');
   if (!body) return;
   var url = data.url ? ('https://crc-supplements-portal.onrender.com' + data.url) : '';
+
+  // Refresh the job detail so the doc shows up immediately in the job's documents section
+  // The portal already saved the doc to uploadedDocs -- we just need to reload
+  var jobId = _irState && _irState.jobId;
+  if (jobId && typeof openJobDetail === 'function') {
+    // Delay slightly so overlay can close first
+    setTimeout(function() {
+      // Only reload if job detail is still open for this job
+      if (typeof _currentJobDetail !== 'undefined' && _currentJobDetail && _currentJobDetail.id === jobId) {
+        openJobDetail(jobId);
+      }
+    }, 800);
+  }
   body.innerHTML = ''
     + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center">'
     +   '<div style="font-size:64px;margin-bottom:12px">&#9989;</div>'
