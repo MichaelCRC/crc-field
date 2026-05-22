@@ -36,7 +36,7 @@ function readBuilds() {
 }
 
 // GET /api/builds
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     let builds = readBuilds();
     if (req.query.rep) {
@@ -71,7 +71,7 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/builds/summary
-router.get('/summary', (req, res) => {
+router.get('/summary', async (req, res) => {
   try {
     const builds = readBuilds();
     const byRep = {};

@@ -3,19 +3,19 @@ const router = express.Router();
 const { read, write } = require('../lib/store');
 
 // Serve training asset manifest (Cloudinary URLs)
-router.get('/assets', (req, res) => {
+router.get('/assets', async (req, res) => {
   const assets = read('training-assets.json', {});
   res.json(assets);
 });
 
 // Serve quiz data
-router.get('/quizzes', (req, res) => {
+router.get('/quizzes', async (req, res) => {
   const quizzes = read('training-quizzes.json', {});
   res.json(quizzes);
 });
 
 // Serve flashcard data
-router.get('/flashcards', (req, res) => {
+router.get('/flashcards', async (req, res) => {
   const flashcards = read('training-flashcards.json', {});
   res.json(flashcards);
 });
@@ -32,7 +32,7 @@ function saveProgress(data) {
 }
 
 // GET /api/training/progress — admin: get all reps' progress
-router.get('/progress', (req, res) => {
+router.get('/progress', async (req, res) => {
   const auth = req.query.auth || req.headers['x-rep-code'] || '';
   if (!auth || !isAdmin(auth.toUpperCase())) {
     return res.status(403).json({ error: 'Admin access required' });
@@ -41,7 +41,7 @@ router.get('/progress', (req, res) => {
 });
 
 // GET /api/training/progress/:repCode — get rep's progress
-router.get('/progress/:repCode', (req, res) => {
+router.get('/progress/:repCode', async (req, res) => {
   const code = req.params.repCode.toUpperCase();
   const rep = validateRepCode(code);
   if (!rep) return res.status(404).json({ error: 'Unknown rep code' });
@@ -59,7 +59,7 @@ router.get('/progress/:repCode', (req, res) => {
 });
 
 // POST /api/training/progress/:repCode — save progress update
-router.post('/progress/:repCode', (req, res) => {
+router.post('/progress/:repCode', async (req, res) => {
   const code = req.params.repCode.toUpperCase();
   const rep = validateRepCode(code);
   if (!rep) return res.status(404).json({ error: 'Unknown rep code' });

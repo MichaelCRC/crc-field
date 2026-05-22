@@ -5,7 +5,7 @@ const { migratePhotos } = require('../lib/photoStorage');
 
 // Generate a report from selected photos
 router.post('/:id/report', async (req, res) => {
-  const lead = getLead(req.params.id);
+  const lead = await getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
   const { type, reportType, photoIds, photos: selectedPhotos, repCode } = req.body;
@@ -47,7 +47,7 @@ router.post('/:id/report', async (req, res) => {
             generatedAt: new Date().toISOString(),
             generatedBy: repCode,
           });
-          updateLead(req.params.id, { reports });
+          await updateLead(req.params.id, { reports });
 
           return res.json({
             success: true,
@@ -77,7 +77,7 @@ router.post('/:id/report', async (req, res) => {
     generatedAt: new Date().toISOString(),
     generatedBy: repCode,
   });
-  updateLead(req.params.id, { reports, lastReportHtml: reportHtml });
+  await updateLead(req.params.id, { reports, lastReportHtml: reportHtml });
 
   res.json({
     success: true,
@@ -87,8 +87,8 @@ router.post('/:id/report', async (req, res) => {
 });
 
 // Serve a generated report
-router.get('/:id/report/:reportId', (req, res) => {
-  const lead = getLead(req.params.id);
+router.get('/:id/report/:reportId', async (req, res) => {
+  const lead = await getLead(req.params.id);
   if (!lead || !lead.lastReportHtml) return res.status(404).send('Report not found');
   res.setHeader('Content-Type', 'text/html');
   res.send(lead.lastReportHtml);

@@ -53,7 +53,7 @@ function getMergedCard(code) {
 // ─── API ROUTES ───────────────────────────────────────────────────────
 
 // GET /api/rep-card/:code — return merged card data
-router.get('/api/rep-card/:code', (req, res) => {
+router.get('/api/rep-card/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
   const merged = getMergedCard(code);
   if (!merged) return res.status(404).json({ error: 'Rep not found' });
@@ -61,7 +61,7 @@ router.get('/api/rep-card/:code', (req, res) => {
 });
 
 // PATCH /api/rep-cards/:code — update card fields
-router.patch('/api/rep-cards/:code', (req, res) => {
+router.patch('/api/rep-cards/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
   const auth = (req.query.auth || '').toUpperCase();
 
@@ -144,7 +144,7 @@ router.post('/api/rep-cards/:code/photo', upload.single('photo'), async (req, re
 });
 
 // GET /api/rep-codes — return all rep codes (for admin panel)
-router.get('/api/rep-codes', (req, res) => {
+router.get('/api/rep-codes', async (req, res) => {
   const codes = listRepCodes();
   res.json(codes.map(c => ({
     code: c.code,
@@ -159,7 +159,7 @@ router.get('/api/rep-codes', (req, res) => {
 });
 
 // PATCH /api/rep-codes/:code — update rep code fields (admin only)
-router.patch('/api/rep-codes/:code', (req, res) => {
+router.patch('/api/rep-codes/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
   const auth = (req.query.auth || '').toUpperCase();
 
@@ -184,7 +184,7 @@ router.patch('/api/rep-codes/:code', (req, res) => {
 
 // ─── VCARD DOWNLOAD ───────────────────────────────────────────────────
 
-router.get('/rep-card/:code/vcard', (req, res) => {
+router.get('/rep-card/:code/vcard', async (req, res) => {
   const code = req.params.code.toUpperCase();
   const merged = getMergedCard(code);
   if (!merged) return res.status(404).send('Rep not found');
@@ -213,7 +213,7 @@ END:VCARD`;
 
 // ─── HTML REP CARD PAGE ──────────────────────────────────────────────
 
-router.get('/rep-card/:code', (req, res) => {
+router.get('/rep-card/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
   const auth = (req.query.auth || '').toUpperCase();
   const isInternal = req.query.internal === 'true';

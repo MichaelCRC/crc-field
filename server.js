@@ -29,7 +29,7 @@ app.use('/', require('./routes/recruit'));
 
 // Rep codes
 const { validateRepCode } = require('./lib/repCodes');
-app.get('/api/rep-codes/validate', (req, res) => {
+app.get('/api/rep-codes/validate', async (req, res) => {
   const code = (req.query.code || '').toUpperCase();
   const rep = validateRepCode(code);
   if (!rep) return res.json({ valid: false });
@@ -50,14 +50,14 @@ app.get('/api/maps/reverse-geocode', async (req, res) => {
 
 // Stub: markup.js calls /api/jobs/:id to pre-load existing strokes.
 // Field app has no /api/jobs route, so return empty object to keep the canvas opening.
-app.get('/api/jobs/:id', (req, res) => res.json({}));
+app.get('/api/jobs/:id', async (req, res) => res.json({}));
 
 // POST /api/leads/:id/photos/markup — save photo markup locally to lead store
-app.post('/api/leads/:id/photos/markup', (req, res) => {
+app.post('/api/leads/:id/photos/markup', async (req, res) => {
   try {
     const { getLead, updateLead } = require('./lib/store');
     const { migratePhotos } = require('./lib/photoStorage');
-    const lead = getLead(req.params.id);
+    const lead = await getLead(req.params.id);
     if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
     const { photoIndex, markupData, strokes, category } = req.body;
@@ -71,7 +71,7 @@ app.post('/api/leads/:id/photos/markup', (req, res) => {
 
     arr[photoIndex] = { ...arr[photoIndex], markupUrl: markupData, hasMarkup: true };
     photos[cat] = arr;
-    updateLead(req.params.id, { photos });
+    await updateLead(req.params.id, { photos });
     res.json({ success: true });
   } catch (e) {
     console.error('[LeadMarkup] Error:', e.message);
@@ -80,19 +80,19 @@ app.post('/api/leads/:id/photos/markup', (req, res) => {
 });
 
 // Health
-app.get('/health', (req, res) => res.json({ status: 'ok', service: 'crc-field-intel' }));
+app.get('/health', async (req, res) => res.json({ status: 'ok', service: 'crc-field-intel' }));
 
 // Claims dashboard page
-app.get('/claims-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'claims-dashboard.html')));
+app.get('/claims-dashboard', async (req, res) => res.sendFile(path.join(__dirname, 'public', 'claims-dashboard.html')));
 
 // Team roster page
-app.get('/roster', (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
+app.get('/roster', async (req, res) => res.sendFile(path.join(__dirname, 'public', 'roster.html')));
 
 // Training portal
-app.get('/training', (req, res) => res.sendFile(path.join(__dirname, 'public', 'training.html')));
+app.get('/training', async (req, res) => res.sendFile(path.join(__dirname, 'public', 'training.html')));
 
 // SPA fallback
-app.get('/{*path}', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/{*path}', async (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`CRC Field Intel on port ${PORT}`));

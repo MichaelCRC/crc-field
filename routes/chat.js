@@ -14,7 +14,7 @@ function saveChat(chat) { write('chat.json', chat); }
 function getDmId(a, b) { return 'dm-' + [a, b].sort().join('-'); }
 
 // SSE stream
-router.get('/stream/:threadId', (req, res) => {
+router.get('/stream/:threadId', async (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
   res.write('data: {"type":"connected"}\n\n');
   addConnection(req.params.threadId, res);
@@ -24,7 +24,7 @@ router.get('/stream/:threadId', (req, res) => {
 });
 
 // Get threads for a rep
-router.get('/threads', (req, res) => {
+router.get('/threads', async (req, res) => {
   const code = (req.query.repCode || '').toUpperCase();
   const chat = getChat();
   const threads = [];
@@ -47,7 +47,7 @@ router.get('/threads', (req, res) => {
 });
 
 // Get messages for a thread
-router.get('/messages/:threadId', (req, res) => {
+router.get('/messages/:threadId', async (req, res) => {
   const code = (req.query.repCode || req.headers['x-rep-code'] || '').toUpperCase();
   if (req.params.threadId === 'leadership' && !isAdmin(code)) return res.status(403).json({ error: 'Admin only' });
   const chat = getChat();
@@ -59,7 +59,7 @@ router.get('/messages/:threadId', (req, res) => {
 });
 
 // Post message
-router.post('/messages', (req, res) => {
+router.post('/messages', async (req, res) => {
   const { threadId, text, photoUrl, repCode } = req.body;
   if (!threadId || (!text && !photoUrl)) return res.status(400).json({ error: 'threadId and text/photo required' });
   if (threadId === 'leadership' && !isAdmin((repCode || '').toUpperCase())) return res.status(403).json({ error: 'Admin only' });
@@ -104,7 +104,7 @@ router.post('/photo', chatUpload.single('photo'), async (req, res) => {
 });
 
 // Add reaction
-router.post('/react', (req, res) => {
+router.post('/react', async (req, res) => {
   const { threadId, messageId, repCode, emoji } = req.body;
   const chat = getChat();
   const thread = chat.threads[threadId];

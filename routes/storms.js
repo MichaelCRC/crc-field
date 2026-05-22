@@ -121,7 +121,7 @@ router.get('/for-address', async (req, res) => {
 
 // ── GET /api/storms/for-lead/:leadId ───────────────────────────────────────
 router.get('/for-lead/:leadId', async (req, res) => {
-  const lead = getLead(req.params.leadId);
+  const lead = await getLead(req.params.leadId);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
   const hasLeadCoords = lead.lat != null && lead.lng != null

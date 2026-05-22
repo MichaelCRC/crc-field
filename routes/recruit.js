@@ -5,7 +5,7 @@ const { read, write } = require('../lib/store');
 const FILE = 'applications.json';
 
 // POST /api/applications
-router.post('/api/applications', (req, res) => {
+router.post('/api/applications', async (req, res) => {
   const apps = read(FILE, []);
   const app = {
     id: 'app-' + Date.now(),
@@ -23,7 +23,7 @@ router.post('/api/applications', (req, res) => {
 });
 
 // GET /recruit — HTML page
-router.get('/recruit', (req, res) => {
+router.get('/recruit', async (req, res) => {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

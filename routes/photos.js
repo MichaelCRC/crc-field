@@ -7,7 +7,7 @@ const { uploadPhoto, deletePhoto, migratePhotos, isConfigured } = require('../li
 
 // Upload photo(s) to a lead with category and tag
 router.post('/:id/photos', upload.array('photos', 20), async (req, res) => {
-  const lead = getLead(req.params.id);
+  const lead = await getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
   if (!req.files?.length) return res.status(400).json({ error: 'No files' });
 
@@ -32,10 +32,10 @@ router.post('/:id/photos', upload.array('photos', 20), async (req, res) => {
     photos.inspection = [...photos.inspection, ...results];
   }
 
-  updateLead(req.params.id, { photos });
+  await updateLead(req.params.id, { photos });
 
   // Auto-sync new photos to portal job (fire-and-forget — never blocks response)
-  const updatedLead = getLead(req.params.id);
+  const updatedLead = await getLead(req.params.id);
   if (updatedLead?.portalJobId && process.env.SUPPLEMENT_PORTAL_URL && results.length > 0) {
     const allPhotos = [...(photos.inspection || []), ...(photos.build || [])];
     fetch(`${process.env.SUPPLEMENT_PORTAL_URL}/api/jobs/${updatedLead.portalJobId}/fields`, {
@@ -49,8 +49,8 @@ router.post('/:id/photos', upload.array('photos', 20), async (req, res) => {
 });
 
 // Get photos for a lead (returns { inspection: [], build: [] })
-router.get('/:id/photos', (req, res) => {
-  const lead = getLead(req.params.id);
+router.get('/:id/photos', async (req, res) => {
+  const lead = await getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
   const photos = migratePhotos(lead);
   res.json({ photos, configured: isConfigured() });
@@ -58,7 +58,7 @@ router.get('/:id/photos', (req, res) => {
 
 // Delete a photo
 router.delete('/:id/photos/:photoId', async (req, res) => {
-  const lead = getLead(req.params.id);
+  const lead = await getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
   const photoId = decodeURIComponent(req.params.photoId);
   await deletePhoto(photoId);
@@ -66,13 +66,13 @@ router.delete('/:id/photos/:photoId', async (req, res) => {
   const photos = migratePhotos(lead);
   photos.inspection = photos.inspection.filter(p => p.id !== photoId);
   photos.build = photos.build.filter(p => p.id !== photoId);
-  updateLead(req.params.id, { photos });
+  await updateLead(req.params.id, { photos });
   res.json({ success: true, photos });
 });
 
 // Update a photo's tag or caption
-router.patch('/:id/photos/:photoId', (req, res) => {
-  const lead = getLead(req.params.id);
+router.patch('/:id/photos/:photoId', async (req, res) => {
+  const lead = await getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
   const photoId = decodeURIComponent(req.params.photoId);
   const { tag, caption } = req.body;
@@ -84,13 +84,13 @@ router.patch('/:id/photos/:photoId', (req, res) => {
   });
   photos.inspection = update(photos.inspection);
   photos.build = update(photos.build);
-  updateLead(req.params.id, { photos });
+  await updateLead(req.params.id, { photos });
   res.json({ success: true, photos });
 });
 
 // Homeowner portal sync endpoint
 router.post('/:id/sync-homeowner-portal', async (req, res) => {
-  const lead = getLead(req.params.id);
+  const lead = await getLead(req.params.id);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
   const photos = migratePhotos(lead);
@@ -106,7 +106,7 @@ router.post('/:id/sync-homeowner-portal', async (req, res) => {
     lastSync: new Date().toISOString(),
   };
 
-  updateLead(req.params.id, { homeownerPortalSync: syncStatus });
+  await updateLead(req.params.id, { homeownerPortalSync: syncStatus });
 
   // If portal job exists, push photos
   if (lead.portalJobId && process.env.SUPPLEMENT_PORTAL_URL) {

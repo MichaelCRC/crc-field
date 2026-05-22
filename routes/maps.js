@@ -37,7 +37,7 @@ router.get('/place-details', async (req, res) => {
 });
 
 // Street View image URL
-router.get('/streetview', (req, res) => {
+router.get('/streetview', async (req, res) => {
   if (!API_KEY) return res.json({ url: '' });
   const addr = req.query.address || '';
   const size = req.query.size || '600x400';
@@ -48,7 +48,7 @@ router.get('/streetview', (req, res) => {
 });
 
 // Maps JS API key (for embedding maps on frontend)
-router.get('/key', (req, res) => {
+router.get('/key', async (req, res) => {
   res.json({ key: API_KEY ? API_KEY : null });
 });
 

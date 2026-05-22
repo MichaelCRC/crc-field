@@ -8,7 +8,7 @@ function loadReferrals() { return read(FILE, []); }
 function saveReferrals(data) { write(FILE, data); }
 
 // GET /api/referrals/stats — must be before /:id
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req, res) => {
   const referrals = loadReferrals();
   const statsByRep = {};
   referrals.forEach(r => {
@@ -23,7 +23,7 @@ router.get('/stats', (req, res) => {
 });
 
 // GET /api/referrals — list all (optional ?rep=CODE)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   let referrals = loadReferrals();
   if (req.query.rep) {
     referrals = referrals.filter(r => r.rep_code === req.query.rep.toUpperCase());
@@ -32,7 +32,7 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/referrals/:id
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const referrals = loadReferrals();
   const referral = referrals.find(r => r.id === req.params.id);
   if (!referral) return res.status(404).json({ error: 'Referral not found' });
@@ -40,7 +40,7 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/referrals — create
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const referrals = loadReferrals();
   const referral = {
     id: 'ref-' + Date.now(),
@@ -62,7 +62,7 @@ router.post('/', (req, res) => {
 });
 
 // PATCH /api/referrals/:id — update status
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
   const referrals = loadReferrals();
   const idx = referrals.findIndex(r => r.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Referral not found' });

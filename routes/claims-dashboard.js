@@ -16,11 +16,22 @@ const PENDING_STATUSES = ['Claim Filed', 'Adj. Meeting Scheduled', 'Adjuster Con
 const INSPECTION_STATUSES = ['Inspection'];
 const ACTIVE_STATUSES = ['Claim Filed', 'Adj. Meeting Scheduled', 'Adjuster Contacted', 'Supplementing', 'Waiting on Scope', 'Re-Inspected', 'Job Approved', 'Job Scheduled', 'Color Selection', 'Estimating', 'Estimate Sent - Follow Up', 'Estimate Presented', 'Inspection', 'Consultation', 'Active Hold', 'Follow Up', 'Appt. Scheduled', 'At Risk'];
 
+// mtime-keyed cache for the 2.7MB JN snapshot. Previously every call
+// re-parsed the whole file. The snapshot only changes when the geocoder
+// or a manual import refreshes it, so caching by mtime gives us O(1)
+// access on the hot path while still picking up fresh exports.
+let _jnCache = { path: null, mtimeMs: 0, jobs: null };
 function loadJobs() {
   for (const p of JN_PATHS) {
     try {
+      const st = fs.statSync(p);
+      if (_jnCache.path === p && _jnCache.mtimeMs === st.mtimeMs && _jnCache.jobs) {
+        return _jnCache.jobs;
+      }
       const raw = fs.readFileSync(p, 'utf8');
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      _jnCache = { path: p, mtimeMs: st.mtimeMs, jobs: parsed };
+      return parsed;
     } catch (e) { /* try next */ }
   }
   console.error('Failed to load JN data from any path');
@@ -103,7 +114,7 @@ function buildDashboard() {
 }
 
 // API endpoint
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   res.json(buildDashboard());
 });
 

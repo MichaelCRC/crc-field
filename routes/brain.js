@@ -73,13 +73,13 @@ router.post('/chat', async (req, res) => {
 });
 
 // Get conversation history
-router.get('/history/:repCode', (req, res) => {
+router.get('/history/:repCode', async (req, res) => {
   const chats = read(HISTORY_FILE, {});
   res.json(chats[req.params.repCode.toUpperCase()] || []);
 });
 
 // Clear history
-router.delete('/history/:repCode', (req, res) => {
+router.delete('/history/:repCode', async (req, res) => {
   const chats = read(HISTORY_FILE, {});
   chats[req.params.repCode.toUpperCase()] = [];
   write(HISTORY_FILE, chats);
@@ -87,7 +87,7 @@ router.delete('/history/:repCode', (req, res) => {
 });
 
 // Admin: all brain usage
-router.get('/history', (req, res) => {
+router.get('/history', async (req, res) => {
   const code = (req.query.repCode || '').toUpperCase();
   if (!isAdmin(code)) return res.status(403).json({ error: 'Admin only' });
   res.json(read(HISTORY_FILE, {}));

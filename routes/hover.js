@@ -25,7 +25,7 @@ router.post('/sync', async (req, res) => {
   const { hoverId, address, measurements, photos, repCode } = req.body;
   if (!address) return res.status(400).json({ error: 'Address required' });
 
-  const leads = listLeads();
+  const leads = await listLeads();
   const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const match = leads.find(l => norm(l.address).includes(norm(address).substring(0, 15)));
   if (!match) return res.json({ success: false, matched: false, message: 'No matching lead found' });
@@ -70,13 +70,13 @@ router.post('/sync', async (req, res) => {
     updates.photos = currentPhotos;
   }
 
-  updateLead(match.id, updates);
+  await updateLead(match.id, updates);
   res.json({ success: true, matched: true, leadId: match.id });
 });
 
 // Pull Hover photos for a specific lead
 router.post('/pull-photos/:leadId', async (req, res) => {
-  const lead = getLead(req.params.leadId);
+  const lead = await getLead(req.params.leadId);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
   if (!lead.hoverId) return res.json({ success: false, message: 'No Hover ID on this job' });
 
@@ -106,7 +106,7 @@ router.post('/pull-photos/:leadId', async (req, res) => {
     }
 
     currentPhotos.inspection = [...currentPhotos.inspection, ...newPhotos];
-    updateLead(lead.id, { photos: currentPhotos });
+    await updateLead(lead.id, { photos: currentPhotos });
 
     res.json({ success: true, pulled: newPhotos.length });
   } catch (e) {
@@ -116,7 +116,7 @@ router.post('/pull-photos/:leadId', async (req, res) => {
 
 // Order Hover measurement from field app
 router.post('/order/:leadId', async (req, res) => {
-  const lead = getLead(req.params.leadId);
+  const lead = await getLead(req.params.leadId);
   if (!lead) return res.status(404).json({ error: 'Lead not found' });
 
   const portalUrl = process.env.SUPPLEMENT_PORTAL_URL;
@@ -137,7 +137,7 @@ router.post('/order/:leadId', async (req, res) => {
     });
     const data = await resp.json();
     if (data.success) {
-      updateLead(lead.id, {
+      await updateLead(lead.id, {
         portalJobId: data.jobId,
         hoverOrdered: true,
         hoverOrderedAt: new Date().toISOString(),

@@ -23,8 +23,8 @@ router.get('/lists/:name', requireAdmin, (req, res) => {
 });
 
 // Rep performance
-router.get('/reps', requireAdmin, (req, res) => {
-  const leads = listLeads();
+router.get('/reps', requireAdmin, async (req, res) => {
+  const leads = await listLeads();
   const codes = listRepCodes();
   const weekAgo = Date.now() - 7 * 86400000;
   const stats = codes.filter(c => c.active).map(rep => {
@@ -169,7 +169,7 @@ router.post('/intelligence', requireAdmin, (req, res) => {
 });
 
 // Zones
-router.get('/zones', (req, res) => res.json(listZones()));
-router.post('/zones', (req, res) => { res.status(201).json(createZone(req.body)); });
+router.get('/zones', async (req, res) => res.json(listZones()));
+router.post('/zones', async (req, res) => { res.status(201).json(createZone(req.body)); });
 
 module.exports = router;

@@ -52,7 +52,7 @@ function cleanAddress(raw) {
 }
 
 // ── POST /api/builds-map/import-csv ──────────────────────────────────
-router.post('/import-csv', (req, res) => {
+router.post('/import-csv', async (req, res) => {
   if (!fs.existsSync(CSV_FILE)) {
     return res.status(404).json({ error: 'CSV not found at ' + CSV_FILE });
   }
@@ -100,7 +100,7 @@ router.post('/import-csv', (req, res) => {
 });
 
 // ── GET /api/builds-map/pins?color=Charcoal|unset ────────────────────
-router.get('/pins', (req, res) => {
+router.get('/pins', async (req, res) => {
   const db = readDb();
   let pins = db.pins;
   const color = (req.query.color || '').trim();
@@ -115,7 +115,7 @@ router.get('/pins', (req, res) => {
 });
 
 // ── PATCH /api/builds-map/pins/:id ───────────────────────────────────
-router.patch('/pins/:id', (req, res) => {
+router.patch('/pins/:id', async (req, res) => {
   const db = readDb();
   const idx = db.pins.findIndex(p => p.id === req.params.id);
   if (idx < 0) return res.status(404).json({ error: 'Pin not found' });
@@ -128,7 +128,7 @@ router.patch('/pins/:id', (req, res) => {
 });
 
 // ── POST /api/builds-map/pins (manual add) ───────────────────────────
-router.post('/pins', (req, res) => {
+router.post('/pins', async (req, res) => {
   const { address, name, shingleColor, notes } = req.body || {};
   if (!address || !String(address).trim()) return res.status(400).json({ error: 'address required' });
   const db = readDb();
