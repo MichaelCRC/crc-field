@@ -16,6 +16,8 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
+const { query } = require('../db/client');
+
 const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
 const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
 
@@ -34,39 +36,74 @@ async function portalFetch(path, opts = {}) {
   return { status: res.status, ok: res.ok, data };
 }
 
-// GET /api/field/jobs?repCode=MCG[&pipeline=insurance|retail|repair][&stage=new_lead]
+// GET /api/field/jobs?repCode=MCG  — direct Postgres read
+// Bypasses the cookie-gated portal /api/jobs list endpoint that the May 6
+// auth tightening (commit 66cf033c) closed. Pulls cards from the shared
+// Postgres directly. The remaining proxy endpoints in this file still work
+// because they hit per-resource paths (/api/jobs/:id, /api/hermes/*) that
+// remain exempt from the cookie middleware.
 router.get('/', async (req, res) => {
   try {
-    const params = new URLSearchParams();
-    if (req.query.repCode) params.set('repCode', req.query.repCode);
-    const { status, ok, data } = await portalFetch(`/api/jobs?${params}`);
-    if (!ok) return res.status(status).json(data);
+    const repCode = String(req.query.repCode || '').toUpperCase().trim();
 
-    // Transform to lightweight cards for the field app
-    // Sort: overdue tasks first, then by lastActivity desc
-    const jobs = (Array.isArray(data) ? data : []).map(job => ({
-      id: job.id,
-      address: job.address,
-      homeownerName: job.homeownerName || `${job.homeowner?.firstName || ''} ${job.homeowner?.lastName || ''}`.trim(),
-      phone: job.homeowner?.phone || '',
-      pipeline: job.pipeline || job.jobCategory || 'insurance',
-      stage: job.stage || 'new_lead',
-      subStatus: job.subStatus || null,
-      carrier: job.carrier || '',
-      claimNumber: job.claimNumber || '',
-      adjusterDate: job.adjusterDate || null,
-      repCode: job.repCode || '',
-      lastActivity: job.lastActivity || job.updated_at || job.created_at,
-      createdAt: job.created_at,
-      openTasks: (job.tasks || []).filter(t => !t.completed).length,
-      overdueTasks: (job.tasks || []).filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < new Date()).length,
-      noteCount: (job.jobNotes || []).length,
-      photoCount: job.simplePhotos?.length || job.photos?.photoCount || 0,
-      estimateValue: job.estimateValue || null,
-      streetViewUrl: job.streetViewUrl || null
-    }));
+    // Same shared SELECT for both filtered + unfiltered (admin) cases.
+    // metadata->>'repCode' is the legacy field the cards filter on. The
+    // first-class sales_rep_id FK isn't used here because the migration
+    // defaulted unassigned jobs to MCG, which would over-collect for him.
+    const baseSql = `
+      SELECT j.field_local_id, j.job_id, j.carrier, j.claim_number, j.job_type,
+             j.metadata, j.created_at, j.updated_at,
+             p.street_address, p.city, p.state, p.zip,
+             c.first_name, c.last_name, c.primary_phone
+        FROM jobs j
+        LEFT JOIN properties p ON p.property_id = j.property_id
+        LEFT JOIN customers c ON c.customer_id = j.customer_id`;
+    const filterSql = repCode
+      ? ` WHERE UPPER(COALESCE(j.metadata->>'repCode','')) = $1`
+      : '';
+    const orderSql = ` ORDER BY j.created_at DESC LIMIT 1000`;
+    const { rows } = await query(baseSql + filterSql + orderSql, repCode ? [repCode] : []);
 
-    // Sort: overdue tasks bubble up, then most recent activity
+    const now = new Date();
+    const jobs = rows.map(row => {
+      const md = row.metadata || {};
+      const tasks = Array.isArray(md.tasks) ? md.tasks : [];
+      const jobNotes = Array.isArray(md.jobNotes) ? md.jobNotes : [];
+
+      // Migration historically wrote the full address into properties.street_address
+      // (street + city + state + zip as one string). Prefer the metadata copy when
+      // present — that's what the legacy portal returned to the field app.
+      const address = md.address || row.street_address || '';
+
+      const firstName = row.first_name || md.homeowner?.firstName || '';
+      const lastName  = row.last_name  || md.homeowner?.lastName  || '';
+      const phone     = row.primary_phone || md.homeowner?.phone || md.phone || '';
+      const homeownerName = md.homeownerName || `${firstName} ${lastName}`.trim();
+
+      return {
+        id: row.field_local_id || row.job_id,
+        address,
+        homeownerName,
+        homeowner: { firstName, lastName, phone },
+        phone,
+        pipeline: md.jobCategory || md.pipeline || row.job_type || 'insurance',
+        stage: md.stage || 'new_lead',
+        subStatus: md.subStatus || null,
+        carrier: row.carrier || md.carrier || '',
+        claimNumber: row.claim_number || md.claimNumber || '',
+        adjusterDate: md.adjusterDate || null,
+        repCode: md.repCode || '',
+        lastActivity: md.lastActivity || row.updated_at || row.created_at,
+        createdAt: row.created_at,
+        openTasks: tasks.filter(t => !t.completed).length,
+        overdueTasks: tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < now).length,
+        noteCount: jobNotes.length,
+        photoCount: md.photos?.photoCount || (Array.isArray(md.simplePhotos) ? md.simplePhotos.length : 0),
+        estimateValue: md.estimateValue || null,
+        streetViewUrl: md.streetViewUrl || null,
+      };
+    });
+
     jobs.sort((a, b) => {
       if (b.overdueTasks !== a.overdueTasks) return b.overdueTasks - a.overdueTasks;
       return new Date(b.lastActivity) - new Date(a.lastActivity);
@@ -74,8 +111,8 @@ router.get('/', async (req, res) => {
 
     res.json(jobs);
   } catch (e) {
-    console.error('[FieldJobs] GET / error:', e.message);
-    res.status(500).json({ error: 'Failed to load jobs from portal' });
+    console.error('[FieldJobs] GET / direct-pg error:', e?.stack || e?.message || e);
+    res.status(500).json({ error: 'Failed to load jobs', detail: e?.message });
   }
 });
 
