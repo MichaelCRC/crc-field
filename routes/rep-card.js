@@ -611,9 +611,34 @@ router.get('/rep-card/:code', async (req, res) => {
       letter-spacing: 0.5px;
       margin-top: 2px;
     }
+    /* Back-to-app affordance (new 2026-05-27). Canonical brand colors per
+       May 2026 lock: navy #0A1530, teal #07BFEE. Other colors on this page
+       predate the brand lock; see DD-008 for the sweep. */
+    .back-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0A1530;
+      border-bottom: 1px solid #07BFEE;
+    }
+    .back-link {
+      display: block;
+      padding: 14px 20px;
+      color: #07BFEE;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .back-link:active {
+      background: rgba(7, 191, 238, 0.1);
+    }
   </style>
 </head>
 <body>
+  <div class="back-bar">
+    <a href="/" class="back-link">&larr; Back to Field App</a>
+  </div>
   <div class="card">
     <div class="card-header">
       <div class="logo"><img src="/img/crc-logo-monogram.jpg" alt="CRC"></div>

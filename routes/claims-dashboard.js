@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const { listProducingRepCodes, refreshRepCodes, repCacheStatus } = require('../lib/repCodes');
 
 // Try multiple paths: local dev path, then bundled data path
 const JN_PATHS = [
@@ -97,7 +98,17 @@ function buildDashboard() {
     if (created >= sevenDaysAgo) r.weekly++;
   });
 
-  const by_rep = Object.values(repMap).sort((a, b) => b.total_jobs - a.total_jobs);
+  // Rule 1 (production scoreboard) filter — drop departed reps from the
+  // per-rep leaderboard. Company aggregates below intentionally stay
+  // computed from ALL jobs because historical revenue from departed reps
+  // is still real revenue that belongs in the company totals. Only the
+  // displayed rep rows are filtered. Match key is JN sales_rep_name vs
+  // PG users.name — fragile, see DD-007 in DOCTRINE_DEBT.md for the
+  // planned jn_contact_id JOIN that replaces this once Add Rep ships.
+  const producingNames = new Set(listProducingRepCodes().map(r => r.name));
+  const by_rep = Object.values(repMap)
+    .filter(r => producingNames.has(r.rep_name))
+    .sort((a, b) => b.total_jobs - a.total_jobs);
 
   // Company totals
   const validJobs = jobs.filter(j => j.sales_rep_name && j.sales_rep_name !== 'null' && j.sales_rep_name !== '');
@@ -115,6 +126,9 @@ function buildDashboard() {
 
 // API endpoint
 router.get('/', async (req, res) => {
+  // Pre-warm rep cache on cold boot so the by_rep filter doesn't see
+  // an empty cache (which would drop every rep from the leaderboard).
+  if (!repCacheStatus().loaded) await refreshRepCodes();
   res.json(buildDashboard());
 });
 
