@@ -127,15 +127,11 @@ async function selectAddress(placeId, desc) {
   try { const sv = await fetch(`/api/maps/streetview?address=${encodeURIComponent(selectedAddress)}`).then(r => r.json()); if (sv.url) document.getElementById('street-view-preview').innerHTML = `<img src="${sv.url}" alt="Street View">`; } catch {}
 }
 
-// --- Job Type Multi-Select ---
-function toggleJobChip(el) {
-  const val = el.dataset.val; const row = document.getElementById('job-type-chips');
-  if (val === 'Full Exterior') { const on = !el.classList.contains('active'); row.querySelectorAll('.chip').forEach(c => { if (['Roof','Siding','Gutters','Full Exterior'].includes(c.dataset.val)) c.classList.toggle('active', on); }); }
-  else { el.classList.toggle('active'); const all3 = ['Roof','Siding','Gutters'].every(v => row.querySelector('[data-val="'+v+'"]').classList.contains('active')); row.querySelector('[data-val="Full Exterior"]').classList.toggle('active', all3); }
-}
-function getJobTypes() { return [...document.querySelectorAll('#job-type-chips .chip.active')].map(c => c.dataset.val); }
-function selectClaimType(el) { document.querySelectorAll('#claim-type-chips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
-function getClaimType() { return document.querySelector('#claim-type-chips .chip.active')?.dataset.val || 'insurance'; }
+// Trade Type + Job Type chip helpers removed 2026-05-27 with the chip
+// rows themselves (see index.html comment). toggleJobChip, getJobTypes,
+// selectClaimType, getClaimType were dead after the HTML cuts. Rep
+// categorizes both on the Job Detail screen later via the Categorization
+// Layer (v3.1 section 5, pending build per v3.1 section 6 line 9).
 function selectSource(el) { document.querySelectorAll('#source-chips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
 function getSource() { return document.querySelector('#source-chips .chip.active')?.dataset.val || 'Door Knock'; }
 
@@ -190,9 +186,11 @@ async function addLead() {
       address: selectedAddress || addr, lat: parseFloat(el.dataset.lat) || null, lng: parseFloat(el.dataset.lng) || null,
       city: el.dataset.city || '', state: el.dataset.state || 'OH', zip: el.dataset.zip || '', county: el.dataset.county || '',
       homeowner: document.getElementById('lead-name').value.trim(), phone: document.getElementById('lead-phone').value.trim(),
-      jobType: getJobTypes().join(', '), jobTypes: getJobTypes(), jobCategory: getClaimType(),
+      // jobType / jobTypes / jobCategory / pipeline intentionally omitted
+      // per v3 Simplification Spec section 1. Rep categorizes on Job Detail
+      // (v3.1 section 5). lib/store.js falls back to 'Roof' / 'insurance'
+      // and routes/field-jobs.js falls back to 'insurance' on pipeline.
       source: getSource(), notes: document.getElementById('lead-notes').value.trim(), streetViewUrl: svRes.url || '', repCode,
-      pipeline: getClaimType() === 'retail' ? 'retail' : 'insurance',
     };
     const result = await fetch('/api/field/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
     const jobId = result.jobId || result.job?.id || '';

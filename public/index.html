@@ -152,23 +152,13 @@
             <input type="text" id="lead-name" placeholder="Homeowner name" class="input-md">
             <input type="tel" id="lead-phone" placeholder="Phone" class="input-md">
           </div>
-          <div style="margin-top:10px">
-            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Trade Type (select all that apply)</div>
-            <div class="chip-row" id="job-type-chips">
-              <button class="chip active" data-val="Roof" onclick="toggleJobChip(this)">Roof</button>
-              <button class="chip" data-val="Siding" onclick="toggleJobChip(this)">Siding</button>
-              <button class="chip" data-val="Gutters" onclick="toggleJobChip(this)">Gutters</button>
-              <button class="chip" data-val="Full Exterior" onclick="toggleJobChip(this)">Full Ext</button>
-            </div>
-          </div>
-          <div style="margin-top:10px">
-            <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type</div>
-            <div class="chip-row" id="claim-type-chips">
-              <button class="chip active" data-val="insurance" onclick="selectClaimType(this)">Insurance</button>
-              <button class="chip" data-val="retail" onclick="selectClaimType(this)">Retail</button>
-              <button class="chip" data-val="repair" onclick="selectClaimType(this)">Repair</button>
-            </div>
-          </div>
+          <!-- Trade Type + Job Type chip rows removed 2026-05-27 per
+               CRC_Field_App_v3_Simplification_Spec.pdf section 1 + section 9.
+               Rep categorizes trade + job type on the Job Detail screen
+               via the Categorization Layer (v3.1 section 5, pending build
+               per v3.1 section 6 line 9). lib/store.js fallbacks keep the
+               persisted lead consistent ('Roof' / 'insurance') as
+               placeholders until the rep categorizes. -->
           <div style="margin-top:10px">
             <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Lead Type</div>
             <div class="chip-row" id="source-chips">
