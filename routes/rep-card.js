@@ -152,8 +152,8 @@ router.get('/api/rep-codes', async (req, res) => {
     role: c.role,
     title: c.title || '',
     department: c.department || '',
-    showOnLeaderboard: c.showOnLeaderboard,
-    canFileClaims: c.canFileClaims,
+    showOnLeaderboard: !!c.sells_volume,
+    canFileClaims: c.canFileClaims,  // see DD-006 in DOCTRINE_DEBT.md
     active: c.active
   })));
 });
