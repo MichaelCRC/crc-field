@@ -377,7 +377,7 @@
         <button class="fab-item" onclick="closeFab();switchView('notes')" title="Notes">&#128221;<span>Notes</span></button>
         <button class="fab-item" onclick="closeFab();switchView('booking')" title="Booking">&#128197;<span>Booking</span></button>
         <button class="fab-item" onclick="closeFab();switchView('brain')" title="Brain">&#129504;<span>Brain</span></button>
-        <button class="fab-item" onclick="closeFab();window.open('/rep-card/'+repCode+'?auth='+repCode,'_blank')" title="Rep Card">&#127183;<span>Rep Card</span></button>
+        <button class="fab-item" onclick="closeFab();location.href='/rep-card/'+repCode+'?auth='+repCode" title="Rep Card">&#127183;<span>Rep Card</span></button>
       </div>
       <button class="fab-main" id="fab-main-btn" onclick="toggleFab()" aria-label="Quick access">&#10010;</button>
     </div>
@@ -414,16 +414,16 @@
         <button class="more-item" onclick="closeMoreMenu();switchView('brain')">
           <span class="more-icon">&#129504;</span><span>CRC Brain</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/training?auth='+repCode,'_blank')">
+        <button class="more-item" onclick="closeMoreMenu();location.href='/training?auth='+repCode">
           <span class="more-icon">&#127891;</span><span>CRC University</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/rep-card/'+repCode+'?auth='+repCode,'_blank')">
+        <button class="more-item" onclick="closeMoreMenu();location.href='/rep-card/'+repCode+'?auth='+repCode">
           <span class="more-icon">&#127183;</span><span>My Rep Card</span><span class="more-arrow">&#8250;</span>
         </button>
         <button class="more-item" onclick="closeMoreMenu();switchView('referrals')" id="nav-referrals">
           <span class="more-icon">&#129309;</span><span>Referrals</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();window.open('/roster','_blank')">
+        <button class="more-item" onclick="closeMoreMenu();location.href='/roster'">
           <span class="more-icon">&#128101;</span><span>Team Roster</span><span class="more-arrow">&#8250;</span>
         </button>
         <button class="more-item" onclick="closeMoreMenu();switchView('resources')">

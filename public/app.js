@@ -466,7 +466,7 @@ function showRecruitOptions() {
   modal.querySelector('#knock-options').innerHTML = `
     <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:8px">Share the Opportunity</div>
     <button class="btn-add" onclick="shareRecruitLink()" style="background:var(--teal)">Share Recruit Link</button>
-    <button class="btn-add" onclick="document.getElementById('knock-modal').style.display='none';window.open('/docs/career-guide','_blank')" style="background:var(--navy)">View Career Guide</button>
+    <button class="btn-add" onclick="document.getElementById('knock-modal').style.display='none';location.href='/docs/career-guide'" style="background:var(--navy)">View Career Guide</button>
     <button onclick="document.getElementById('knock-modal').style.display='none'" style="padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;margin-top:4px;width:100%">Cancel</button>`;
 }
 function shareRecruitLink() {
