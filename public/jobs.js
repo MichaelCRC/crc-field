@@ -609,6 +609,98 @@ async function saveJobInfo(jobId) {
   }
 }
 
+function toggleCategorization(jobId) {
+  window._catExpanded = window._catExpanded || {};
+  window._catExpanded[jobId] = (window._catExpanded[jobId] === false) ? true : false;
+  openJobDetail(jobId);
+}
+
+// Trade Type multi-select. "Full Exterior" is a convenience toggle that
+// selects/clears Roof+Siding+Gutters together; it auto-activates when all
+// three concrete trades are on. Mirrors the original home-form behavior.
+function catToggleTrade(el) {
+  var row = document.getElementById('cat-trade-chips');
+  if (!row) return;
+  if (el.dataset.val === 'Full Exterior') {
+    var on = !el.classList.contains('active');
+    row.querySelectorAll('.chip').forEach(function(c){
+      if (['Roof','Siding','Gutters','Full Exterior'].indexOf(c.dataset.val) !== -1) c.classList.toggle('active', on);
+    });
+  } else {
+    el.classList.toggle('active');
+    var all3 = ['Roof','Siding','Gutters'].every(function(v){
+      var c = row.querySelector('[data-val="' + v + '"]');
+      return c && c.classList.contains('active');
+    });
+    var fe = row.querySelector('[data-val="Full Exterior"]');
+    if (fe) fe.classList.toggle('active', all3);
+  }
+}
+
+function catSelectJobType(el) {
+  document.querySelectorAll('#cat-jobtype-chips .chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+async function saveCategorization(jobId) {
+  var btn = document.querySelector('button[onclick*="saveCategorization"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  // Store the concrete trades only — "Full Exterior" is a UI convenience, not
+  // a stored value. Job Type rides `pipeline` → canonical jobs.job_type.
+  var trades = [].slice.call(document.querySelectorAll('#cat-trade-chips .chip.active'))
+    .map(function(c){ return c.dataset.val; })
+    .filter(function(v){ return v !== 'Full Exterior'; });
+  var jobType = document.querySelector('#cat-jobtype-chips .chip.active');
+  jobType = jobType ? jobType.dataset.val : 'insurance';
+  var patch = { selectedTrades: trades, tradeType: trades.join(', '), pipeline: jobType };
+  try {
+    var r = await fetch('/api/field/jobs/' + jobId, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    });
+    if (!r.ok) throw new Error('Update failed');
+    showToast('Categorization saved');
+    openJobDetail(jobId);
+  } catch (e) {
+    showToast('Save failed: ' + e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Categorization'; }
+  }
+}
+
+function toggleHomeownerInfo(jobId) {
+  window._homeownerExpanded = window._homeownerExpanded || {};
+  window._homeownerExpanded[jobId] = (window._homeownerExpanded[jobId] === true) ? false : true;
+  openJobDetail(jobId);
+}
+
+async function saveHomeownerInfo(jobId) {
+  var btn = document.querySelector('button[onclick*="saveHomeownerInfo"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  // Sent as a whole homeowner object; the portal maps sub-fields to canonical
+  // customers columns (email→primary_email, secondaryPhone→secondary_phone,
+  // spouse→spouse_name, bestTime→best_time_to_contact,
+  // preferredContact→preferred_contact_method).
+  var patch = { homeowner: {
+    email:            document.getElementById('ho-email')?.value?.trim() || '',
+    secondaryPhone:   document.getElementById('ho-secphone')?.value?.trim() || '',
+    spouse:           document.getElementById('ho-spouse')?.value?.trim() || '',
+    bestTime:         document.getElementById('ho-besttime')?.value || '',
+    preferredContact: document.getElementById('ho-prefcontact')?.value || '',
+  } };
+  try {
+    var r = await fetch('/api/field/jobs/' + jobId, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    });
+    if (!r.ok) throw new Error('Update failed');
+    showToast('Homeowner info saved');
+    openJobDetail(jobId);
+  } catch (e) {
+    showToast('Save failed: ' + e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Homeowner Info'; }
+  }
+}
+
 // Navigate to My Jobs view then open a specific job — used by lead confirm "View Job" button
 async function loadAndOpenJob(jobId) {
   switchView('jobs');
@@ -749,6 +841,76 @@ function renderJobDetail(job) {
 
   // Roof diagram is now rendered inside the CRC Measure bottom sheet — removed
   // the standalone Job Detail section 2026-04 to avoid duplicate surfaces.
+
+  // ── Categorization: Trade Type + Job Type (v3.1 section 5) ──
+  // Moved here from the home lead form (cut in commit 82df925) — the rep
+  // categorizes on Job Detail instead of at lead capture. Trade Type is the
+  // sub-product dimension and persists to metadata (tradeType/selectedTrades),
+  // which the doctrine treats as correct for this dimension. Job Type
+  // (insurance/retail/repair) is sent as `pipeline`, which the portal's
+  // updateJob partition maps to the canonical jobs.job_type column.
+  var catExpanded = (window._catExpanded || {})[jid] !== false;
+  var curTrades = Array.isArray(job.selectedTrades) ? job.selectedTrades.slice()
+    : Array.isArray(job.jobTypes) ? job.jobTypes.slice()
+    : (typeof job.tradeType === 'string' && job.tradeType) ? job.tradeType.split(',').map(function(s){return s.trim();}).filter(Boolean)
+    : (typeof job.jobType === 'string' && job.jobType && job.jobType !== 'roof_only') ? job.jobType.split(',').map(function(s){return s.trim();}).filter(Boolean)
+    : ['Roof'];
+  var curJobType = String(job.pipeline || job.jobCategory || 'insurance').toLowerCase();
+  var allCoreTrades = ['Roof','Siding','Gutters'].every(function(t){ return curTrades.indexOf(t) !== -1; });
+  html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
+  html += '<button onclick="toggleCategorization(\'' + jid + '\')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:' + (catExpanded ? '12' : '0') + 'px">';
+  html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Categorization</span>';
+  html += '<span style="font-size:14px;color:var(--gray)">' + (catExpanded ? '▲' : '▼') + '</span></button>';
+  if (catExpanded) {
+    html += '<div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Trade Type (select all that apply)</div>';
+    html += '<div class="chip-row" id="cat-trade-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
+    [['Roof','Roof'],['Siding','Siding'],['Gutters','Gutters'],['Full Exterior','Full Ext']].forEach(function(t){
+      var on = (t[0] === 'Full Exterior') ? allCoreTrades : (curTrades.indexOf(t[0]) !== -1);
+      html += '<button class="chip' + (on ? ' active' : '') + '" data-val="' + t[0] + '" onclick="catToggleTrade(this)">' + t[1] + '</button>';
+    });
+    html += '</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Job Type</div>';
+    html += '<div class="chip-row" id="cat-jobtype-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
+    [['insurance','Insurance'],['retail','Retail'],['repair','Repair']].forEach(function(t){
+      html += '<button class="chip' + (curJobType === t[0] ? ' active' : '') + '" data-val="' + t[0] + '" onclick="catSelectJobType(this)">' + t[1] + '</button>';
+    });
+    html += '</div>';
+    html += '<button onclick="saveCategorization(\'' + jid + '\')" style="width:100%;padding:9px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Categorization</button>';
+  }
+  html += '</div>';
+
+  // ── Homeowner Info (collapsible) — enrichment fields (v3.1 §5 line 10) ──
+  // Email + Secondary Phone reuse canonical customer columns; Spouse, Best
+  // Time, Preferred Contact persist to the new customers columns (doctrine
+  // §2.2). Saved as a whole homeowner object; the portal routes sub-fields to
+  // the customers table. Collapsed by default to keep the screen tidy.
+  var ho = job.homeowner || {};
+  var hoExpanded = (window._homeownerExpanded || {})[jid] === true;
+  function _hoOpt(cur, val, label) { return '<option value="' + val + '"' + (String(cur||'') === val ? ' selected' : '') + '>' + (label || (val || '— select —')) + '</option>'; }
+  html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
+  html += '<button onclick="toggleHomeownerInfo(\'' + jid + '\')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:' + (hoExpanded ? '12' : '0') + 'px">';
+  html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Homeowner Info</span>';
+  html += '<span style="font-size:14px;color:var(--gray)">' + (hoExpanded ? '▲' : '▼') + '</span></button>';
+  if (hoExpanded) {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">EMAIL</label>'
+      + '<input type="email" id="ho-email" value="' + (ho.email || '') + '" placeholder="homeowner@email.com" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">SECONDARY PHONE</label>'
+      + '<input type="tel" id="ho-secphone" value="' + (ho.secondaryPhone || '') + '" placeholder="(614) 555-0000" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">SPOUSE / CO-OWNER</label>'
+      + '<input type="text" id="ho-spouse" value="' + (ho.spouse || '') + '" placeholder="Name" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">BEST TIME</label>'
+      + '<select id="ho-besttime" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box">'
+      + _hoOpt(ho.bestTime,'') + _hoOpt(ho.bestTime,'Anytime') + _hoOpt(ho.bestTime,'Morning') + _hoOpt(ho.bestTime,'Afternoon') + _hoOpt(ho.bestTime,'Evening') + _hoOpt(ho.bestTime,'Weekend')
+      + '</select></div>';
+    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">PREFERRED CONTACT</label>'
+      + '<select id="ho-prefcontact" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box">'
+      + _hoOpt(ho.preferredContact,'') + _hoOpt(ho.preferredContact,'Call') + _hoOpt(ho.preferredContact,'Text') + _hoOpt(ho.preferredContact,'Email')
+      + '</select></div>';
+    html += '</div>';
+    html += '<button onclick="saveHomeownerInfo(\'' + jid + '\')" style="width:100%;padding:9px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Homeowner Info</button>';
+  }
+  html += '</div>';
 
   // ── Job Info (collapsible) ──
   var jobInfoExpanded = (window._jobInfoExpanded || {})[jid] !== false;

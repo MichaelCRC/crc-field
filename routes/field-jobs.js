@@ -205,6 +205,12 @@ router.patch('/:id', async (req, res) => {
     const allowed = [
       'stage', 'pipeline', 'subStatus', 'carrier', 'claimNumber', 'estimateValue',
       'adjusterName', 'adjusterPhone', 'adjusterEmail', 'adjusterDate',
+      // Categorization Layer (v3.1 section 5) — Trade Type (sub-product, lands
+      // in metadata) + Job Type rides `pipeline` → canonical jobs.job_type.
+      'tradeType', 'selectedTrades',
+      // Homeowner enrichment (v3.1 section 5 line 10) — whole homeowner object;
+      // the portal routes its sub-fields to canonical customers columns.
+      'homeowner',
       // CRC Measure drawing layer (satellite + strokes + composite image)
       'roofDiagramClean', 'roofDiagramMarkup', 'roofDiagramStrokes',
       // Field notes whiteboard (separate freehand canvas below the measure diagram)
