@@ -830,10 +830,12 @@ html, body { overflow-x: hidden; }
 }
 
 /* Tablet: clamp content column so it doesn't stretch on 768-1199 widths
-   where the single-column layout would otherwise fill the full viewport. */
+   where the single-column layout would otherwise fill the full viewport.
+   #view-feed .feed-post removed 2026-06-01 — composer felt cramped at
+   640px; let it use the full width established by #view-feed itself.
+   .feed-list stays at 640px for comfortable post reading. */
 @media (min-width: 768px) and (max-width: 1199px) {
   #view-leads .quick-add,
-  #view-feed .feed-post,
   #view-feed .feed-list { max-width: 640px; margin-left: auto; margin-right: auto; }
 }
 
