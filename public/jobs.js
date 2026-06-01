@@ -62,7 +62,28 @@ function renderJobsList() {
   const el = document.getElementById('view-jobs');
   if (!el) return;
 
-  let jobs = _jobsCache;
+  // v3.0 spec section 9 line 16 / v3.2 section 5 line 8 (2026-06-01):
+  // Auto-archive Paid & Closed jobs older than 30 days from default view.
+  // Server-side cron (v3.2 §5 line 8) is a separate session; this is the
+  // client-side filter that makes the rep's My Jobs view show only
+  // currently relevant work. Closed jobs remain searchable / accessible
+  // via direct URL until the cron archives them properly.
+  const PAID_CLOSED_HIDE_DAYS = 30;
+  const archiveCutoff = Date.now() - (PAID_CLOSED_HIDE_DAYS * 86400000);
+  const isPaidClosed = (j) => (
+    j.status_name === 'Paid & Closed' ||
+    j.stage === 'paid_closed' ||
+    j.status === 'paid_closed'
+  );
+  const lastTouchTs = (j) => {
+    const candidate = j.lastActivity || j.updated_at || j.last_modified || j.closed_at || j.created_at;
+    const t = candidate ? Date.parse(candidate) : NaN;
+    return Number.isNaN(t) ? Date.now() : t;
+  };
+
+  let jobs = _jobsCache.filter(j => !isPaidClosed(j) || lastTouchTs(j) >= archiveCutoff);
+  const afterArchiveCount = jobs.length;
+
   if (_jobsFilter === 'insurance') jobs = jobs.filter(j => (j.pipeline || 'insurance') === 'insurance');
   else if (_jobsFilter === 'retail')    jobs = jobs.filter(j => j.pipeline === 'retail');
   else if (_jobsFilter === 'repair')    jobs = jobs.filter(j => j.pipeline === 'repair');
@@ -87,7 +108,15 @@ function renderJobsList() {
   // ── Top bar: summary + view toggle ──
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
   html += '<div style="display:flex;gap:10px;align-items:center">';
-  html += '<span style="font-size:13px;color:var(--gray)">' + _jobsCache.length + ' jobs</span>';
+  // v3.1 Bug #4 (2026-06-01): show "Y of X jobs" when filtered so the
+  // counter doesn't mismatch what's rendered. X reflects what's visible
+  // after auto-archive (Paid & Closed > 30 days hidden), so the counter
+  // matches the rep's actual working pile.
+  const visibleCount = jobs.length;
+  const countLabel = (visibleCount === afterArchiveCount)
+    ? visibleCount + ' jobs'
+    : visibleCount + ' of ' + afterArchiveCount + ' jobs';
+  html += '<span style="font-size:13px;color:var(--gray)">' + countLabel + '</span>';
   if (totalTasks > 0) html += '<span style="font-size:12px;padding:2px 8px;border-radius:10px;background:#DC2626;color:#fff;font-weight:600">' + totalTasks + ' open tasks</span>';
   html += '</div>';
   // View toggle

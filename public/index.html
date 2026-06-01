@@ -262,7 +262,9 @@
       <!-- Channel tabs -->
       <div id="feed-channels" style="display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--surface-card);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
         <button class="feed-channel-tab active" data-channel="activity" onclick="switchFeedChannel('activity')">Activity</button>
-        <button class="feed-channel-tab" data-channel="leadership" onclick="switchFeedChannel('leadership')">Leadership</button>
+        <!-- Leadership tab removed 2026-06-01 per v3 spec section 1 + v3.1 section 6 line 14.
+             Leadership comms move to dev portal / Slack. feed.js channel branch
+             stays as defensive dead code (no UI to trigger it). -->
         <button class="feed-channel-tab" data-channel="projects" onclick="switchFeedChannel('projects')">Projects</button>
       </div>
       <!-- Sticky post box -->
@@ -410,18 +412,16 @@
         <button class="more-item" onclick="closeMoreMenu();location.href='/rep-card/'+repCode+'?auth='+repCode">
           <span class="more-icon">&#127183;</span><span>My Rep Card</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();switchView('referrals')" id="nav-referrals">
-          <span class="more-icon">&#129309;</span><span>Referrals</span><span class="more-arrow">&#8250;</span>
-        </button>
+        <!-- Referrals removed 2026-06-01 per v3 spec section 9 line 13 + v3.1 section 6 line 15.
+             Re-add when ready for rep referral tracking system (future build). -->
         <button class="more-item" onclick="closeMoreMenu();location.href='/roster'">
           <span class="more-icon">&#128101;</span><span>Team Roster</span><span class="more-arrow">&#8250;</span>
         </button>
         <button class="more-item" onclick="closeMoreMenu();switchView('resources')">
           <span class="more-icon">&#128218;</span><span>Resources</span><span class="more-arrow">&#8250;</span>
         </button>
-        <button class="more-item" onclick="closeMoreMenu();alert('Settings coming soon')">
-          <span class="more-icon">&#9881;</span><span>Settings</span><span class="more-arrow">&#8250;</span>
-        </button>
+        <!-- Settings removed 2026-06-01 per v3 spec section 9 line 13 + v3.1 section 6 line 15.
+             Nothing to put there yet. Re-add when something needs to live there. -->
         <button class="more-item" onclick="closeMoreMenu();switchView('admin')" id="nav-admin" style="display:none">
           <span class="more-icon">&#128100;</span><span>Admin</span><span class="more-arrow">&#8250;</span>
         </button>

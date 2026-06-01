@@ -579,10 +579,16 @@ async function loadStats(period) {
     if (repData.length > 0) {
       const lbEl = document.getElementById('leaderboard');
       if (lbEl) {
+        // v3.1 Bug #6 softening (2026-06-01): JN snapshot only carries
+        // amount_to_be_paid for ~5% of jobs; the spec-named fallback
+        // fields (last_estimate, approved_invoice_total) don't exist
+        // in current export. Show '—' instead of '$0K' so the column
+        // doesn't lie about zero revenue.
+        const fmtVal = (v) => v > 0 ? `$${(v/1000).toFixed(0)}K` : '&#8212;';
         lbEl.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:8px;text-align:left">#</th><th style="text-align:left">Rep</th><th style="text-align:right">Jobs</th><th style="text-align:right">Claims</th><th style="text-align:right">Value</th></tr></thead><tbody>` +
           repData.slice(0, 15).map((r, i) => {
             const isMe = r.rep_name && r.rep_name.toLowerCase().includes(repName.split(' ')[0]?.toLowerCase());
-            return `<tr style="border-bottom:1px solid var(--border);${isMe?'background:#E0F7FA;font-weight:700':''}"><td style="padding:8px">${i === 0 ? '&#127942;' : i+1}</td><td><a href="/rep-card/${r.rep_code||''}" style="color:inherit;text-decoration:none">${r.rep_name}</a></td><td style="text-align:right">${r.total_jobs}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">$${((r.total_value||0)/1000).toFixed(0)}K</td></tr>`;
+            return `<tr style="border-bottom:1px solid var(--border);${isMe?'background:#E0F7FA;font-weight:700':''}"><td style="padding:8px">${i === 0 ? '&#127942;' : i+1}</td><td><a href="/rep-card/${r.rep_code||''}" style="color:inherit;text-decoration:none">${r.rep_name}</a></td><td style="text-align:right">${r.total_jobs}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">${fmtVal(r.total_value)}</td></tr>`;
           }).join('') + '</tbody></table>';
       }
     }
@@ -594,11 +600,17 @@ async function loadStats(period) {
       fetch(`/api/stats?period=${period}`).then(r => r.json()),
     ]);
     const trend = (cur, prev) => cur > prev ? '<span style="color:var(--green)">&#9650;</span>' : cur < prev ? '<span style="color:var(--red)">&#9660;</span>' : '<span style="color:var(--gray)">&#8212;</span>';
+    // v3.1 Bug #5 softening (2026-06-01): per-rep aggregation join not wired
+    // yet (depends on rep_daily_kpi + jn_ytd_metrics tables — Build Kickoff
+    // v2 entities #13/#14, Tier E). Until then stats fields may be missing.
+    // Show '—' instead of 'undefined' so the panel reads honestly as
+    // "no data yet" rather than broken.
+    const safe = (v, suffix='') => (v == null || Number.isNaN(v)) ? '&#8212;' : v + suffix;
     document.getElementById('my-stats').innerHTML = `
-      <div class="admin-stat"><div class="val">${stats.leadsAdded}</div><div class="label">Leads ${trend(stats.leadsAdded, stats.prevLeadsAdded)}</div></div>
-      <div class="admin-stat"><div class="val">${stats.claimsFiled}</div><div class="label">Claims ${trend(stats.claimsFiled, stats.prevClaimsFiled)}</div></div>
-      <div class="admin-stat"><div class="val">${stats.conversionRate}%</div><div class="label">Conv Rate</div></div>
-      <div class="admin-stat"><div class="val">${stats.photosTaken}</div><div class="label">Photos</div></div>`;
+      <div class="admin-stat"><div class="val">${safe(stats.leadsAdded)}</div><div class="label">Leads ${trend(stats.leadsAdded || 0, stats.prevLeadsAdded || 0)}</div></div>
+      <div class="admin-stat"><div class="val">${safe(stats.claimsFiled)}</div><div class="label">Claims ${trend(stats.claimsFiled || 0, stats.prevClaimsFiled || 0)}</div></div>
+      <div class="admin-stat"><div class="val">${safe(stats.conversionRate, '%')}</div><div class="label">Conv Rate</div></div>
+      <div class="admin-stat"><div class="val">${safe(stats.photosTaken)}</div><div class="label">Photos</div></div>`;
     const bd = stats.statusBreakdown || {};
     document.getElementById('status-breakdown').innerHTML = Object.entries(bd).map(([s,n]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>${s.replace(/_/g,' ')}</span><strong>${n}</strong></div>`).join('');
     document.getElementById('recent-activity').innerHTML = (stats.recentActivity || []).map(a => `<div style="padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);font-size:13px">${a.action} -- ${a.address || ''} ${a.homeowner ? '('+a.homeowner+')' : ''}<div style="font-size:11px;color:var(--gray)">${timeAgo(a.time)}</div></div>`).join('');

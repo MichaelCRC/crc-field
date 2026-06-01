@@ -31,7 +31,10 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
 
 /* Views */
 .app-view { display: none; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
-.app-view.active { display: block; }
+/* z-index + position: relative create an explicit stacking context for the
+   active view, fixing v3.1 Bug #2 (Dashboard rendered behind My Jobs).
+   Defensive against any sibling view that lingers above due to stale display. */
+.app-view.active { display: block; position: relative; z-index: 1; }
 
 /* Detail panels — fixed overlay, always above content, always below bottom nav.
    Nav stays visible on all screens. Panel scrolls internally.
