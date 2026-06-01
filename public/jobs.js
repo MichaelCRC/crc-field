@@ -673,6 +673,10 @@ function renderJobDetail(job) {
   var phone = job.homeowner?.phone || job.phone || '';
   var name = job.homeownerName || ((job.homeowner?.firstName||'') + ' ' + (job.homeowner?.lastName||'')).trim() || 'Unknown';
   var jid = job.id;
+  // Job Type drives what shows. Insurance (Phase 1) surfaces carrier/claim
+  // info + the Next Steps Packet; retail/repair don't. Single source for the
+  // conditionals below.
+  var isInsurance = String(job.pipeline || job.jobCategory || 'insurance').toLowerCase() === 'insurance';
 
   var html = '<div style="padding:16px;max-width:540px;margin:0 auto">';
 
@@ -738,11 +742,15 @@ function renderJobDetail(job) {
     photoReportBuilt ? '&#10003; Built' : (wfPhotos.length ? 'Build' : 'No photos yet'),
     photoReportBuilt ? '#16A34A' : '#94A3B8',
     wfPhotos.length ? ('openPhotoInspectionReport(\'' + jid + '\')') : '');
-  var claimLabel = claimSent ? '&#10003; Sent' : (claimReady ? 'Build' : 'Mark ready');
-  var claimColor = claimSent ? '#16A34A' : (claimReady ? '#F59E0B' : '#94A3B8');
-  html += _workflowChip('&#128203;', 'Next Steps Packet',
-    claimLabel, claimColor,
-    claimReady ? ('openClaimFilingPackage(\'' + jid + '\')') : ('toggleClaimReady(\'' + jid + '\')'));
+  // Next Steps Packet is the insurance deliverable — only show it on insurance
+  // jobs. Retail/repair get their own equivalents under the Phase 2/3 workflow.
+  if (isInsurance) {
+    var claimLabel = claimSent ? '&#10003; Sent' : (claimReady ? 'Build' : 'Mark ready');
+    var claimColor = claimSent ? '#16A34A' : (claimReady ? '#F59E0B' : '#94A3B8');
+    html += _workflowChip('&#128203;', 'Next Steps Packet',
+      claimLabel, claimColor,
+      claimReady ? ('openClaimFilingPackage(\'' + jid + '\')') : ('toggleClaimReady(\'' + jid + '\')'));
+  }
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
@@ -750,7 +758,7 @@ function renderJobDetail(job) {
   // correctly in both modes even if a CSS variable somewhere fails to resolve.
   html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
   html += '<button onclick="openStagePickerInDetail(\'' + jid + '\')" style="flex:1;padding:11px;background:#00B5CC;color:#FFFFFF;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Move Stage</button>';
-  html += '<button onclick="openPipelineTransfer(\'' + jid + '\')" style="flex:1;padding:11px;background:#1e3a6e;color:#FFFFFF;border:1.5px solid #4a6fa5;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Transfer Type</button>';
+  html += '<button onclick="openPipelineTransfer(\'' + jid + '\')" style="flex:1;padding:11px;background:#1e3a6e;color:#FFFFFF;border:1.5px solid #4a6fa5;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:0.04em;cursor:pointer;min-width:100px;min-height:44px">Job Type</button>';
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
   html += '<button onclick="markJobFollowUp(\'' + jid + '\')" style="flex:1;padding:9px;background:#0EA5E9;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Follow Up</button>';
@@ -810,11 +818,14 @@ function renderJobDetail(job) {
   }
   html += '</div>';
 
-  // ── Job Info (collapsible) ──
+  // ── Insurance Info (collapsible) — insurance jobs only (Phase 1) ──
+  // Carrier / claim / adjuster are meaningless on retail/repair, so the whole
+  // card only renders for insurance jobs.
+  if (isInsurance) {
   var jobInfoExpanded = (window._jobInfoExpanded || {})[jid] !== false;
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
   html += '<button onclick="toggleJobInfo(\'' + jid + '\')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:' + (jobInfoExpanded ? '12' : '0') + 'px">';
-  html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Job Info</span>';
+  html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Insurance Info</span>';
   html += '<span style="font-size:14px;color:var(--gray)">' + (jobInfoExpanded ? '▲' : '▼') + '</span></button>';
   if (jobInfoExpanded) {
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
@@ -835,6 +846,7 @@ function renderJobDetail(job) {
     html += '<div style="font-size:11px;color:var(--gray);margin-top:6px">Created: ' + (job.created_at ? new Date(job.created_at).toLocaleDateString() : '—') + '</div>';
   }
   html += '</div>';
+  }
 
   // ── Notes ──
   html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
@@ -1051,7 +1063,7 @@ function markJobLost(jobId) {
 function openJobActionMenu(jobId) {
   showActionSheet('Job Actions', [
     { label: 'Move Stage',    color: '#00B5CC', action: function() { openStagePickerInDetail(jobId); } },
-    { label: 'Transfer Type', color: '#1B2360', action: function() { openPipelineTransfer(jobId); } },
+    { label: 'Job Type', color: '#1B2360', action: function() { openPipelineTransfer(jobId); } },
     { label: 'Follow Up',     color: '#0EA5E9', action: function() { markJobFollowUp(jobId); } },
     { label: 'Mark Lost',     color: '#DC2626', action: function() { markJobLost(jobId); } },
   ]);
