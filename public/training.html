@@ -115,7 +115,19 @@ body {
   width: 40px; height: 40px; min-width: 40px; border-radius: 50%; background: var(--teal);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 15px; color: var(--white);
+  /* 2026-06-01: numbers like 4-5, 10-12 used to overflow the circle.
+     container-driven shrink keeps the badge round while letting longer
+     labels fit. Single digits unchanged. */
+  letter-spacing: -0.5px;
+  padding: 0 2px;
+  overflow: hidden;
 }
+.module-badge:has(*:not(:empty)) { font-size: 13px; }
+/* Fallback for browsers without :has — apply a generic shrink via attribute. */
+.module-badge[data-len="2"],
+.module-badge[data-len="3"] { font-size: 13px; }
+.module-badge[data-len="4"],
+.module-badge[data-len="5"] { font-size: 11px; letter-spacing: -1px; }
 .module-info { flex: 1; }
 .module-info h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
 .module-info p { font-size: 13px; color: #666; line-height: 1.4; }
@@ -390,12 +402,17 @@ body {
 
 <!-- Field-app sidebar nav (bottom-nav on mobile, left rail on desktop). Anchors
      route back to the main field app where the JS handles view switching. -->
+<!-- 2026-06-01: nav links use SPA hash routes (/#leads, /#jobs, etc.).
+     Field app reads window.location.hash in applyHashRoute() and lands
+     on the right tab. CRC U tab replaced with More so users have a
+     consistent way back to the menu; no active tab on training because
+     CRC U isn't part of the bottom nav anymore. -->
 <nav class="bottom-nav fc-bottom-nav">
-  <a class="nav-item" href="/"><span class="nav-icon">&#127968;</span><span class="nav-label">Home</span></a>
-  <a class="nav-item" href="/"><span class="nav-icon">&#128197;</span><span class="nav-label">My Jobs</span></a>
-  <a class="nav-item" href="/"><span class="nav-icon">&#128205;</span><span class="nav-label">Map</span></a>
-  <a class="nav-item" href="/"><span class="nav-icon">&#128240;</span><span class="nav-label">Feed</span></a>
-  <a class="nav-item active" href="/training.html"><span class="nav-icon">&#127891;</span><span class="nav-label">CRC U</span></a>
+  <a class="nav-item" href="/#leads"><span class="nav-icon">&#127968;</span><span class="nav-label">Home</span></a>
+  <a class="nav-item" href="/#jobs"><span class="nav-icon">&#128197;</span><span class="nav-label">My Jobs</span></a>
+  <a class="nav-item" href="/#map"><span class="nav-icon">&#128205;</span><span class="nav-label">Map</span></a>
+  <a class="nav-item" href="/#feed"><span class="nav-icon">&#128240;</span><span class="nav-label">Feed</span></a>
+  <a class="nav-item" href="/#more"><span class="nav-icon">&#9776;</span><span class="nav-label">More</span></a>
 </nav>
 
 <style>
@@ -1034,7 +1051,7 @@ function renderModuleCards() {
 
     return `<div class="module-card" data-module="${mod.id}">
       <div class="module-card-header" onclick="toggleModule(this)">
-        <div class="module-badge">${mod.number}</div>
+        <div class="module-badge" data-len="${String(mod.number).length}">${mod.number}</div>
         <div class="module-info">
           <h3>${mod.title}</h3>
           <p>${mod.description}</p>

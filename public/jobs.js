@@ -58,6 +58,18 @@ let _jobsCache = [];
 let _jobsFilter = 'all';
 let _jobsView = 'list'; // 'list' or 'board'
 
+// 2026-06-01: search input debounce + focus preservation. The renderer
+// rebuilds the entire view's innerHTML on each keystroke, which would
+// otherwise drop focus from the new input node and feel like the box
+// "loses" characters. We debounce the actual re-render and re-acquire
+// focus + cursor position after.
+let _jobsSearchTimer = null;
+function _scheduleJobsSearch(value) {
+  _jobsSearch = value;
+  if (_jobsSearchTimer) clearTimeout(_jobsSearchTimer);
+  _jobsSearchTimer = setTimeout(renderJobsList, 180);
+}
+
 // ─── Swipe state ───────────────────────────────────────────────────────────
 let _swipeStart = null;
 let _swipeEl = null;
@@ -160,7 +172,7 @@ function renderJobsList() {
   html += '<div style="position:relative;margin-bottom:10px">';
   html += '<span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">🔍</span>';
   html += '<input id="jobs-search-input" type="text" placeholder="Search name, address, claim, carrier..." value="' + _jobsSearch.replace(/"/g,'&quot;') + '" '
-    + 'oninput="_jobsSearch=this.value;renderJobsList()" '
+    + 'oninput="_scheduleJobsSearch(this.value)" '
     + 'style="width:100%;padding:10px 36px 10px 36px;border-radius:10px;border:1px solid var(--border);background:var(--white);color:#000;font-size:14px;box-sizing:border-box;-webkit-appearance:none">';
   if (_jobsSearch) {
     html += '<button onclick="_jobsSearch=\'\';document.getElementById(\'jobs-search-input\').value=\'\';renderJobsList()" '
@@ -201,7 +213,7 @@ function renderJobsList() {
       : 'No jobs in ' + (tabs.find(t => t[0] === _jobsFilter) || [])[1] + ' yet';
     html += '<div style="padding:40px;text-align:center;color:var(--gray)">' + stageLbl + '</div>';
     html += '</div>';
-    el.innerHTML = html;
+    _replaceJobsHtmlPreservingSearch(el, html);
     return;
   }
 
@@ -215,8 +227,24 @@ function renderJobsList() {
   }
 
   html += '</div>';
-  el.innerHTML = html;
+  _replaceJobsHtmlPreservingSearch(el, html);
   attachSwipeListeners();
+}
+
+// 2026-06-01: assign innerHTML while preserving focus + cursor position
+// on the search input. Without this the search box drops focus on every
+// keystroke because the input node gets replaced.
+function _replaceJobsHtmlPreservingSearch(el, html) {
+  const wasSearchFocused = document.activeElement && document.activeElement.id === 'jobs-search-input';
+  const cursorPos = wasSearchFocused ? document.activeElement.selectionStart : null;
+  el.innerHTML = html;
+  if (wasSearchFocused) {
+    const input = document.getElementById('jobs-search-input');
+    if (input) {
+      input.focus();
+      if (cursorPos != null) try { input.setSelectionRange(cursorPos, cursorPos); } catch {}
+    }
+  }
 }
 
 // ─── List view: grouped by stage (only used when _jobsFilter === 'all') ──

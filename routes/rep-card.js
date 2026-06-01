@@ -611,37 +611,34 @@ router.get('/rep-card/:code', async (req, res) => {
       letter-spacing: 0.5px;
       margin-top: 2px;
     }
-    /* Back-to-app affordance (new 2026-05-27). Canonical brand colors per
-       May 2026 lock: navy #0A1530, teal #07BFEE. Other colors on this page
-       predate the brand lock; see DD-008 for the sweep. */
-    .back-bar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* Standard field-app bottom nav (2026-06-01). Replaces the prior
+       back-to-app bar so this page feels continuous with the SPA.
+       Tabs link to /#<view> hash routes consumed by applyHashRoute()
+       in app.js. Canonical brand colors per May 2026 lock. */
+    body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+    .fc-bottom-nav {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      display: flex; z-index: 200;
       background: #0A1530;
-      border-bottom: 1px solid #07BFEE;
+      padding-bottom: env(safe-area-inset-bottom);
+      height: calc(60px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(7,191,238,0.2);
     }
-    .back-link {
-      display: block;
-      padding: 14px 20px;
-      color: #07BFEE;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+    .fc-bottom-nav .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
+      text-decoration: none; color: rgba(255,255,255,0.6);
+      font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
-    .back-link:active {
-      background: rgba(7, 191, 238, 0.1);
-    }
+    .fc-bottom-nav .nav-item:hover { color: #07BFEE; }
+    .fc-bottom-nav .nav-icon { font-size: 20px; line-height: 1; }
   </style>
 </head>
 <body>
-  <div class="back-bar">
-    <a href="/" class="back-link">&larr; Back to Field App</a>
-  </div>
   <div class="card">
     <div class="card-header">
-      <div class="logo"><img src="/img/crc-logo-monogram.jpg" alt="CRC"></div>
+      <div class="logo"><img src="/assets/CRC_Icon.svg" alt="CRC"></div>
       <div class="avatar-photo">${avatarHtml}</div>
       <div class="rep-name">${merged.name}</div>
       <div class="rep-title">${merged.title}</div>
@@ -787,6 +784,13 @@ router.get('/rep-card/:code', async (req, res) => {
       }
     }
   </script>` : ''}
+  <nav class="fc-bottom-nav">
+    <a class="nav-item" href="/#leads"><span class="nav-icon">&#127968;</span><span>Home</span></a>
+    <a class="nav-item" href="/#jobs"><span class="nav-icon">&#128197;</span><span>My Jobs</span></a>
+    <a class="nav-item" href="/#map"><span class="nav-icon">&#128205;</span><span>Map</span></a>
+    <a class="nav-item" href="/#feed"><span class="nav-icon">&#128240;</span><span>Feed</span></a>
+    <a class="nav-item" href="/#more"><span class="nav-icon">&#9776;</span><span>More</span></a>
+  </nav>
 </body>
 </html>`;
 

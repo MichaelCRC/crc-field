@@ -384,7 +384,7 @@ body.has-retry-banner .cam-count { top: calc(48px + env(safe-area-inset-top, 0px
 .storm-panel-header h4 { font-size: 14px; color: var(--navy); }
 
 @media (min-width: 600px) {
-  .quick-add { max-width: 500px; margin: 0 auto; }
+  /* .quick-add max-width removed 2026-06-01 — see tablet breakpoint. */
   .admin-stats { grid-template-columns: 1fr 1fr 1fr 1fr; }
 }
 
@@ -464,7 +464,9 @@ body.has-retry-banner .cam-count { top: calc(48px + env(safe-area-inset-top, 0px
    ══════════════════════════════════════════════════════════════════════ */
 @media (min-width: 768px) and (max-width: 1199px) {
   .app-view { max-width: 820px; margin: 0 auto; padding-left: 8px; padding-right: 8px; }
-  .quick-add, .quick-add form { max-width: 640px; margin-left: auto; margin-right: auto; }
+  /* .quick-add clamp removed 2026-06-01 — the lead form was narrower than
+     the Quick Note section below it, breaking column alignment. Both
+     sections now fill the same container width. */
   .feed-list { max-width: 640px; margin: 0 auto; }
 }
 
@@ -835,7 +837,7 @@ html, body { overflow-x: hidden; }
    640px; let it use the full width established by #view-feed itself.
    .feed-list stays at 640px for comfortable post reading. */
 @media (min-width: 768px) and (max-width: 1199px) {
-  #view-leads .quick-add,
+  /* #view-leads .quick-add clamp removed 2026-06-01 — see prior note above. */
   #view-feed .feed-list { max-width: 640px; margin-left: auto; margin-right: auto; }
 }
 

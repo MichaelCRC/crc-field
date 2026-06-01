@@ -32,6 +32,11 @@ async function validateAndEnter(code) {
     repCode = code; repName = data.name; repRole = data.role;
     localStorage.setItem('crc-rep-code', code); localStorage.setItem('crc-rep-name', data.name); localStorage.setItem('crc-rep-role', data.role);
     document.getElementById('gate').style.display = 'none'; document.getElementById('app').style.display = '';
+    // 2026-06-01: standalone pages (roster, rep-card, training) link
+    // back into the SPA with hash routes like /#jobs, /#map, /#more.
+    // applyHashRoute consumes that hash on the first paint after auth
+    // so the rep lands on the tab they intended.
+    applyHashRoute();
     // Rep badge shows code only — full name + role live in the dropdown.
     const badge = document.getElementById('rep-badge');
     if (badge) badge.textContent = code;
@@ -154,6 +159,21 @@ function closeMoreMenu() {
 function toggleFab() { const m = document.getElementById('fab-menu'); const btn = document.getElementById('fab-main-btn'); const open = m.style.display === 'none' || m.style.display === ''; m.style.display = open ? 'flex' : 'none'; btn.classList.toggle('open', open); }
 function closeFab() { const m = document.getElementById('fab-menu'); const btn = document.getElementById('fab-main-btn'); if (m) m.style.display = 'none'; if (btn) btn.classList.remove('open'); }
 document.addEventListener('click', function(e) { if (!e.target.closest('#fab-container')) closeFab(); });
+
+// --- Hash routing (2026-06-01) ---
+// Standalone pages (roster.html, training.html, the rep-card HTML template)
+// link tabs to /#leads, /#jobs, /#map, /#feed, /#more so the bottom nav
+// feels continuous across the whole app. On SPA boot we consume the hash,
+// pick the right view (or open the More menu), then clear it so a reload
+// doesn't re-fire the same route.
+function applyHashRoute() {
+  const raw = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+  if (!raw) return;
+  if (history.replaceState) history.replaceState(null, '', window.location.pathname);
+  if (raw === 'more') { toggleMoreMenu(); return; }
+  const known = new Set(['leads','jobs','map','feed','brain','notes','stats','admin','booking','resources','referrals']);
+  if (known.has(raw)) switchView(raw);
+}
 
 // --- View Switching ---
 function switchView(name) {
