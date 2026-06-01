@@ -258,7 +258,10 @@ async function loadRoster() {
         : initials;
       const roleLabel = card.title || getRoleLabel(rep.role);
 
-      return '<a href="/rep-card/' + rep.code + '" class="roster-card">' +
+      // ?team=1 puts the rep card in team-detail mode (stats + extended
+      // About + Work Style traits). The default URL — what customers see
+      // when a rep shares their card — stays in business-card mode.
+      return '<a href="/rep-card/' + rep.code + '?team=1" class="roster-card">' +
         '<div class="roster-avatar">' + avatarHtml + '</div>' +
         '<div class="roster-name">' + rep.name + '</div>' +
         '<div class="roster-role">' + roleLabel + '</div>' +

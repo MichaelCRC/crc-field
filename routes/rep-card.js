@@ -216,7 +216,14 @@ END:VCARD`;
 router.get('/rep-card/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
   const auth = (req.query.auth || '').toUpperCase();
-  const isInternal = req.query.internal === 'true';
+  // 2026-06-01: ?team=1 is the new team-detail flag (roster.html uses it).
+  // ?internal=true is the legacy alias that still gates work-style traits.
+  // Both expand the page from business-card mode (default — what customers
+  // see when a rep shares their QR / link) to team-detail mode (Stats +
+  // Work Style + extended About fields). The default keeps the shared URL
+  // clean for customer use.
+  const isTeamView = req.query.team === '1' || req.query.internal === 'true';
+  const isInternal = isTeamView;
   const merged = getMergedCard(code);
   if (!merged) return res.status(404).send('Rep not found');
 
@@ -282,11 +289,14 @@ router.get('/rep-card/:code', async (req, res) => {
     </div>`;
   }
 
-  // ── STATS SECTION ──
-  const statsHtml = `<div class="baseball-section" id="stats-section" style="display:none;">
+  // ── STATS SECTION (team-detail mode only) ──
+  // Business-card mode (default) hides stats entirely — customers
+  // shouldn't see internal numbers. Team view (?team=1) renders the
+  // section + runs the loading script below.
+  const statsHtml = isTeamView ? `<div class="baseball-section" id="stats-section" style="display:none;">
     <div class="section-title">Stats</div>
     <div class="stats-row" id="stats-row"></div>
-  </div>`;
+  </div>` : '';
 
   const editButtonHtml = canEdit ? `<button onclick="toggleEdit()" class="btn btn-edit" id="editBtn">✏️ Edit Card</button>` : '';
 
@@ -674,14 +684,17 @@ router.get('/rep-card/:code', async (req, res) => {
     </div>
   </div>
   <script>
-    // Load stats from claims dashboard
+    // Load stats from claims dashboard. Only runs when statsHtml rendered
+    // the #stats-section node (team-detail mode). Business-card mode
+    // doesn't render the section, so the early bail below is the gate.
     (async function() {
+      const section = document.getElementById('stats-section');
+      if (!section) return;
       try {
         const res = await fetch('/api/claims-dashboard');
         const d = await res.json();
         const repData = d.by_rep.find(r => r.rep_name === '${merged.name.replace(/'/g, "\\'")}');
         if (repData) {
-          const section = document.getElementById('stats-section');
           const row = document.getElementById('stats-row');
           let boxes = '';
           if (repData.mtd !== undefined) boxes += '<div class="stat-box"><div class="stat-num">' + repData.mtd + '</div><div class="stat-label">This Month</div></div>';
