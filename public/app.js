@@ -136,8 +136,20 @@ function selectSource(el) { document.querySelectorAll('#source-chips .chip').for
 function getSource() { return document.querySelector('#source-chips .chip.active')?.dataset.val || 'Door Knock'; }
 
 // --- More Menu ---
-function toggleMoreMenu() { document.getElementById('more-menu').classList.toggle('open'); }
-function closeMoreMenu() { document.getElementById('more-menu').classList.remove('open'); }
+// 2026-06-01: hide the FAB while the More menu is open. FAB sits at
+// z-index:250 (above the more-overlay's z-index:100) by design — it
+// needs to float above content — but that puts it over Resources in
+// the slide-up drawer. Cheap fix: hide while open, restore on close.
+function toggleMoreMenu() {
+  const open = document.getElementById('more-menu').classList.toggle('open');
+  const fab = document.getElementById('fab-container');
+  if (fab) fab.style.display = open ? 'none' : '';
+}
+function closeMoreMenu() {
+  document.getElementById('more-menu').classList.remove('open');
+  const fab = document.getElementById('fab-container');
+  if (fab) fab.style.display = '';
+}
 // --- FAB Quick Access ---
 function toggleFab() { const m = document.getElementById('fab-menu'); const btn = document.getElementById('fab-main-btn'); const open = m.style.display === 'none' || m.style.display === ''; m.style.display = open ? 'flex' : 'none'; btn.classList.toggle('open', open); }
 function closeFab() { const m = document.getElementById('fab-menu'); const btn = document.getElementById('fab-main-btn'); if (m) m.style.display = 'none'; if (btn) btn.classList.remove('open'); }

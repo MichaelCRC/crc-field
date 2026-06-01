@@ -36,6 +36,18 @@ body { font-family: var(--font-body); background: var(--surface-primary); color:
    Defensive against any sibling view that lingers above due to stale display. */
 .app-view.active { display: block; position: relative; z-index: 1; }
 
+/* Feed view: composer + posts use full available width on tablet/desktop
+   (2026-06-01). Mobile keeps default. Padding gives breathing room
+   without artificially shrinking the composer. */
+@media (min-width: 768px) {
+  #view-feed .feed-post,
+  #view-feed .feed-empty,
+  #view-feed .feed-list {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
 /* Detail panels — fixed overlay, always above content, always below bottom nav.
    Nav stays visible on all screens. Panel scrolls internally.
    padding-top: env(safe-area-inset-top) reserves space for the iPhone notch /
@@ -965,10 +977,12 @@ html, body { overflow-x: hidden; }
    at tablet size (no desktop sidebar until 1200px).
    ══════════════════════════════════════════════════════════════════════ */
 @media (min-width: 768px) and (max-width: 1199px) {
-  /* Center main views at a comfortable reading width */
+  /* Center main views at a comfortable reading width.
+     #view-feed removed from this list 2026-06-01 — the composer felt
+     cramped on tablet sizes. Feed now uses full available width via
+     the rule directly below this block. */
   #view-leads #leads-main,
   #view-jobs,
-  #view-feed,
   #view-stats,
   #view-resources,
   #view-brain,

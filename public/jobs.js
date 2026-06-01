@@ -1,25 +1,51 @@
 /* CRC Field Intel -- My Jobs View */
 
+// JN insurance board stages 2026-06-01. Each entry has a canonical `key`,
+// a display `label`, the section accent `color`, and `aliases` listing
+// the raw JN stage values that bucket into this stage. Aliases let the
+// renderer absorb stage-name drift between JN exports without losing
+// jobs to silent-drop (the v3.1 Bug #4 root cause from the prior turn).
 const JOB_STAGES = [
-  { key: 'new_lead',        label: 'New Lead',          color: '#6B7280' },
-  { key: 'appointment_set', label: 'Appointment Set',   color: '#F59E0B' },
-  { key: 'inspected',       label: 'Inspected',         color: '#3B82F6' },
-  { key: 'claim_filed',     label: 'Claim Filed',       color: '#8B5CF6' },
-  { key: 'crc_scope_built', label: 'CRC Scope Built',   color: '#7C3AED' },
-  { key: 'scope_received',  label: 'Scope Received',    color: '#EC4899' },
-  { key: 'supplementing',   label: 'Supplementing',     color: '#F97316' },
-  { key: 'ready_to_collect',label: 'Ready to Collect',  color: '#10B981' },
-  { key: 'follow_up',       label: 'Follow Up',         color: '#0EA5E9' },
-  { key: 'lost',            label: 'Lost',              color: '#DC2626' },
+  { key: 'follow_up',             label: 'Follow Up',             color: '#0EA5E9', aliases: ['follow_up'] },
+  { key: 'new_lead',              label: 'Uncontacted Lead',      color: '#6B7280', aliases: ['new_lead','uncontacted_lead','uncontacted'] },
+  { key: 'appointment_set',       label: 'Appointment Scheduled', color: '#F59E0B', aliases: ['appointment_set','appointment_scheduled'] },
+  { key: 'inspected',             label: 'Inspection Complete',   color: '#3B82F6', aliases: ['inspected','inspection_complete','inspection_done'] },
+  { key: 'claim_filed',           label: 'Claim Filed',           color: '#8B5CF6', aliases: ['claim_filed'] },
+  { key: 'waiting_on_scope',      label: 'Waiting on Scope',      color: '#7C3AED', aliases: ['waiting_on_scope','scope_received','crc_scope_built'] },
+  { key: 'scope_dispute',         label: 'Scope Dispute',         color: '#EC4899', aliases: ['scope_dispute'] },
+  { key: 'supplementing',         label: 'Supplementing',         color: '#F97316', aliases: ['supplementing'] },
+  { key: 'color_selection',       label: 'Color Selection',       color: '#10B981', aliases: ['color_selection','ready_to_collect'] },
+  { key: 'perfect_packet',        label: 'Perfect Packet',        color: '#059669', aliases: ['perfect_packet'] },
 ];
 
+// Stages auto-hidden from default view after 90 days of no activity per
+// v3.0 spec section 11 ("Lost jobs filter out of default My Jobs view
+// but remain searchable") and the user's call to bump the cutoff from 30
+// to 90 days (insurance lifecycle can run that long).
+const LOST_STAGES = new Set([
+  'lost','rehash_lost','lost_canceled','lost_unresponsive','lost_rehash','lost_no_show',
+]);
+const PAID_CLOSED_STAGES = new Set(['paid_closed','paid_and_closed']);
+const ARCHIVE_HIDE_DAYS = 90;
+
+// Map a raw job.stage value to its canonical JOB_STAGES key, or null if
+// the stage belongs to no visible bucket (Lost / Paid&Closed / unknown).
+function stageBucket(s) {
+  if (!s) return 'new_lead';
+  const lower = String(s).toLowerCase();
+  const found = JOB_STAGES.find(x => x.aliases.includes(lower));
+  return found ? found.key : null;
+}
+
 function stageColor(s) {
-  const found = JOB_STAGES.find(x => x.key === s);
+  const bucket = stageBucket(s) || s;
+  const found = JOB_STAGES.find(x => x.key === bucket);
   return found ? found.color : '#6B7280';
 }
 function stageLabel(s) {
-  const found = JOB_STAGES.find(x => x.key === s);
-  return found ? found.label : (s || 'New Lead').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  const bucket = stageBucket(s) || s;
+  const found = JOB_STAGES.find(x => x.key === bucket);
+  return found ? found.label : (s || 'Unknown').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function pipelineBadge(p) {
@@ -62,32 +88,37 @@ function renderJobsList() {
   const el = document.getElementById('view-jobs');
   if (!el) return;
 
-  // v3.0 spec section 9 line 16 / v3.2 section 5 line 8 (2026-06-01):
-  // Auto-archive Paid & Closed jobs older than 30 days from default view.
-  // Server-side cron (v3.2 §5 line 8) is a separate session; this is the
-  // client-side filter that makes the rep's My Jobs view show only
-  // currently relevant work. Closed jobs remain searchable / accessible
-  // via direct URL until the cron archives them properly.
-  const PAID_CLOSED_HIDE_DAYS = 30;
-  const archiveCutoff = Date.now() - (PAID_CLOSED_HIDE_DAYS * 86400000);
-  const isPaidClosed = (j) => (
-    j.status_name === 'Paid & Closed' ||
-    j.stage === 'paid_closed' ||
-    j.status === 'paid_closed'
-  );
+  // Auto-archive (2026-06-01): hide Paid & Closed + Lost variants from
+  // default view after ARCHIVE_HIDE_DAYS of no activity. Bumped from 30
+  // to 90 days per user — insurance lifecycle can legitimately run that
+  // long. Server-side cron (v3.2 §5 line 8) is separate work; this is
+  // the client-side filter that keeps the rep's My Jobs view focused on
+  // currently active work. Archived jobs remain searchable.
+  const archiveCutoff = Date.now() - (ARCHIVE_HIDE_DAYS * 86400000);
+  const isArchivable = (j) => {
+    const stage = String(j.stage || '').toLowerCase();
+    return (
+      j.status_name === 'Paid & Closed' ||
+      LOST_STAGES.has(stage) ||
+      PAID_CLOSED_STAGES.has(stage)
+    );
+  };
   const lastTouchTs = (j) => {
     const candidate = j.lastActivity || j.updated_at || j.last_modified || j.closed_at || j.created_at;
     const t = candidate ? Date.parse(candidate) : NaN;
     return Number.isNaN(t) ? Date.now() : t;
   };
 
-  let jobs = _jobsCache.filter(j => !isPaidClosed(j) || lastTouchTs(j) >= archiveCutoff);
+  let jobs = _jobsCache.filter(j => !isArchivable(j) || lastTouchTs(j) >= archiveCutoff);
   const afterArchiveCount = jobs.length;
 
-  if (_jobsFilter === 'insurance') jobs = jobs.filter(j => (j.pipeline || 'insurance') === 'insurance');
-  else if (_jobsFilter === 'retail')    jobs = jobs.filter(j => j.pipeline === 'retail');
-  else if (_jobsFilter === 'repair')    jobs = jobs.filter(j => j.pipeline === 'repair');
-  else if (_jobsFilter === 'follow_up') jobs = jobs.filter(j => j.stage === 'follow_up' || j.subStatus === 'follow_up');
+  // Stage tab filter (2026-06-01): replaces the prior pipeline tabs
+  // (Insurance / Retail / Repair / Follow Up). Tabs now mirror the JN
+  // insurance board so reps can drill into a single stage. Pipeline
+  // distinction stays visible via the per-card colored badge.
+  if (_jobsFilter !== 'all') {
+    jobs = jobs.filter(j => stageBucket(j.stage) === _jobsFilter);
+  }
 
   // Search filter
   if (_jobsSearch.trim()) {
@@ -139,7 +170,24 @@ function renderJobsList() {
 
   // ── Filter tabs ──
   html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none">';
-  var tabs = [['all','All'],['insurance','Insurance'],['retail','Retail'],['repair','Repair'],['follow_up','Follow Up']];
+  // Tabs mirror the JN insurance board (2026-06-01). 'All' shows the
+  // grouped-by-stage list view; any other tab filters to that stage and
+  // renders flat. Retail / Repair pipelines surface as colored badges on
+  // each card (per-card pipelineBadge), so dropping the pipeline tabs
+  // doesn't lose that distinction.
+  var tabs = [
+    ['all',                  'All'],
+    ['follow_up',            'Follow Up'],
+    ['new_lead',             'Uncontacted Lead'],
+    ['appointment_set',      'Appointment Scheduled'],
+    ['inspected',            'Inspection Complete'],
+    ['claim_filed',          'Claim Filed'],
+    ['waiting_on_scope',     'Waiting on Scope'],
+    ['scope_dispute',        'Scope Dispute'],
+    ['supplementing',        'Supplementing'],
+    ['color_selection',      'Color Selection'],
+    ['perfect_packet',       'Perfect Packet'],
+  ];
   for (var i = 0; i < tabs.length; i++) {
     var t = tabs[i];
     var active = _jobsFilter === t[0];
@@ -148,7 +196,10 @@ function renderJobsList() {
   html += '</div>';
 
   if (!jobs.length) {
-    html += '<div style="padding:40px;text-align:center;color:var(--gray)">No jobs match this filter</div>';
+    const stageLbl = (_jobsFilter === 'all')
+      ? 'No jobs match this filter'
+      : 'No jobs in ' + (tabs.find(t => t[0] === _jobsFilter) || [])[1] + ' yet';
+    html += '<div style="padding:40px;text-align:center;color:var(--gray)">' + stageLbl + '</div>';
     html += '</div>';
     el.innerHTML = html;
     return;
@@ -156,8 +207,11 @@ function renderJobsList() {
 
   if (_jobsView === 'board') {
     html += renderBoardView(jobs);
-  } else {
+  } else if (_jobsFilter === 'all') {
     html += renderListView(jobs);
+  } else {
+    // Stage tab selected — flat list, no group headers (the tab itself names the stage)
+    for (const job of jobs) html += renderJobCard(job, true);
   }
 
   html += '</div>';
@@ -165,15 +219,17 @@ function renderJobsList() {
   attachSwipeListeners();
 }
 
-// ─── List view: grouped by stage ──────────────────────────────────────────
+// ─── List view: grouped by stage (only used when _jobsFilter === 'all') ──
 function renderListView(jobs) {
-  // Group by stage, in pipeline order
+  // Group via stageBucket so raw stage values like 'ready_to_collect'
+  // land in the 'color_selection' bucket (and any unknown stage drops
+  // into 'new_lead' fallback so no job is silently lost — that was the
+  // bug that hid 29 jobs in the prior turn).
   const stageOrder = JOB_STAGES.map(s => s.key);
   const grouped = {};
   for (const s of stageOrder) grouped[s] = [];
   for (const j of jobs) {
-    const s = j.stage || 'new_lead';
-    if (!grouped[s]) grouped[s] = [];
+    const s = stageBucket(j.stage) || 'new_lead';
     grouped[s].push(j);
   }
 
@@ -198,15 +254,12 @@ function renderListView(jobs) {
 
 // ─── Board view: kanban columns ────────────────────────────────────────────
 function renderBoardView(jobs) {
-  // Show active stages only (exclude lost unless there are lost jobs)
-  const activeStages = JOB_STAGES.filter(s => {
-    if (s.key === 'lost') return jobs.some(j => j.stage === 'lost');
-    return true;
-  });
-
+  // All JN board stages render as columns even if empty so the rep sees
+  // the full pipeline at a glance. Lost / Paid&Closed are already
+  // filtered upstream by the 90-day archive in renderJobsList.
   let html = '<div style="display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:12px;scrollbar-width:thin">';
-  for (const s of activeStages) {
-    const group = jobs.filter(j => (j.stage || 'new_lead') === s.key);
+  for (const s of JOB_STAGES) {
+    const group = jobs.filter(j => stageBucket(j.stage) === s.key);
     html += '<div style="flex-shrink:0;width:200px">';
     html += '<div style="background:' + s.color + ';color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between">';
     html += '<span>' + s.label + '</span><span>' + group.length + '</span></div>';

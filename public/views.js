@@ -588,7 +588,11 @@ async function loadStats(period) {
         lbEl.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:8px;text-align:left">#</th><th style="text-align:left">Rep</th><th style="text-align:right">Jobs</th><th style="text-align:right">Claims</th><th style="text-align:right">Value</th></tr></thead><tbody>` +
           repData.slice(0, 15).map((r, i) => {
             const isMe = r.rep_name && r.rep_name.toLowerCase().includes(repName.split(' ')[0]?.toLowerCase());
-            return `<tr style="border-bottom:1px solid var(--border);${isMe?'background:#E0F7FA;font-weight:700':''}"><td style="padding:8px">${i === 0 ? '&#127942;' : i+1}</td><td><a href="/rep-card/${r.rep_code||''}" style="color:inherit;text-decoration:none">${r.rep_name}</a></td><td style="text-align:right">${r.total_jobs}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">${fmtVal(r.total_value)}</td></tr>`;
+            // 2026-06-01: when isMe, force navy text so the row reads
+            // against the light-cyan highlight. Default inherited color
+            // is white from the dark dashboard theme — invisible on cyan.
+            const rowStyle = isMe ? 'background:#E0F7FA;color:#0A1530;font-weight:700' : '';
+            return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:8px">${i === 0 ? '&#127942;' : i+1}</td><td><a href="/rep-card/${r.rep_code||''}" style="color:inherit;text-decoration:none">${r.rep_name}</a></td><td style="text-align:right">${r.total_jobs}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">${fmtVal(r.total_value)}</td></tr>`;
           }).join('') + '</tbody></table>';
       }
     }
