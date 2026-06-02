@@ -876,9 +876,9 @@ async function repCardPage(req, res) {
       <div style="font-size:12px;color:#666;margin:-4px 0 10px">${sub}</div>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}" alt="${title} QR" style="width:180px;height:180px;background:#fff;border-radius:12px;padding:8px;display:inline-block">
       <div style="font-size:12px;color:#666;margin-top:8px;word-break:break-all">${url}</div>
-      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
-        <button onclick="shareUrl('${url}','${title.replace(/'/g, "")}')" class="btn btn-secondary" style="flex:0 0 auto;padding:8px 16px;font-size:13px">Share</button>
-        <a href="${url}" target="_blank" style="display:inline-block;padding:8px 16px;color:#00BCD4;font-weight:700;font-size:13px;text-decoration:none">👁 Preview</a>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button onclick="shareUrl('${url}','${title.replace(/'/g, "")}')" style="flex:1;padding:11px;border:none;border-radius:8px;background:#001A4D;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Share</button>
+        <a href="${url}" target="_blank" style="flex:1;text-align:center;padding:11px;border:1px solid #00BCD4;border-radius:8px;color:#00BCD4;font-weight:700;font-size:13px;text-decoration:none">👁 Preview</a>
       </div>
     </div>`;
       return block('Homeowner Booking Page', 'For clients — leads with the free roof check.', homeUrl)
@@ -890,8 +890,8 @@ async function repCardPage(req, res) {
       <div id="bklList" style="display:flex;flex-direction:column;gap:10px">Loading…</div>
       <button onclick="bklAdd()" class="btn btn-secondary" style="margin-top:12px">＋ Add a custom link</button>
     </div>
-    <div id="bklEditor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;justify-content:center">
-      <div style="background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 18px 28px;max-height:88vh;overflow:auto">
+    <div id="bklEditor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3000;align-items:flex-end;justify-content:center">
+      <div style="background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 18px calc(40px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto">
         <div id="bklEdTitle" style="font-size:17px;font-weight:800;color:#0A1530;margin-bottom:14px">Edit link</div>
         <div id="bklEdCustomFields" style="display:none">
           <label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Link name</label>
