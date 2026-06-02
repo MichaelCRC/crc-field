@@ -13,10 +13,16 @@ const CODES_FILE = 'rep-codes.json';
 // Public booking proxies to the portal booking engine (server-side secret —
 // the public page never holds it). Sandbox returns mock data offline.
 const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
+// Booking + rep-links proxy can target a different portal than lead/brain
+// traffic. Reps manage their booking links + availability IN the Field App
+// (no portal access), and those writes — plus public bookings — land on this
+// portal. Point it at the dev portal until the booking engine is promoted to
+// production; defaults to the main portal when unset.
+const BOOKING_PORTAL_URL = process.env.BOOKING_PORTAL_URL || PORTAL_URL;
 const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
 const _sandbox = require('../lib/sandbox');
 async function portalApi(path, opts = {}) {
-  const r = await fetch(`${PORTAL_URL}${path}`, {
+  const r = await fetch(`${BOOKING_PORTAL_URL}${path}`, {
     ...opts,
     headers: { 'Content-Type': 'application/json', 'x-hermes-secret': HERMES_SECRET, ...(opts.headers || {}) },
   });
