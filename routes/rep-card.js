@@ -734,6 +734,12 @@ async function repCardPage(req, res) {
       <div class="section-title">Roofs We've Done Near You</div>
       <div style="padding:18px;text-align:center;color:#999;font-size:13px">🗺️ Build map coming soon</div>
     </div>` : ''}
+    ${!isPublic ? `<div class="baseball-section" style="text-align:center">
+      <div class="section-title">Your Booking Page — scan or share</div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(req.protocol + '://' + req.get('host') + '/r/' + repSlugForCode(code))}" alt="Booking QR" style="width:200px;height:200px;background:#fff;border-radius:12px;padding:8px;display:inline-block">
+      <div style="font-size:12px;color:#666;margin-top:8px;word-break:break-all">${req.protocol}://${req.get('host')}/r/${repSlugForCode(code)}</div>
+      <a href="/r/${repSlugForCode(code)}" target="_blank" style="display:inline-block;margin-top:10px;color:#00BCD4;font-weight:700;font-size:14px;text-decoration:none">👁 Preview my public page</a>
+    </div>` : ''}
     <div class="buttons">
       ${isPublic
         ? `<a href="/r/${repSlugForCode(code)}/book" class="btn btn-primary">📅 Book My Inspection</a>
@@ -778,8 +784,8 @@ async function repCardPage(req, res) {
       } catch(e) { /* silently fail if no dashboard data */ }
     })();
     function shareCard() {
-      const url = window.location.href.split('?')[0];
-      const text = "Hi, I'm ${merged.name.replace(/'/g, "\\'")} from Columbus Roofing Company.\\nHere's my contact card:\\n" + url;
+      const url = '${req.protocol}://${req.get('host')}/r/${repSlugForCode(code)}';
+      const text = "Hi, I'm ${merged.name.replace(/'/g, "\\'")} from Columbus Roofing Company.\\nBook a free roof inspection or save my info here:\\n" + url;
       if (navigator.share) {
         navigator.share({ title: '${merged.name.replace(/'/g, "\\'")} - CRC', text: text, url: url }).catch(() => {});
       } else {
