@@ -4,11 +4,13 @@
     "title": "CEO",
     "phone": "614-824-7462",
     "email": "michael@columbusroofingco.com",
-    "bio": "",
-    "photo": "",
+    "bio": "Michael leads Columbus Roofing Company with one standard — do it right, every time. From the first inspection to the final nail, he and the CRC team handle the insurance process end to end so homeowners never have to fight their carrier alone.",
+    "photo": "/images/mcg-headshot.jpg",
     "linkedin": "",
     "instagram": "",
-    "updatedAt": "2026-04-01"
+    "updatedAt": "2026-06-02T14:17:27.660Z",
+    "slug": "michael",
+    "public_enabled": true
   },
   "LANE": {
     "name": "Lane Campbell",

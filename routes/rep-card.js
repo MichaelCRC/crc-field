@@ -10,6 +10,28 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 const CARDS_FILE = 'rep-cards.json';
 const CODES_FILE = 'rep-codes.json';
 
+// Public booking proxies to the portal booking engine (server-side secret —
+// the public page never holds it). Sandbox returns mock data offline.
+const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
+const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
+const _sandbox = require('../lib/sandbox');
+async function portalApi(path, opts = {}) {
+  const r = await fetch(`${PORTAL_URL}${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'x-hermes-secret': HERMES_SECRET, ...(opts.headers || {}) },
+  });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, data };
+}
+function _sandboxTypes() {
+  return [
+    { id: 'roof-inspection', name: 'Roof Inspection', duration: 45, shortDescription: 'Free on-site roof inspection.', isPublic: true },
+    { id: 'insurance-roof-report', name: 'Insurance Roof Report', duration: 45, shortDescription: 'We inspect and document a roof condition report for your insurance file.', isPublic: true },
+    { id: 'connect-call', name: 'Connect Call', duration: 30, shortDescription: 'Quick call to find the right next step.', isPublic: true },
+  ];
+}
+function _sandboxSlots() { return ['9:00 AM', '10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM']; }
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -48,6 +70,40 @@ function getMergedCard(code) {
     active: rep.active,
     updatedAt: card.updatedAt || ''
   };
+}
+
+// Public URL slug for a rep. Prefers an explicit card.slug, else the rep's
+// first name lowercased, else the code. (Phase 1: stored alongside card data
+// in rep-cards.json; canonical PG slug column lands at production integration.)
+function repSlugForCode(code) {
+  const card = getCard(code) || {};
+  if (card.slug) return String(card.slug).toLowerCase();
+  const rep = validateRepCode(code);
+  const first = ((card.name || (rep && rep.name) || '').trim().split(/\s+/)[0] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return first || String(code).toLowerCase();
+}
+
+// Resolve a public slug back to a rep code. Matches an explicit slug, the
+// derived first-name slug, or the code itself (case-insensitive).
+function findRepBySlug(slug) {
+  const s = String(slug || '').toLowerCase();
+  if (!s) return null;
+  const codes = (listRepCodes() || []);
+  for (const r of codes) {
+    const code = (r.code || '').toUpperCase();
+    if (!code) continue;
+    if (code.toLowerCase() === s) return code;
+    if (repSlugForCode(code) === s) return code;
+  }
+  return null;
+}
+
+function unavailablePage() {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">`
+    + `<title>Columbus Roofing</title></head>`
+    + `<body style="margin:0;background:#0A1530;color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center">`
+    + `<div style="padding:40px"><div style="font-size:18px;font-weight:800;letter-spacing:0.5px">COLUMBUS ROOFING COMPANY</div>`
+    + `<div style="color:#07BFEE;font-size:13px;margin-top:8px">This page is no longer available.</div></div></body></html>`;
 }
 
 // ─── API ROUTES ───────────────────────────────────────────────────────
@@ -213,9 +269,12 @@ END:VCARD`;
 
 // ─── HTML REP CARD PAGE ──────────────────────────────────────────────
 
-router.get('/rep-card/:code', async (req, res) => {
+async function repCardPage(req, res) {
   const code = req.params.code.toUpperCase();
   const auth = (req.query.auth || '').toUpperCase();
+  // Public state (/r/:slug): photo + Book My Inspection CTA, Edit hidden,
+  // build map. Internal/team state is unchanged.
+  const isPublic = req.query.public === '1' || req._isPublic === true;
   // 2026-06-01: ?team=1 is the new team-detail flag (roster.html uses it).
   // ?internal=true is the legacy alias that still gates work-style traits.
   // Both expand the page from business-card mode (default — what customers
@@ -671,10 +730,17 @@ router.get('/rep-card/:code', async (req, res) => {
     ${aboutHtml}
     ${styleHtml}
     ${statsHtml}
+    ${isPublic ? `<div class="baseball-section">
+      <div class="section-title">Roofs We've Done Near You</div>
+      <div style="padding:18px;text-align:center;color:#999;font-size:13px">🗺️ Build map coming soon</div>
+    </div>` : ''}
     <div class="buttons">
-      <a href="/rep-card/${code}/vcard" class="btn btn-primary">Save to Contacts</a>
+      ${isPublic
+        ? `<a href="/r/${repSlugForCode(code)}/book" class="btn btn-primary">📅 Book My Inspection</a>
+      <a href="/rep-card/${code}/vcard" class="btn btn-secondary">Save to Contacts</a>`
+        : `<a href="/rep-card/${code}/vcard" class="btn btn-primary">Save to Contacts</a>
       <button onclick="shareCard()" class="btn btn-secondary">Share My Card</button>
-      ${editButtonHtml}
+      ${editButtonHtml}`}
     </div>
     ${editFormHtml}
     <div class="footer">
@@ -808,6 +874,197 @@ router.get('/rep-card/:code', async (req, res) => {
 </html>`;
 
   res.send(html);
+}
+
+router.get('/rep-card/:code', repCardPage);
+
+// ─── PUBLIC REP PAGE ──────────────────────────────────────────────────
+// /r/:slug — public, unauthenticated booking page. Resolves slug → code,
+// honors public_enabled, renders the card in public state via repCardPage.
+router.get('/r/:slug', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).send(unavailablePage());
+  const card = getCard(code) || {};
+  if (card.public_enabled === false) return res.status(404).send(unavailablePage());
+  const merged = getMergedCard(code);
+  const slug = repSlugForCode(code);
+  const src = (req.query.src || 'direct').toString().replace(/[^a-zA-Z0-9_-]/g, '');
+  res.send(landingPage(merged, slug, src));
 });
+
+// ─── PUBLIC BOOKING API (rep-scoped, proxies the portal booking engine) ──
+router.get('/api/public/:slug/types', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).json({ error: 'Rep not found' });
+  if (_sandbox.enabled) return res.json({ types: _sandboxTypes() });
+  const { ok, data } = await portalApi('/api/booking/types');
+  if (!ok) return res.status(502).json({ error: 'Could not load types' });
+  res.json({ types: (data.types || []).filter(t => t.isPublic) });
+});
+
+router.get('/api/public/:slug/slots', async (req, res) => {
+  const { date, typeId } = req.query;
+  if (!date || !typeId) return res.status(400).json({ error: 'date and typeId required' });
+  if (_sandbox.enabled) return res.json({ slots: _sandboxSlots() });
+  const { ok, data } = await portalApi(`/api/booking/available-slots?date=${encodeURIComponent(date)}&type=${encodeURIComponent(typeId)}`);
+  if (!ok) return res.status(502).json({ error: 'Could not load slots' });
+  res.json({ slots: data.slots || [] });
+});
+
+router.post('/api/public/:slug/book', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).json({ error: 'Rep not found' });
+  const { typeId, date, time, homeowner = {}, src } = req.body || {};
+  if (!typeId || !date || !time) return res.status(400).json({ error: 'typeId, date, time required' });
+  if (!homeowner.name || !homeowner.phone) return res.status(400).json({ error: 'Name and phone required' });
+  if (_sandbox.enabled) return res.json({ booking: { confirmationId: 'SANDBOX1', typeId, date, time, repId: code } });
+  // repId assigns the lead to the scanned rep; src is the offline channel tag.
+  const { ok, status, data } = await portalApi('/api/booking/book', {
+    method: 'POST',
+    body: JSON.stringify({ typeId, date, time, homeowner, notes: homeowner.notes || '', repId: code, source: 'rep-page', src: src || 'direct' }),
+  });
+  if (!ok) return res.status(status || 502).json(data);
+  res.json(data);
+});
+
+// /r/:slug/book — public, rep-scoped 3-step booking page.
+router.get('/r/:slug/book', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).send(unavailablePage());
+  const card = getCard(code) || {};
+  if (card.public_enabled === false) return res.status(404).send(unavailablePage());
+  const merged = getMergedCard(code);
+  const slug = (req.params.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const src = (req.query.src || 'direct').toString().replace(/[^a-zA-Z0-9_-]/g, '');
+  res.send(bookingPage(slug, src, merged ? merged.name : 'CRC'));
+});
+
+function bookingPage(slug, src, repName) {
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>Book My Inspection — Columbus Roofing</title><style>'
+    + ':root{--navy:#0A1530;--teal:#07BFEE;--card:#16213e;--border:#2a3a5c;--muted:#94a3b8}'
+    + '*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif}'
+    + '.wrap{max-width:520px;margin:0 auto;padding:20px 16px 48px}'
+    + '.hd{font-size:20px;font-weight:800}.sub{color:var(--teal);font-size:13px;margin-top:2px;margin-bottom:18px}'
+    + '.steps{display:flex;gap:6px;margin-bottom:18px}.sdot{flex:1;height:4px;border-radius:2px;background:var(--border)}.sdot.on{background:var(--teal)}'
+    + '.opt{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;color:#fff;cursor:pointer}'
+    + '.opt b{font-size:15px}.opt small{color:var(--muted);display:block;margin-top:3px}'
+    + '.slot{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:11px;color:#fff;cursor:pointer;font-size:14px}'
+    + '.slot.on{background:var(--teal);color:var(--navy);font-weight:700;border-color:var(--teal)}'
+    + '.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}'
+    + 'label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin:10px 0 4px}'
+    + 'input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--border);background:#0d1830;color:#fff;font-size:14px}'
+    + '.btn{width:100%;padding:14px;border:none;border-radius:10px;background:var(--teal);color:var(--navy);font-size:15px;font-weight:800;cursor:pointer;margin-top:16px}'
+    + '.back{background:none;border:none;color:var(--teal);cursor:pointer;font-size:13px;margin-bottom:10px;padding:0}'
+    + '.err{color:#fca5a5;font-size:13px;margin-top:8px}</style></head><body><div class="wrap">'
+    + '<div class="hd">Book My Inspection</div><div class="sub">with ' + repName + ' · Columbus Roofing</div>'
+    + '<div class="steps"><div class="sdot on" id="d1"></div><div class="sdot" id="d2"></div><div class="sdot" id="d3"></div></div>'
+    + '<div id="step1"><div id="types"></div></div>'
+    + '<div id="step2" style="display:none"><button class="back" onclick="goStep(1)">&larr; Back</button>'
+    + '<label>Pick a date</label><input type="date" id="bdate"><div class="grid" id="slots" style="margin-top:12px"></div></div>'
+    + '<div id="step3" style="display:none"><button class="back" onclick="goStep(2)">&larr; Back</button>'
+    + '<label>Name</label><input id="hname"><label>Property address</label><input id="haddr">'
+    + '<label>Phone</label><input id="hphone" type="tel"><label>Email</label><input id="hemail" type="email">'
+    + '<button class="btn" id="confirmBtn" onclick="confirmBooking()">Confirm Booking</button><div class="err" id="err"></div></div>'
+    + '<div id="done" style="display:none;text-align:center;padding:30px 0"><div style="font-size:54px">✅</div>'
+    + '<div style="font-size:20px;font-weight:800;margin-top:8px">You\'re booked!</div>'
+    + '<div style="color:var(--muted);font-size:14px;margin-top:8px" id="doneMsg"></div></div>'
+    + '<script>'
+    + 'var SLUG=' + JSON.stringify(slug) + ',SRC=' + JSON.stringify(src) + ';'
+    + 'var sel={type:null,typeName:"",date:"",time:""};'
+    + 'function api(p,o){return fetch("/api/public/"+SLUG+p,o).then(function(r){return r.json()})}'
+    + 'function goStep(n){["step1","step2","step3","done"].forEach(function(s,i){document.getElementById(s).style.display=(i===n-1)?"":"none"});["d1","d2","d3"].forEach(function(d,i){document.getElementById(d).className="sdot"+(i<n?" on":"")})}'
+    + 'function loadTypes(){api("/types").then(function(d){var h="";(d.types||[]).forEach(function(t){h+=\'<button class="opt" onclick="pickType(\\\'\'+t.id+\'\\\',\\\'\'+(t.name||"").replace(/\'/g,"")+\'\\\')"><b>\'+t.name+\'</b><small>\'+(t.shortDescription||((t.duration||30)+" min"))+\'</small></button>\'});document.getElementById("types").innerHTML=h||"<div style=\\"color:#94a3b8\\">No times available right now.</div>"})}'
+    + 'function pickType(id,name){sel.type=id;sel.typeName=name;goStep(2);var d=document.getElementById("bdate");var t=new Date();t.setDate(t.getDate()+1);d.min=t.toISOString().slice(0,10);d.value=d.min;d.onchange=loadSlots;loadSlots()}'
+    + 'function loadSlots(){sel.date=document.getElementById("bdate").value;document.getElementById("slots").innerHTML="<div style=\\"color:#94a3b8\\">Loading…</div>";api("/slots?date="+sel.date+"&typeId="+sel.type).then(function(d){var s=d.slots||[];if(!s.length){document.getElementById("slots").innerHTML="<div style=\\"color:#94a3b8;grid-column:1/-1\\">No times that day. Try another.</div>";return}document.getElementById("slots").innerHTML=s.map(function(t){return \'<button class="slot" onclick="pickSlot(this,\\\'\'+t+\'\\\')">\'+t+\'</button>\'}).join("")})}'
+    + 'function pickSlot(el,t){sel.time=t;goStep(3)}'
+    + 'function confirmBooking(){var b=document.getElementById("confirmBtn");var e=document.getElementById("err");e.textContent="";var ho={name:document.getElementById("hname").value.trim(),address:document.getElementById("haddr").value.trim(),phone:document.getElementById("hphone").value.trim(),email:document.getElementById("hemail").value.trim()};if(!ho.name||!ho.phone){e.textContent="Name and phone are required.";return}b.disabled=true;b.textContent="Booking…";api("/book",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({typeId:sel.type,date:sel.date,time:sel.time,homeowner:ho,src:SRC})}).then(function(d){if(d.error){e.textContent=d.error;b.disabled=false;b.textContent="Confirm Booking";return}document.getElementById("doneMsg").textContent=sel.typeName+" — "+sel.date+" at "+sel.time+(d.booking&&d.booking.confirmationId?" · Conf #"+d.booking.confirmationId:"");goStep(4)}).catch(function(){e.textContent="Something went wrong. Try again.";b.disabled=false;b.textContent="Confirm Booking"})}'
+    + 'loadTypes();'
+    + '</script></div></body></html>';
+}
+
+// Static, curated social proof for v1 (company-level). Wire live Google
+// reviews later. Kept here so it's one place to edit.
+const LANDING_REVIEWS = [
+  { t: 'They got our roof fully approved by insurance — we paid our deductible and nothing else. Couldn’t have been easier.', a: 'Sarah P., Powell' },
+  { t: 'Professional from the first knock to the final walkthrough. The whole team clearly knows what they’re doing.', a: 'Mike R., Westerville' },
+  { t: 'Honest inspection, zero pressure. Showed me exactly what was wrong, with photos. Highly recommend.', a: 'Jen K., Dublin' },
+];
+const LANDING_RATING = '4.9';
+const LANDING_REVIEW_COUNT = '127';
+const LANDING_JOBS_DONE = '200+';
+
+function landingPage(merged, slug, src) {
+  const m = merged || {};
+  const initials = (m.name || 'CRC').split(' ').map(n => n[0]).join('').slice(0, 2);
+  const bookUrl = `/r/${slug}/book?src=${encodeURIComponent(src)}`;
+  const avatar = m.photo
+    ? `<img src="${m.photo}" alt="${m.name}" style="width:132px;height:132px;border-radius:50%;object-fit:cover;border:3px solid #07BFEE;box-shadow:0 10px 34px rgba(7,191,238,.28)">`
+    : `<div style="width:132px;height:132px;border-radius:50%;background:#16213e;border:3px solid #07BFEE;display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:800;color:#07BFEE">${initials}</div>`;
+  const phone = m.phone || '';
+  const callText = phone
+    ? `<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+         <a href="tel:${phone}" style="flex:1;max-width:150px;text-decoration:none;background:#16213e;border:1px solid #2a3a5c;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:700;font-size:14px">☎ Call</a>
+         <a href="sms:${phone}" style="flex:1;max-width:150px;text-decoration:none;background:#16213e;border:1px solid #2a3a5c;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:700;font-size:14px">💬 Text</a>
+       </div>` : '';
+  const reviewCards = LANDING_REVIEWS.map(r => `<div style="background:#16213e;border:1px solid #2a3a5c;border-radius:12px;padding:14px;margin-bottom:10px">
+      <div style="color:#fbbf24;font-size:14px;letter-spacing:2px">★★★★★</div>
+      <div style="font-size:14px;line-height:1.55;margin:6px 0;color:#e2e8f0">“${r.t}”</div>
+      <div style="font-size:12px;color:#94a3b8">— ${r.a}</div></div>`).join('');
+  const ctaBtn = (label) => `<a href="${bookUrl}" style="display:block;text-decoration:none;background:#07BFEE;color:#0A1530;border-radius:12px;padding:16px;text-align:center;font-size:16px;font-weight:800;box-shadow:0 6px 20px rgba(7,191,238,.3)">📅 ${label}</a>`;
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${m.name || 'Columbus Roofing'} — Free Roof Check</title><style>
+*{box-sizing:border-box}body{margin:0;background:#0A1530;color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.4}
+.wrap{max-width:520px;margin:0 auto;padding-bottom:24px}
+.bar{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #1c2a47;font-weight:800;letter-spacing:.5px;font-size:13px}
+.bar .t{color:#07BFEE}
+.sec{padding:22px 18px;border-bottom:1px solid #1c2a47}
+.klabel{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:10px}
+.trust{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:14px}
+.trust .i{font-size:18px}
+.sticky{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(10,21,48,0),#0A1530 30%);padding:14px 18px}
+</style></head><body><div class="wrap">
+  <div class="bar" style="justify-content:center;padding:16px 18px"><img src="/images/crc-badge.png" alt="Columbus Roofing Company" style="height:56px;width:auto"></div>
+
+  <div class="sec" style="text-align:center;border-bottom:none;padding-top:26px">
+    ${avatar}
+    <div style="font-size:24px;font-weight:800;margin-top:14px">${m.name || ''}</div>
+    <div style="color:#cbd5e1;font-size:14px">${m.title ? m.title + ' · ' : ''}Columbus Roofing Company</div>
+    <div style="color:#07BFEE;font-size:12px;font-weight:700;margin-top:6px">GAF Master Elite · Licensed &amp; Insured</div>
+    <div style="color:#cbd5e1;font-size:14px;margin-top:12px;line-height:1.5">A free, no-pressure roof inspection — and we handle the insurance process for you.</div>
+    <div style="margin-top:16px">${ctaBtn('Get My Free Roof Check')}</div>
+    ${callText}
+  </div>
+
+  <div class="sec" style="text-align:center">
+    <div style="font-size:15px;font-weight:800"><span style="color:#fbbf24;letter-spacing:2px">★★★★★</span> &nbsp;${LANDING_RATING} · ${LANDING_REVIEW_COUNT} reviews</div>
+    <div style="margin-top:14px;text-align:left">${reviewCards}</div>
+  </div>
+
+  <div class="sec">
+    <div class="klabel">Roofs We’ve Done Near You</div>
+    <div style="background:#16213e;border:1px solid #2a3a5c;border-radius:12px;height:180px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px">🗺 Build map — coming soon</div>
+    <div style="text-align:center;color:#cbd5e1;font-size:13px;margin-top:10px"><b style="color:#fff">${LANDING_JOBS_DONE}</b> roofs completed across Columbus</div>
+  </div>
+
+  ${m.bio ? `<div class="sec"><div class="klabel">About ${(m.name || '').split(' ')[0]}</div><div style="font-size:14px;color:#e2e8f0;line-height:1.6">${m.bio}</div></div>` : ''}
+
+  <div class="sec">
+    <div class="klabel">Why Columbus Roofing</div>
+    <div class="trust"><span class="i">🛡️</span><div><b>GAF Master Elite</b> — top 2% of contractors nationwide (G09361)</div></div>
+    <div class="trust"><span class="i">✅</span><div><b>Licensed &amp; Insured</b> · Ohio HIC-L00838</div></div>
+    <div class="trust"><span class="i">🏠</span><div><b>Local to Columbus</b> — we know these neighborhoods and these storms</div></div>
+  </div>
+
+  <div class="sec" style="border-bottom:none;text-align:center">
+    <a href="/rep-card/${m.code}/vcard" style="color:#07BFEE;text-decoration:none;font-size:14px;font-weight:700">💾 Save my contact</a>
+  </div>
+
+  <div style="text-align:center;padding:18px;color:#64748b;font-size:11px">Columbus Roofing Company · <i>The Everyday Standard.</i></div>
+</div></body></html>`;
+}
 
 module.exports = router;

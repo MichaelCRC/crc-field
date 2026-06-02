@@ -550,12 +550,10 @@ function openCreateReport(jobId) {
     opt('Photo Report', 'Clean photo documentation — roof is in good shape', '#1B2360', function(){ openPhotoInspectionReport(jobId); }),
     opt('Insurance Report', 'On-file roof condition report for the homeowner’s insurer', '#00B5CC', function(){ openInsuranceReport(jobId); }),
   ];
-  // Next Steps Packet — unchanged from the original flow: if not yet marked
-  // ready, the first tap marks it ready; once ready it builds the original
-  // packet (full portal PDF). No preview, no content changes.
-  if (isIns) opts.push(opt('Next Steps Packet', 'Homeowner is ready to file a claim', '#16A34A', function(){
-    if (job.claimFilingReady) openClaimFilingPackage(jobId); else toggleClaimReady(jobId);
-  }));
+  // Next Steps Packet — opens the builder and generates directly, the same
+  // smooth flow as Photo + Insurance Report (no "mark ready" two-tap). The
+  // packet PDF itself (portal generator) is unchanged.
+  if (isIns) opts.push(opt('Next Steps Packet', 'Homeowner is ready to file a claim', '#16A34A', function(){ openClaimFilingPackage(jobId); }));
   showActionSheet('Create Report', opts);
 }
 
