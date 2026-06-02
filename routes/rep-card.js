@@ -31,6 +31,66 @@ function _sandboxTypes() {
   ];
 }
 function _sandboxSlots() { return ['9:00 AM', '10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM']; }
+// Sandbox in-memory per-rep links (offline build/test only — never used live).
+const _SB_DEFAULT_AVAIL = { start: '08:00', end: '18:00', days: [1, 2, 3, 4, 5, 6] };
+const _sbCustom = {};     // code -> [customLink]
+const _sbOverrides = {};  // code -> { typeId: availability }
+function _sbCrypto() { return Math.random().toString(36).slice(2, 10); }
+function _sbEffectiveLinks(code) {
+  const ov = _sbOverrides[code] || {};
+  const standard = _sandboxTypes().map(t => ({
+    id: t.id, name: t.name, kind: 'standard', locked: true, duration: t.duration,
+    shortDescription: t.shortDescription || '', description: '',
+    pipelineAction: t.id === 'connect-call' ? 'none' : 'create-insurance',
+    isPublic: true, businessHours: ov[t.id] || { ..._SB_DEFAULT_AVAIL }, category: 'general',
+  }));
+  const custom = (_sbCustom[code] || []).map(l => ({ ...l, kind: 'custom', locked: false }));
+  return [...standard, ...custom];
+}
+function _sbAddCustom(code, d = {}) {
+  const cat = ['insurance', 'retail', 'general'].includes(d.category) ? d.category : 'insurance';
+  const link = {
+    id: 'custom-' + _sbCrypto(), name: (d.name || 'Custom Booking').slice(0, 80),
+    duration: Math.max(15, Math.min(240, parseInt(d.duration, 10) || 30)),
+    shortDescription: (d.shortDescription || '').slice(0, 200), description: (d.description || '').slice(0, 1200),
+    category: cat, pipelineAction: cat === 'retail' ? 'create-retail' : cat === 'general' ? 'none' : 'create-insurance',
+    isPublic: d.isPublic !== false, businessHours: _sbAvail(d.availability), badgeColor: 'teal',
+  };
+  (_sbCustom[code] = _sbCustom[code] || []).push(link);
+  return { ...link, kind: 'custom', locked: false };
+}
+function _sbAvail(a) {
+  if (!a || typeof a !== 'object') return { ..._SB_DEFAULT_AVAIL };
+  const hm = /^([01]\d|2[0-3]):[0-5]\d$/;
+  let days = Array.isArray(a.days) ? [...new Set(a.days.map(Number).filter(d => d >= 0 && d <= 6))] : [..._SB_DEFAULT_AVAIL.days];
+  if (!days.length) days = [..._SB_DEFAULT_AVAIL.days];
+  return { start: hm.test(a.start) ? a.start : '08:00', end: hm.test(a.end) ? a.end : '18:00', days: days.sort((x, y) => x - y) };
+}
+function _sbUpdate(code, linkId, u = {}) {
+  if (!String(linkId).startsWith('custom-')) {
+    (_sbOverrides[code] = _sbOverrides[code] || {})[linkId] = _sbAvail(u.availability);
+    return _sbEffectiveLinks(code).find(l => l.id === linkId) || null;
+  }
+  const arr = _sbCustom[code] || []; const l = arr.find(x => x.id === linkId); if (!l) return null;
+  if (u.name !== undefined) l.name = String(u.name).slice(0, 80) || l.name;
+  if (u.duration !== undefined) l.duration = Math.max(15, Math.min(240, parseInt(u.duration, 10) || l.duration));
+  if (u.description !== undefined) l.description = String(u.description).slice(0, 1200);
+  if (u.availability !== undefined) l.businessHours = _sbAvail(u.availability);
+  return { ...l, kind: 'custom', locked: false };
+}
+function _sbDelete(code, linkId) {
+  if (!String(linkId).startsWith('custom-')) return { locked: true };
+  const arr = _sbCustom[code] || []; const i = arr.findIndex(x => x.id === linkId);
+  if (i === -1) return { notFound: true }; arr.splice(i, 1); return { ok: true };
+}
+
+// Auth gate for rep-link management: rep manages their own links, admin any.
+function repLinkAuth(req, code) {
+  const auth = (req.query.auth || '').toUpperCase();
+  if (!auth || !validateRepCode(auth)) return { code: 401, msg: 'Auth required' };
+  if (auth !== code && !isAdmin(auth)) return { code: 403, msg: 'You can only manage your own links' };
+  return { ok: true };
+}
 
 // Configure Cloudinary
 cloudinary.config({
@@ -236,6 +296,69 @@ router.patch('/api/rep-codes/:code', async (req, res) => {
   write(CODES_FILE, data);
 
   res.json({ ok: true, repCode: data.codes[idx] });
+});
+
+// ─── REP BOOKING LINKS (manage) ───────────────────────────────────────
+// The Field App is a trusted write-proxy to the portal booking engine. The rep
+// manages their OWN links (standard = availability only + never deletable;
+// custom = full add/edit/delete). repId = the authenticated rep's code.
+
+// GET /api/rep-links/:code — a rep's effective links
+router.get('/api/rep-links/:code', async (req, res) => {
+  const code = req.params.code.toUpperCase();
+  const a = repLinkAuth(req, code);
+  if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) return res.json({ links: _sbEffectiveLinks(code) });
+  const { ok, data } = await portalApi(`/api/booking/rep-links/${encodeURIComponent(code)}`);
+  if (!ok) return res.status(502).json({ error: 'Could not load links' });
+  res.json({ links: data.links || [] });
+});
+
+// POST /api/rep-links/:code — add a custom link
+router.post('/api/rep-links/:code', async (req, res) => {
+  const code = req.params.code.toUpperCase();
+  const a = repLinkAuth(req, code);
+  if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) return res.json({ link: _sbAddCustom(code, req.body || {}) });
+  const { ok, status, data } = await portalApi(`/api/booking/rep-links/${encodeURIComponent(code)}`, {
+    method: 'POST', body: JSON.stringify(req.body || {}),
+  });
+  if (!ok) return res.status(status || 502).json(data);
+  res.json(data);
+});
+
+// PATCH /api/rep-links/:code/:linkId — edit (standard: availability only)
+router.patch('/api/rep-links/:code/:linkId', async (req, res) => {
+  const code = req.params.code.toUpperCase();
+  const a = repLinkAuth(req, code);
+  if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) {
+    const link = _sbUpdate(code, req.params.linkId, req.body || {});
+    return link ? res.json({ link }) : res.status(404).json({ error: 'Link not found' });
+  }
+  const { ok, status, data } = await portalApi(`/api/booking/rep-links/${encodeURIComponent(code)}/${encodeURIComponent(req.params.linkId)}`, {
+    method: 'PATCH', body: JSON.stringify(req.body || {}),
+  });
+  if (!ok) return res.status(status || 502).json(data);
+  res.json(data);
+});
+
+// DELETE /api/rep-links/:code/:linkId — custom links only (never standard)
+router.delete('/api/rep-links/:code/:linkId', async (req, res) => {
+  const code = req.params.code.toUpperCase();
+  const a = repLinkAuth(req, code);
+  if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) {
+    const r = _sbDelete(code, req.params.linkId);
+    if (r.locked) return res.status(403).json({ error: 'Standard booking links cannot be deleted.' });
+    if (r.notFound) return res.status(404).json({ error: 'Link not found' });
+    return res.json({ ok: true });
+  }
+  const { ok, status, data } = await portalApi(`/api/booking/rep-links/${encodeURIComponent(code)}/${encodeURIComponent(req.params.linkId)}`, {
+    method: 'DELETE',
+  });
+  if (!ok) return res.status(status || 502).json(data);
+  res.json(data);
 });
 
 // ─── VCARD DOWNLOAD ───────────────────────────────────────────────────
@@ -740,6 +863,43 @@ async function repCardPage(req, res) {
       <div style="font-size:12px;color:#666;margin-top:8px;word-break:break-all">${req.protocol}://${req.get('host')}/r/${repSlugForCode(code)}</div>
       <a href="/r/${repSlugForCode(code)}" target="_blank" style="display:inline-block;margin-top:10px;color:#00BCD4;font-weight:700;font-size:14px;text-decoration:none">👁 Preview my public page</a>
     </div>` : ''}
+    ${canEdit ? `<div class="baseball-section">
+      <div class="section-title">My Booking Links</div>
+      <div style="font-size:12px;color:#666;margin:-4px 0 12px">Share a link for a specific reason. Standard links can't be removed — set the days you're available. Add your own anytime.</div>
+      <div id="bklList" style="display:flex;flex-direction:column;gap:10px">Loading…</div>
+      <button onclick="bklAdd()" class="btn btn-secondary" style="margin-top:12px">＋ Add a custom link</button>
+    </div>
+    <div id="bklEditor" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:flex-end;justify-content:center">
+      <div style="background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 18px 28px;max-height:88vh;overflow:auto">
+        <div id="bklEdTitle" style="font-size:17px;font-weight:800;color:#0A1530;margin-bottom:14px">Edit link</div>
+        <div id="bklEdCustomFields" style="display:none">
+          <label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Link name</label>
+          <input id="bklName" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:12px">
+          <label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Length (minutes)</label>
+          <input id="bklDur" type="number" min="15" max="240" step="15" value="30" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:12px">
+          <label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Type</label>
+          <select id="bklCat" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:12px;background:#fff">
+            <option value="insurance">Insurance lead</option>
+            <option value="retail">Retail lead</option>
+            <option value="general">General (no lead)</option>
+          </select>
+          <label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Description (optional)</label>
+          <input id="bklDesc" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:12px">
+        </div>
+        <label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Available days</label>
+        <div id="bklDays" style="display:flex;gap:5px;margin-bottom:14px"></div>
+        <div style="display:flex;gap:12px;margin-bottom:6px">
+          <div style="flex:1"><label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">From</label><input id="bklStart" type="time" value="08:00" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:14px"></div>
+          <div style="flex:1"><label style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">To</label><input id="bklEnd" type="time" value="18:00" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;font-size:14px"></div>
+        </div>
+        <div id="bklEdErr" style="color:#c00;font-size:13px;min-height:16px;margin:6px 0"></div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button onclick="bklCancel()" class="btn btn-secondary" style="flex:1">Cancel</button>
+          <button onclick="bklSave()" class="btn btn-primary" id="bklSaveBtn" style="flex:1">Save</button>
+        </div>
+        <button onclick="bklDelete()" id="bklDelBtn" style="display:none;width:100%;margin-top:10px;background:none;border:none;color:#c00;font-size:13px;font-weight:700;cursor:pointer">Delete this link</button>
+      </div>
+    </div>` : ''}
     <div class="buttons">
       ${isPublic
         ? `<a href="/r/${repSlugForCode(code)}/book" class="btn btn-primary">📅 Book My Inspection</a>
@@ -868,6 +1028,123 @@ async function repCardPage(req, res) {
         status.style.color = '#c00';
       }
     }
+
+    // ── My Booking Links manager ──
+    var BKL_SLUG = '${repSlugForCode(code)}';
+    var BKL_HOST = '${req.protocol}://${req.get('host')}';
+    var BKL_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var bklLinks = [], bklSel = { id:null, kind:null, days:[] };
+
+    function bklUrl(id){ return BKL_HOST + '/r/' + BKL_SLUG + '/b/' + id; }
+    function bklDaysSummary(bh){
+      bh = bh || {}; var days = (bh.days||[]).slice().sort();
+      var lbl;
+      if (days.length === 6 && days.indexOf(0) === -1) lbl = 'Mon–Sat';
+      else if (days.length === 5 && days.indexOf(0) === -1 && days.indexOf(6) === -1) lbl = 'Mon–Fri';
+      else if (!days.length) lbl = 'No days set';
+      else lbl = days.map(function(d){ return BKL_DAYS[d]; }).join(', ');
+      return lbl + ' · ' + (bh.start||'08:00') + '–' + (bh.end||'18:00');
+    }
+    function bklBtn(label, primary, fn){
+      var b = document.createElement('button'); b.type='button'; b.textContent = label;
+      b.style.cssText = 'flex:1;min-width:68px;padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;' + (primary ? 'border:none;background:#07BFEE;color:#06263a' : 'border:1px solid #07BFEE;background:#fff;color:#0097A7');
+      b.onclick = fn; return b;
+    }
+    function bklLoad(){
+      fetch('/api/rep-links/' + CODE + '?auth=' + AUTH).then(function(r){ return r.json(); }).then(function(d){
+        bklLinks = d.links || []; bklRender();
+      }).catch(function(){ document.getElementById('bklList').innerHTML = '<div style="color:#c00;font-size:13px">Could not load links.</div>'; });
+    }
+    function bklRender(){
+      var el = document.getElementById('bklList'); el.innerHTML = '';
+      if (!bklLinks.length){ el.innerHTML = '<div style="color:#999;font-size:13px">No links yet.</div>'; return; }
+      bklLinks.forEach(function(l){
+        var locked = l.kind === 'standard';
+        var card = document.createElement('div');
+        card.style.cssText = 'border:1px solid #e3e8f0;border-radius:12px;padding:12px;background:#fafbfd';
+        var head = document.createElement('div'); head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px';
+        var nm = document.createElement('div'); nm.style.cssText = 'font-weight:700;color:#0A1530;font-size:14px'; nm.textContent = l.name || '';
+        if (locked){ var lk = document.createElement('span'); lk.textContent = ' 🔒'; nm.appendChild(lk); }
+        var dur = document.createElement('div'); dur.style.cssText = 'font-size:11px;color:#94a3b8;white-space:nowrap'; dur.textContent = (l.duration||30) + ' min';
+        head.appendChild(nm); head.appendChild(dur); card.appendChild(head);
+        var av = document.createElement('div'); av.style.cssText = 'font-size:12px;color:#667;margin-top:3px'; av.textContent = bklDaysSummary(l.businessHours); card.appendChild(av);
+        var row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;margin-top:10px;flex-wrap:wrap';
+        row.appendChild(bklBtn('Copy link', false, function(){ bklCopy(l.id); }));
+        row.appendChild(bklBtn('Share', false, function(){ bklShare(l.id, l.name || ''); }));
+        row.appendChild(bklBtn(locked ? 'Availability' : 'Edit', true, function(){ bklEdit(l.id); }));
+        card.appendChild(row); el.appendChild(card);
+      });
+    }
+    function bklCopy(id){ var u = bklUrl(id); if (navigator.clipboard){ navigator.clipboard.writeText(u).then(function(){ alert('Link copied: ' + u); }).catch(function(){ prompt('Copy this link:', u); }); } else { prompt('Copy this link:', u); } }
+    function bklShare(id, name){ var u = bklUrl(id); if (navigator.share){ navigator.share({ title: name || 'Book with CRC', text: 'Book with Columbus Roofing: ' + u, url: u }).catch(function(){}); } else { bklCopy(id); } }
+
+    function bklRenderDays(){
+      var c = document.getElementById('bklDays'); c.innerHTML = '';
+      BKL_DAYS.forEach(function(nm, i){
+        var on = bklSel.days.indexOf(i) !== -1;
+        var b = document.createElement('button'); b.type='button'; b.textContent = nm;
+        b.style.cssText = 'flex:1;padding:8px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ' + (on?'#07BFEE':'#ddd') + ';background:' + (on?'#07BFEE':'#fff') + ';color:' + (on?'#06263a':'#999');
+        b.onclick = function(){ var k = bklSel.days.indexOf(i); if (k===-1) bklSel.days.push(i); else bklSel.days.splice(k,1); bklRenderDays(); };
+        c.appendChild(b);
+      });
+    }
+    function bklOpenEditor(){ document.getElementById('bklEditor').style.display = 'flex'; document.getElementById('bklEdErr').textContent = ''; }
+    function bklCancel(){ document.getElementById('bklEditor').style.display = 'none'; }
+    function bklAdd(){
+      bklSel = { id:null, kind:'custom', days:[1,2,3,4,5] };
+      document.getElementById('bklEdTitle').textContent = 'New custom link';
+      document.getElementById('bklEdCustomFields').style.display = 'block';
+      document.getElementById('bklName').value = ''; document.getElementById('bklDur').value = 30;
+      document.getElementById('bklCat').value = 'insurance'; document.getElementById('bklDesc').value = '';
+      document.getElementById('bklStart').value = '08:00'; document.getElementById('bklEnd').value = '18:00';
+      document.getElementById('bklDelBtn').style.display = 'none';
+      bklRenderDays(); bklOpenEditor();
+    }
+    function bklEdit(id){
+      var l = bklLinks.filter(function(x){ return x.id === id; })[0]; if (!l) return;
+      var bh = l.businessHours || {}; var custom = l.kind !== 'standard';
+      bklSel = { id:id, kind:l.kind, days:(bh.days||[]).slice() };
+      document.getElementById('bklEdTitle').textContent = custom ? ('Edit · ' + l.name) : (l.name + ' — your availability');
+      document.getElementById('bklEdCustomFields').style.display = custom ? 'block' : 'none';
+      if (custom){ document.getElementById('bklName').value = l.name||''; document.getElementById('bklDur').value = l.duration||30; document.getElementById('bklCat').value = l.category||'insurance'; document.getElementById('bklDesc').value = l.description||''; }
+      document.getElementById('bklStart').value = bh.start||'08:00';
+      document.getElementById('bklEnd').value = bh.end||'18:00';
+      document.getElementById('bklDelBtn').style.display = custom ? 'block' : 'none';
+      bklRenderDays(); bklOpenEditor();
+    }
+    function bklSave(){
+      var err = document.getElementById('bklEdErr'); err.textContent = '';
+      var btn = document.getElementById('bklSaveBtn');
+      var avail = { start: document.getElementById('bklStart').value, end: document.getElementById('bklEnd').value, days: bklSel.days };
+      if (!avail.days.length){ err.textContent = 'Pick at least one available day.'; return; }
+      var body = { availability: avail };
+      if (bklSel.kind === 'custom'){
+        body.name = document.getElementById('bklName').value.trim();
+        body.duration = parseInt(document.getElementById('bklDur').value, 10) || 30;
+        body.category = document.getElementById('bklCat').value;
+        body.description = document.getElementById('bklDesc').value.trim();
+        if (!body.name){ err.textContent = 'Give your link a name.'; return; }
+      }
+      btn.disabled = true; btn.textContent = 'Saving…';
+      var isNew = !bklSel.id;
+      var url = isNew ? ('/api/rep-links/' + CODE + '?auth=' + AUTH) : ('/api/rep-links/' + CODE + '/' + bklSel.id + '?auth=' + AUTH);
+      fetch(url, { method: isNew ? 'POST' : 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) })
+        .then(function(r){ return r.json(); }).then(function(d){
+          btn.disabled = false; btn.textContent = 'Save';
+          if (d.error){ err.textContent = d.error; return; }
+          bklCancel(); bklLoad();
+        }).catch(function(){ btn.disabled = false; btn.textContent = 'Save'; err.textContent = 'Network error.'; });
+    }
+    function bklDelete(){
+      if (!bklSel.id || bklSel.kind === 'standard') return;
+      if (!confirm('Delete this link? Anyone with the old link will no longer be able to book it.')) return;
+      fetch('/api/rep-links/' + CODE + '/' + bklSel.id + '?auth=' + AUTH, { method: 'DELETE' })
+        .then(function(r){ return r.json(); }).then(function(d){
+          if (d.error){ document.getElementById('bklEdErr').textContent = d.error; return; }
+          bklCancel(); bklLoad();
+        }).catch(function(){ document.getElementById('bklEdErr').textContent = 'Network error.'; });
+    }
+    bklLoad();
   </script>` : ''}
   <nav class="fc-bottom-nav">
     <a class="nav-item" href="/#leads"><span class="nav-icon">&#127968;</span><span>Home</span></a>
@@ -902,10 +1179,12 @@ router.get('/r/:slug', async (req, res) => {
 router.get('/api/public/:slug/types', async (req, res) => {
   const code = findRepBySlug(req.params.slug);
   if (!code) return res.status(404).json({ error: 'Rep not found' });
-  if (_sandbox.enabled) return res.json({ types: _sandboxTypes() });
-  const { ok, data } = await portalApi('/api/booking/types');
+  // Effective links = standard public types (with this rep's availability) +
+  // the rep's custom links. So custom links appear in the public flow too.
+  if (_sandbox.enabled) return res.json({ types: _sbEffectiveLinks(code).filter(t => t.isPublic) });
+  const { ok, data } = await portalApi(`/api/booking/rep-links/${encodeURIComponent(code)}`);
   if (!ok) return res.status(502).json({ error: 'Could not load types' });
-  res.json({ types: (data.types || []).filter(t => t.isPublic) });
+  res.json({ types: (data.links || []).filter(t => t.isPublic) });
 });
 
 router.get('/api/public/:slug/slots', async (req, res) => {
@@ -935,7 +1214,7 @@ router.post('/api/public/:slug/book', async (req, res) => {
   res.json(data);
 });
 
-// /r/:slug/book — public, rep-scoped 3-step booking page.
+// /r/:slug/book — public, rep-scoped 3-step booking page (pick any link).
 router.get('/r/:slug/book', async (req, res) => {
   const code = findRepBySlug(req.params.slug);
   if (!code) return res.status(404).send(unavailablePage());
@@ -947,7 +1226,22 @@ router.get('/r/:slug/book', async (req, res) => {
   res.send(bookingPage(slug, src, merged ? merged.name : 'CRC'));
 });
 
-function bookingPage(slug, src, repName) {
+// /r/:slug/b/:linkId — share a SPECIFIC booking link. Same page, but jumps
+// straight to date/time for that one link. This is what reps copy/share for a
+// particular booking reason (and what the per-link QR encodes).
+router.get('/r/:slug/b/:linkId', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).send(unavailablePage());
+  const card = getCard(code) || {};
+  if (card.public_enabled === false) return res.status(404).send(unavailablePage());
+  const merged = getMergedCard(code);
+  const slug = (req.params.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const src = (req.query.src || 'direct').toString().replace(/[^a-zA-Z0-9_-]/g, '');
+  const preselectId = (req.params.linkId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  res.send(bookingPage(slug, src, merged ? merged.name : 'CRC', preselectId));
+});
+
+function bookingPage(slug, src, repName, preselectId) {
   return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>Book My Inspection — Columbus Roofing</title><style>'
@@ -979,11 +1273,11 @@ function bookingPage(slug, src, repName) {
     + '<div style="font-size:20px;font-weight:800;margin-top:8px">You\'re booked!</div>'
     + '<div style="color:var(--muted);font-size:14px;margin-top:8px" id="doneMsg"></div></div>'
     + '<script>'
-    + 'var SLUG=' + JSON.stringify(slug) + ',SRC=' + JSON.stringify(src) + ';'
+    + 'var SLUG=' + JSON.stringify(slug) + ',SRC=' + JSON.stringify(src) + ',PRESELECT=' + JSON.stringify(preselectId || '') + ';'
     + 'var sel={type:null,typeName:"",date:"",time:""};'
     + 'function api(p,o){return fetch("/api/public/"+SLUG+p,o).then(function(r){return r.json()})}'
     + 'function goStep(n){["step1","step2","step3","done"].forEach(function(s,i){document.getElementById(s).style.display=(i===n-1)?"":"none"});["d1","d2","d3"].forEach(function(d,i){document.getElementById(d).className="sdot"+(i<n?" on":"")})}'
-    + 'function loadTypes(){api("/types").then(function(d){var h="";(d.types||[]).forEach(function(t){h+=\'<button class="opt" onclick="pickType(\\\'\'+t.id+\'\\\',\\\'\'+(t.name||"").replace(/\'/g,"")+\'\\\')"><b>\'+t.name+\'</b><small>\'+(t.shortDescription||((t.duration||30)+" min"))+\'</small></button>\'});document.getElementById("types").innerHTML=h||"<div style=\\"color:#94a3b8\\">No times available right now.</div>"})}'
+    + 'function loadTypes(){api("/types").then(function(d){var types=d.types||[];if(PRESELECT){var pre=types.filter(function(t){return t.id===PRESELECT})[0];if(pre){pickType(pre.id,pre.name||"");return}}var h="";types.forEach(function(t){h+=\'<button class="opt" onclick="pickType(\\\'\'+t.id+\'\\\',\\\'\'+(t.name||"").replace(/\'/g,"")+\'\\\')"><b>\'+t.name+\'</b><small>\'+(t.shortDescription||((t.duration||30)+" min"))+\'</small></button>\'});document.getElementById("types").innerHTML=h||"<div style=\\"color:#94a3b8\\">No times available right now.</div>"})}'
     + 'function pickType(id,name){sel.type=id;sel.typeName=name;goStep(2);var d=document.getElementById("bdate");var t=new Date();t.setDate(t.getDate()+1);d.min=t.toISOString().slice(0,10);d.value=d.min;d.onchange=loadSlots;loadSlots()}'
     + 'function loadSlots(){sel.date=document.getElementById("bdate").value;document.getElementById("slots").innerHTML="<div style=\\"color:#94a3b8\\">Loading…</div>";api("/slots?date="+sel.date+"&typeId="+sel.type).then(function(d){var s=d.slots||[];if(!s.length){document.getElementById("slots").innerHTML="<div style=\\"color:#94a3b8;grid-column:1/-1\\">No times that day. Try another.</div>";return}document.getElementById("slots").innerHTML=s.map(function(t){return \'<button class="slot" onclick="pickSlot(this,\\\'\'+t+\'\\\')">\'+t+\'</button>\'}).join("")})}'
     + 'function pickSlot(el,t){sel.time=t;goStep(3)}'
