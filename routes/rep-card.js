@@ -903,10 +903,12 @@ router.get('/api/public/:slug/types', async (req, res) => {
 });
 
 router.get('/api/public/:slug/slots', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
   const { date, typeId } = req.query;
   if (!date || !typeId) return res.status(400).json({ error: 'date and typeId required' });
   if (_sandbox.enabled) return res.json({ slots: _sandboxSlots() });
-  const { ok, data } = await portalApi(`/api/booking/available-slots?date=${encodeURIComponent(date)}&type=${encodeURIComponent(typeId)}`);
+  // repId scopes availability to the rep's own CRC calendar.
+  const { ok, data } = await portalApi(`/api/booking/available-slots?date=${encodeURIComponent(date)}&type=${encodeURIComponent(typeId)}&repId=${encodeURIComponent(code || '')}`);
   if (!ok) return res.status(502).json({ error: 'Could not load slots' });
   res.json({ slots: data.slots || [] });
 });
