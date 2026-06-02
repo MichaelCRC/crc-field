@@ -30,6 +30,9 @@ function openPhotoInspectionReport(jobId) {
 function openClaimFilingPackage(jobId) {
   _launchBuilder(jobId, 'claim-filing');
 }
+function openInsuranceReport(jobId) {
+  _launchBuilder(jobId, 'insurance-report');
+}
 
 async function _launchBuilder(jobId, mode) {
   var job;
@@ -58,11 +61,18 @@ async function _launchBuilder(jobId, mode) {
     // Claim filing extras
     dateOfLoss: '',
     stormType: 'Wind & Hail',
-    damageSummary: ''
+    damageSummary: '',
+    // Insurance report extras
+    insSummary: '',
+    insDescription: '',
+    insCondition: 'sound'   // sound | wear | damage — steers the CRC Brain tone
   };
   // Prefill damage summary template for claim-filing mode
   if (mode === 'claim-filing') {
     _irState.damageSummary = _defaultDamageSummary(job);
+  }
+  if (mode === 'insurance-report') {
+    _irState.insSummary = _defaultInsuranceSummary(job);
   }
   _renderBuilder();
 }
@@ -71,6 +81,12 @@ function _defaultDamageSummary(job) {
   var addr = job.address || 'the property';
   return 'Storm damage was identified on the roof and exterior of the property at ' + addr
     + ' following a recent storm event. Columbus Roofing Company recommends filing an insurance claim for professional repair or replacement.';
+}
+
+function _defaultInsuranceSummary(job) {
+  var addr = job.address || 'the property';
+  return 'Columbus Roofing Company completed a documented roof inspection at ' + addr
+    + '. This report records the current condition of the roof and exterior for the homeowner to keep on file with their insurance carrier.';
 }
 
 // ── Render ──────────────────────────────────────────────────────────────────
@@ -83,9 +99,13 @@ function _renderBuilder() {
   overlay.id = 'ir-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:1100;background:#F8FAFC;display:flex;flex-direction:column;overflow:hidden';
 
-  var title = s.mode === 'claim-filing' ? 'Next Steps Packet' : 'Photo Inspection Report';
+  var title = s.mode === 'claim-filing' ? 'Next Steps Packet'
+    : s.mode === 'insurance-report' ? 'Insurance Report'
+    : 'Photo Inspection Report';
   var subtitle = s.mode === 'claim-filing'
     ? 'Select photos and fill in details for the homeowner packet.'
+    : s.mode === 'insurance-report'
+    ? 'A roof condition report the homeowner keeps on file for their insurer.'
     : 'Select photos to include. Add a label and (optionally) markup to each.';
 
   overlay.innerHTML = ''
@@ -99,7 +119,9 @@ function _renderBuilder() {
     + '</div>'
     + '<div style="background:#fff;border-top:1px solid #E5E7EB;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-shrink:0">'
     +   '<div style="flex:1;font-size:12px;color:#64748B"><span id="ir-count">' + s.selected.size + ' of ' + s.photos.length + ' photos selected</span></div>'
-    +   '<button id="ir-generate" onclick="_irGenerate()" style="padding:11px 18px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;min-height:44px">' + (s.mode === 'claim-filing' ? 'Generate Packet' : 'Generate Report') + '</button>'
+    +   (s.mode === 'insurance-report'
+          ? '<button id="ir-generate" onclick="_irPreview()" style="padding:11px 18px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;min-height:44px">Preview Report</button>'
+          : '<button id="ir-generate" onclick="_irGenerate()" style="padding:11px 18px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;min-height:44px">' + (s.mode === 'claim-filing' ? 'Generate Packet' : 'Generate Report') + '</button>')
     + '</div>';
 
   document.body.appendChild(overlay);
@@ -130,6 +152,28 @@ function _buildBody() {
     html += '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">'
       + '<div style="font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Inspection Summary</div>'
       + '<textarea id="ir-photo-summary" oninput="_irState.photoSummary=this.value" rows="3" placeholder="Describe the damage found, areas affected, recommended next steps..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.photoSummary || '') + '</textarea>'
+      + '</div>';
+  }
+
+  // Insurance report fields — summary + condition description the homeowner
+  // keeps on file for their insurer.
+  if (s.mode === 'insurance-report') {
+    html += '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">'
+      + '<div style="font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Insurance Report Details</div>'
+      + '<label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px">Summary</label>'
+      + '<textarea id="ir-ins-summary" oninput="_irState.insSummary=this.value" rows="3" placeholder="Brief summary for the homeowner\'s insurance file..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px">' + _esc(s.insSummary || '') + '</textarea>'
+      + '<label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:5px">Overall Condition <span style="font-weight:400">(steers the report tone)</span></label>'
+      + '<div id="ir-ins-condition-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
+      + [['sound','Sound — checks out'],['wear','Normal wear'],['damage','Damage observed']].map(function(c){
+          var on = (s.insCondition || 'sound') === c[0];
+          return '<button type="button" data-val="' + c[0] + '" onclick="_irSetCondition(this)" style="padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;background:' + (on?'#0A1530':'#F1F5F9') + ';color:' + (on?'#fff':'#1B2360') + ';border:1px solid ' + (on?'#0A1530':'#CBD5E1') + '">' + c[1] + '</button>';
+        }).join('')
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">'
+      +   '<label style="font-size:11px;font-weight:700;color:#64748B">Description / Condition Notes</label>'
+      +   '<button id="ir-ai-desc-btn" type="button" onclick="_irGenerateDescription()" style="font-size:11px;font-weight:700;color:#fff;background:#0A1530;border:1px solid #07BFEE;border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap">&#10024; Generate with CRC Brain</button>'
+      + '</div>'
+      + '<textarea id="ir-ins-desc" oninput="_irState.insDescription=this.value" rows="5" placeholder="Tap “Generate with CRC Brain” for an official statement, or write your own..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.insDescription || '') + '</textarea>'
       + '</div>';
   }
 
@@ -202,6 +246,161 @@ function _irClose() {
   _irState = null;
 }
 
+// ── Preview (view before download — all report types) ───────────────────────
+function _irReportMeta(s) {
+  var d = new Date();
+  var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+  var dateStr = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+  var stamp = '' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+  var code = { 'insurance-report': 'INS', 'photo-report': 'PIR', 'claim-filing': 'NSP' }[s.mode] || 'RPT';
+  var tail = String(s.jobId || '').replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase() || 'XXXXX';
+  return { dateStr: dateStr, reportNo: 'CRC-' + code + '-' + stamp + '-' + tail };
+}
+function _irSection(heading, inner) {
+  return '<div style="margin-bottom:16px">'
+    + '<div style="font-size:12px;font-weight:800;color:#0A1530;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;border-left:3px solid #07BFEE;padding-left:8px">' + heading + '</div>'
+    + '<div style="font-size:13px;color:#334155;line-height:1.6">' + inner + '</div></div>';
+}
+function _irMetaRow(label, val) {
+  return '<div><div style="font-size:10px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.4px">' + label + '</div>'
+    + '<div style="font-size:13px;color:#0A1530;font-weight:600;margin-top:1px">' + _esc(val) + '</div></div>';
+}
+function _irBuildPreviewHtml(s) {
+  var job = s.job || {};
+  var meta = _irReportMeta(s);
+  var rep = (typeof repName !== 'undefined' && repName) ? repName : 'CRC Representative';
+  var title = { 'insurance-report': 'Roof Condition Report', 'photo-report': 'Photo Inspection Report', 'claim-filing': 'Insurance Claim — Next Steps' }[s.mode] || 'Property Report';
+  var subtitle = { 'insurance-report': "Prepared for the homeowner's insurance records", 'photo-report': 'Documented roof & exterior inspection', 'claim-filing': 'Storm damage documentation for claim filing' }[s.mode] || '';
+
+  var photos = Array.from(s.selected).map(function (url) {
+    var p = s.photos.find(function (x) { return x.url === url; }) || { url: url };
+    return { url: (p.thumbnail || p.url), label: (s.labels[url] || p.label || p.caption || '') };
+  });
+
+  var blocks = '';
+  if (s.mode === 'insurance-report') {
+    blocks += _irSection('Summary', _esc(s.insSummary || ''));
+    if (s.insDescription) blocks += _irSection('Roof Condition &amp; Notes', _esc(s.insDescription));
+    blocks += _irSection('Scope of Inspection', 'This inspection visually assessed the roof covering, flashings, penetrations, and accessible exterior components. Findings reflect the condition observed on the inspection date and are documented with the photographs below.');
+  } else if (s.mode === 'photo-report') {
+    if (s.photoSummary) blocks += _irSection('Inspection Summary', _esc(s.photoSummary));
+  } else if (s.mode === 'claim-filing') {
+    blocks += _irSection('Claim Details', '<strong>Date of Loss:</strong> ' + _esc(s.dateOfLoss || '—') + '<br><strong>Storm Type:</strong> ' + _esc(s.stormType || '—'));
+    if (s.damageSummary) blocks += _irSection('Damage Summary', _esc(s.damageSummary));
+    blocks += _irSection('What CRC Does For You',
+      '<ul style="margin:0;padding-left:18px">'
+      + '<li>CRC files the claim on your behalf with your authorization</li>'
+      + '<li>We attend the adjuster meeting with your documentation</li>'
+      + '<li>You pay only your deductible</li></ul>');
+    var steps = [
+      ['Sign the Authorization', 'You sign our Authorization to Represent — this lets CRC file the claim and work with your carrier on your behalf. No money changes hands.'],
+      ['We File the Claim', 'CRC contacts your insurance carrier and files the claim with our full documentation package — inspection report, storm data, and photos.'],
+      ['Adjuster Meeting', 'An adjuster is assigned. CRC attends with you, presents the documented evidence, and ensures nothing is overlooked.'],
+      ['Approval & Scope', "Once approved, CRC reviews the carrier's scope and supplements any missed items. You don't pay more than your deductible."],
+      ['Installation', 'CRC completes the work with GAF-certified materials to Ohio building code, with a warranty on materials and labor.'],
+    ];
+    var stepsHtml = steps.map(function (st, i) {
+      return '<div style="display:flex;gap:10px;margin-bottom:8px">'
+        + '<div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#07BFEE;color:#0A1530;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center">' + (i + 1) + '</div>'
+        + '<div><div style="font-weight:700;color:#0A1530;font-size:13px">' + st[0] + '</div>'
+        + '<div style="font-size:12px;color:#555;line-height:1.5">' + st[1] + '</div></div></div>';
+    }).join('');
+    blocks += _irSection('Your Steps to a New Roof', stepsHtml);
+  }
+
+  var photoGrid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">'
+    + photos.map(function (p) {
+        return '<div style="border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;background:#fff">'
+          + '<img src="' + p.url + '" style="width:100%;height:130px;object-fit:cover;display:block" onerror="this.style.opacity=0.2">'
+          + (p.label ? '<div style="padding:6px 8px;font-size:12px;color:#0A1530;font-weight:600">' + _esc(p.label) + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '</div>';
+
+  return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.1)">'
+    + '<div style="background:#0A1530;color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">'
+    +   '<div><div style="font-size:17px;font-weight:800;letter-spacing:0.3px">COLUMBUS ROOFING COMPANY</div>'
+    +     '<div style="font-size:11px;color:#07BFEE;margin-top:2px">GAF Master Elite&#174; · Licensed &amp; Insured</div>'
+    +     '<div style="font-size:10px;color:#94A3B8;margin-top:1px">HIC-L00838 / G09361 · thecolumbusroofing.com</div></div>'
+    +   '<div style="text-align:right;font-size:10px;color:#94A3B8">Report No.<div style="color:#fff;font-weight:700;font-size:12px">' + meta.reportNo + '</div></div>'
+    + '</div>'
+    + '<div style="padding:16px 20px;border-bottom:1px solid #E5E7EB">'
+    +   '<div style="font-size:20px;font-weight:800;color:#0A1530">' + title + '</div>'
+    +   '<div style="font-size:12px;color:#64748B;margin-top:2px">' + subtitle + '</div>'
+    + '</div>'
+    + '<div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;border-bottom:1px solid #E5E7EB">'
+    +   _irMetaRow('Prepared For', job.homeownerName || ((job.homeowner && (job.homeowner.firstName + ' ' + job.homeowner.lastName).trim()) || 'Homeowner'))
+    +   _irMetaRow('Property', job.address || '—')
+    +   _irMetaRow('Prepared By', rep + ', Columbus Roofing Co.')
+    +   _irMetaRow('Inspection Date', meta.dateStr)
+    + '</div>'
+    + '<div style="padding:16px 20px">' + blocks + _irSection('Photo Documentation (' + photos.length + ')', photoGrid) + '</div>'
+    + '<div style="background:#F8FAFC;border-top:1px solid #E5E7EB;padding:14px 20px;font-size:11px;color:#64748B;line-height:1.5">'
+    +   'This report reflects conditions visually observed on ' + meta.dateStr + ' by Columbus Roofing Company and is provided for the homeowner&#39;s records. It is not a guarantee of insurance coverage. Keep on file with your insurance carrier.'
+    + '</div></div>';
+}
+function _irPreview() {
+  var s = _irState; if (!s) return;
+  if (!s.selected.size) { alert('Select at least one photo.'); return; }
+  if (s.mode === 'claim-filing' && !s.dateOfLoss) { alert('Enter the date of loss.'); return; }
+  var body = document.getElementById('ir-body');
+  if (!body) return;
+  body.scrollTop = 0;
+  body.innerHTML = '<div style="max-width:680px;margin:0 auto">' + _irBuildPreviewHtml(s) + '</div>';
+  // Swap the footer to Back / Download.
+  var bar = document.querySelector('#ir-overlay > div:last-child');
+  if (bar) {
+    bar.innerHTML = '<button onclick="_irBackToEdit()" style="flex:1;padding:11px;background:#fff;color:#1B2360;border:1px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px">&larr; Back to edit</button>'
+      + '<button onclick="_irGenerate()" id="ir-generate" style="flex:2;padding:11px;background:#00B5CC;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;min-height:44px">&#11015;&#65039; Download PDF</button>';
+    bar.style.display = 'flex';
+    bar.style.gap = '10px';
+  }
+}
+function _irBackToEdit() { _renderBuilder(); }
+
+function _irSetCondition(el) {
+  var s = _irState; if (!s) return;
+  s.insCondition = el.dataset.val;
+  var row = document.getElementById('ir-ins-condition-chips');
+  if (row) row.querySelectorAll('button').forEach(function (b) {
+    var on = b.dataset.val === s.insCondition;
+    b.style.background = on ? '#0A1530' : '#F1F5F9';
+    b.style.color = on ? '#fff' : '#1B2360';
+    b.style.borderColor = on ? '#0A1530' : '#CBD5E1';
+  });
+}
+
+// CRC Brain — generate an official condition statement so rep descriptions are
+// consistent and professional. Fills the Description field; rep can still edit.
+async function _irGenerateDescription() {
+  var s = _irState; if (!s) return;
+  var btn = document.getElementById('ir-ai-desc-btn');
+  var ta = document.getElementById('ir-ins-desc');
+  if (btn) { btn.disabled = true; btn.innerHTML = '&#10024; Generating…'; }
+  try {
+    var labels = Array.from(s.selected).map(function (u) { return s.labels[u]; }).filter(Boolean);
+    var r = await fetch('/api/brain/generate-description', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: s.mode,
+        address: s.job && s.job.address,
+        homeownerName: s.job && s.job.homeownerName,
+        summary: s.insSummary,
+        condition: s.insCondition,
+        photoLabels: labels,
+      }),
+    });
+    var data = await r.json();
+    if (!r.ok || !data.text) throw new Error(data.error || 'No text returned');
+    s.insDescription = data.text;
+    if (ta) ta.value = data.text;
+  } catch (e) {
+    alert('Could not generate: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#10024; Generate with CRC Brain'; }
+  }
+}
+
 // ── Generate ───────────────────────────────────────────────────────────────
 async function _irGenerate() {
   var s = _irState; if (!s) return;
@@ -216,7 +415,9 @@ async function _irGenerate() {
     return { url: url, label: (s.labels[url] || p.label || p.caption || '').trim() };
   });
 
-  var endpoint = s.mode === 'claim-filing' ? 'claim-filing-package' : 'photo-inspection-report';
+  var endpoint = s.mode === 'claim-filing' ? 'claim-filing-package'
+    : s.mode === 'insurance-report' ? 'insurance-report'
+    : 'photo-inspection-report';
   var body = {
     selections: selections,
     includeDiagram: !!s.includeDiagram,
@@ -231,6 +432,10 @@ async function _irGenerate() {
   }
   if (s.mode === 'photo-report' && s.photoSummary) {
     body.damageSummary = s.photoSummary;
+  }
+  if (s.mode === 'insurance-report') {
+    body.summary = s.insSummary;
+    body.description = s.insDescription;
   }
 
   try {
@@ -378,6 +583,11 @@ function _irShowQR(url) {
 // Expose
 window.openPhotoInspectionReport = openPhotoInspectionReport;
 window.openClaimFilingPackage = openClaimFilingPackage;
+window.openInsuranceReport = openInsuranceReport;
+window._irPreview = _irPreview;
+window._irBackToEdit = _irBackToEdit;
+window._irGenerateDescription = _irGenerateDescription;
+window._irSetCondition = _irSetCondition;
 window._irToggle = _irToggle;
 window._irSelectAll = _irSelectAll;
 window._irApplyChip = _irApplyChip;

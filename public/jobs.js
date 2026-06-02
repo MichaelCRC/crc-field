@@ -535,6 +535,30 @@ function closeActionSheet() {
   window._actionSheetCallbacks = [];
 }
 
+// Create Report chooser — Photo Report / Insurance Report / Next Steps Packet.
+// Photo + Insurance reports apply to any job type; Next Steps Packet (claim
+// filing) is insurance-only.
+function openCreateReport(jobId) {
+  var job = _currentJobDetail || {};
+  var isIns = String(job.pipeline || job.jobCategory || 'insurance').toLowerCase() === 'insurance';
+  function opt(title, desc, color, fn) {
+    return { color: color, action: fn,
+      label: '<span style="display:block;font-weight:700;color:#0D0D0D">' + title + '</span>'
+           + '<span style="display:block;font-size:12px;color:#6B7280;font-weight:400;margin-top:2px">' + desc + '</span>' };
+  }
+  var opts = [
+    opt('Photo Report', 'Clean photo documentation — roof is in good shape', '#1B2360', function(){ openPhotoInspectionReport(jobId); }),
+    opt('Insurance Report', 'On-file roof condition report for the homeowner’s insurer', '#00B5CC', function(){ openInsuranceReport(jobId); }),
+  ];
+  // Next Steps Packet — unchanged from the original flow: if not yet marked
+  // ready, the first tap marks it ready; once ready it builds the original
+  // packet (full portal PDF). No preview, no content changes.
+  if (isIns) opts.push(opt('Next Steps Packet', 'Homeowner is ready to file a claim', '#16A34A', function(){
+    if (job.claimFilingReady) openClaimFilingPackage(jobId); else toggleClaimReady(jobId);
+  }));
+  showActionSheet('Create Report', opts);
+}
+
 // ─── Update job field ──────────────────────────────────────────────────────
 async function updateJobField(jobId, fields, successMsg) {
   try {
@@ -636,6 +660,7 @@ async function saveHomeownerInfo(jobId) {
     });
     if (!r.ok) throw new Error('Update failed');
     showToast('Homeowner info saved');
+    var ov = document.getElementById('ho-overlay'); if (ov) ov.remove();
     openJobDetail(jobId);
   } catch (e) {
     showToast('Save failed: ' + e.message, true);
@@ -738,19 +763,15 @@ function renderJobDetail(job) {
     squares ? '#16A34A' : '#00B5CC',
     'runFieldMeasure(\'' + (job.address || '').replace(/\'/g,"\\'") + '\',\'' + jid + '\')');
   // Photos workflow chip removed — photos section below + camera button above handle this
-  html += _workflowChip('&#128220;', 'Photo Report',
-    photoReportBuilt ? '&#10003; Built' : (wfPhotos.length ? 'Build' : 'No photos yet'),
-    photoReportBuilt ? '#16A34A' : '#94A3B8',
-    wfPhotos.length ? ('openPhotoInspectionReport(\'' + jid + '\')') : '');
-  // Next Steps Packet is the insurance deliverable — only show it on insurance
-  // jobs. Retail/repair get their own equivalents under the Phase 2/3 workflow.
-  if (isInsurance) {
-    var claimLabel = claimSent ? '&#10003; Sent' : (claimReady ? 'Build' : 'Mark ready');
-    var claimColor = claimSent ? '#16A34A' : (claimReady ? '#F59E0B' : '#94A3B8');
-    html += _workflowChip('&#128203;', 'Next Steps Packet',
-      claimLabel, claimColor,
-      claimReady ? ('openClaimFilingPackage(\'' + jid + '\')') : ('toggleClaimReady(\'' + jid + '\')'));
-  }
+  // Create Report — one entry, three outputs (Photo Report / Insurance Report
+  // / Next Steps Packet) chosen in a sheet. Replaces the separate Photo Report
+  // + Next Steps chips. Needs photos; chooser content adapts by job type.
+  var insReportBuilt = (job.uploadedDocs || []).some(function(d){ return d.docType === 'insurance-report'; });
+  var anyReport = photoReportBuilt || claimSent || insReportBuilt;
+  html += _workflowChip('&#128220;', 'Create Report',
+    anyReport ? '&#10003; Built' : (wfPhotos.length ? 'Create' : 'No photos yet'),
+    anyReport ? '#16A34A' : (wfPhotos.length ? '#00B5CC' : '#94A3B8'),
+    wfPhotos.length ? ('openCreateReport(\'' + jid + '\')') : '');
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
@@ -785,38 +806,8 @@ function renderJobDetail(job) {
   // Roof diagram is now rendered inside the CRC Measure bottom sheet — removed
   // the standalone Job Detail section 2026-04 to avoid duplicate surfaces.
 
-  // ── Homeowner Info (collapsible) — enrichment fields (v3.1 §5 line 10) ──
-  // Email + Secondary Phone reuse canonical customer columns; Spouse, Best
-  // Time, Preferred Contact persist to the new customers columns (doctrine
-  // §2.2). Saved as a whole homeowner object; the portal routes sub-fields to
-  // the customers table. Collapsed by default to keep the screen tidy.
-  var ho = job.homeowner || {};
-  var hoExpanded = (window._homeownerExpanded || {})[jid] === true;
-  function _hoOpt(cur, val, label) { return '<option value="' + val + '"' + (String(cur||'') === val ? ' selected' : '') + '>' + (label || (val || '— select —')) + '</option>'; }
-  html += '<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:16px">';
-  html += '<button onclick="toggleHomeownerInfo(\'' + jid + '\')" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:' + (hoExpanded ? '12' : '0') + 'px">';
-  html += '<span style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Homeowner Info</span>';
-  html += '<span style="font-size:14px;color:var(--gray)">' + (hoExpanded ? '▲' : '▼') + '</span></button>';
-  if (hoExpanded) {
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">';
-    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">EMAIL</label>'
-      + '<input type="email" id="ho-email" value="' + (ho.email || '') + '" placeholder="homeowner@email.com" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
-    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">SECONDARY PHONE</label>'
-      + '<input type="tel" id="ho-secphone" value="' + (ho.secondaryPhone || '') + '" placeholder="(614) 555-0000" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
-    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">SPOUSE / CO-OWNER</label>'
-      + '<input type="text" id="ho-spouse" value="' + (ho.spouse || '') + '" placeholder="Name" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>';
-    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">BEST TIME</label>'
-      + '<select id="ho-besttime" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box">'
-      + _hoOpt(ho.bestTime,'') + _hoOpt(ho.bestTime,'Anytime') + _hoOpt(ho.bestTime,'Morning') + _hoOpt(ho.bestTime,'Afternoon') + _hoOpt(ho.bestTime,'Evening') + _hoOpt(ho.bestTime,'Weekend')
-      + '</select></div>';
-    html += '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">PREFERRED CONTACT</label>'
-      + '<select id="ho-prefcontact" style="width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box">'
-      + _hoOpt(ho.preferredContact,'') + _hoOpt(ho.preferredContact,'Call') + _hoOpt(ho.preferredContact,'Text') + _hoOpt(ho.preferredContact,'Email')
-      + '</select></div>';
-    html += '</div>';
-    html += '<button onclick="saveHomeownerInfo(\'' + jid + '\')" style="width:100%;padding:9px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Save Homeowner Info</button>';
-  }
-  html += '</div>';
+  // Homeowner Info moved into the ⋯ menu (top-right) to declutter the job
+  // screen — opens as an overlay via openHomeownerInfo(). See openJobActionMenu.
 
   // ── Insurance Info (collapsible) — insurance jobs only (Phase 1) ──
   // Carrier / claim / adjuster are meaningless on retail/repair, so the whole
@@ -1060,13 +1051,35 @@ function markJobLost(jobId) {
   }]);
 }
 
-function openJobActionMenu(jobId) {
-  showActionSheet('Job Actions', [
-    { label: 'Move Stage',    color: '#00B5CC', action: function() { openStagePickerInDetail(jobId); } },
-    { label: 'Job Type', color: '#1B2360', action: function() { openPipelineTransfer(jobId); } },
-    { label: 'Follow Up',     color: '#0EA5E9', action: function() { markJobFollowUp(jobId); } },
-    { label: 'Mark Lost',     color: '#DC2626', action: function() { markJobLost(jobId); } },
-  ]);
+// The ⋯ (top-right of Job Detail) opens Homeowner Info. The four actions that
+// used to live here (Move Stage, Job Type, Follow Up, Mark Lost) are already
+// dedicated buttons on the screen, so this menu was pure duplication.
+function openJobActionMenu(jobId) { openHomeownerInfo(jobId); }
+
+function openHomeownerInfo(jobId) {
+  var job = _currentJobDetail || {};
+  var ho = job.homeowner || {};
+  function opt(cur, val, label) { return '<option value="' + val + '"' + (String(cur||'') === val ? ' selected' : '') + '>' + (label || (val || '— select —')) + '</option>'; }
+  var existing = document.getElementById('ho-overlay'); if (existing) existing.remove();
+  var ov = document.createElement('div');
+  ov.id = 'ho-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:1100;background:rgba(10,21,48,0.6);display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML = '<div style="background:var(--white);width:100%;max-width:540px;border-radius:16px 16px 0 0;max-height:85vh;overflow-y:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom))">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    +   '<span style="font-size:14px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px">Homeowner Info</span>'
+    +   '<button onclick="document.getElementById(\'ho-overlay\').remove()" style="background:none;border:none;font-size:26px;color:var(--gray);cursor:pointer;line-height:1;min-width:44px;min-height:44px">&times;</button>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    +   '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">EMAIL</label><input type="email" id="ho-email" value="' + (ho.email || '') + '" placeholder="homeowner@email.com" style="width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
+    +   '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">SECONDARY PHONE</label><input type="tel" id="ho-secphone" value="' + (ho.secondaryPhone || '') + '" placeholder="(614) 555-0000" style="width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
+    +   '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">SPOUSE / CO-OWNER</label><input type="text" id="ho-spouse" value="' + (ho.spouse || '') + '" placeholder="Name" style="width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box"></div>'
+    +   '<div><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">BEST TIME</label><select id="ho-besttime" style="width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box">' + opt(ho.bestTime,'') + opt(ho.bestTime,'Anytime') + opt(ho.bestTime,'Morning') + opt(ho.bestTime,'Afternoon') + opt(ho.bestTime,'Evening') + opt(ho.bestTime,'Weekend') + '</select></div>'
+    +   '<div style="grid-column:1 / -1"><label style="font-size:11px;font-weight:700;color:var(--gray);display:block;margin-bottom:3px">PREFERRED CONTACT</label><select id="ho-prefcontact" style="width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box">' + opt(ho.preferredContact,'') + opt(ho.preferredContact,'Call') + opt(ho.preferredContact,'Text') + opt(ho.preferredContact,'Email') + '</select></div>'
+    + '</div>'
+    + '<button onclick="saveHomeownerInfo(\'' + jobId + '\')" style="width:100%;padding:12px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Save Homeowner Info</button>'
+    + '</div>';
+  ov.addEventListener('click', function(e){ if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
 }
 
 // ─── Notes / Tasks renderers ───────────────────────────────────────────────

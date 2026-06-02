@@ -17,6 +17,7 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 const { query } = require('../db/client');
+const _sandbox = require('../lib/sandbox');  // FIELD_SANDBOX=1: in-memory, no DB/portal. No-op in prod.
 
 const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
 const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
@@ -43,6 +44,7 @@ async function portalFetch(path, opts = {}) {
 // because they hit per-resource paths (/api/jobs/:id, /api/hermes/*) that
 // remain exempt from the cookie middleware.
 router.get('/', async (req, res) => {
+  if (_sandbox.enabled) return res.json(_sandbox.listJobs(req.query.repCode));
   try {
     const repCode = String(req.query.repCode || '').toUpperCase().trim();
 
@@ -140,6 +142,10 @@ function _rewritePhotoArray(arr) {
 
 // GET /api/field/jobs/:id — full job detail
 router.get('/:id', async (req, res) => {
+  if (_sandbox.enabled) {
+    const j = _sandbox.getJob(req.params.id);
+    return j ? res.json(j) : res.status(404).json({ error: 'Job not found (sandbox)' });
+  }
   try {
     const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}`);
     if (!ok) return res.status(status).json(data);
@@ -161,6 +167,11 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/field/jobs — create job in portal via hermes bridge
 router.post('/', async (req, res) => {
+  if (_sandbox.enabled) {
+    if (!req.body || !req.body.address) return res.status(400).json({ error: 'Address required' });
+    const job = _sandbox.createJob(req.body);
+    return res.json({ success: true, jobId: job.id, job });
+  }
   try {
     const body = req.body;
     if (!body.address) return res.status(400).json({ error: 'Address required' });
@@ -201,6 +212,10 @@ router.post('/', async (req, res) => {
 
 // PATCH /api/field/jobs/:id — update stage, pipeline, status, drawings
 router.patch('/:id', async (req, res) => {
+  if (_sandbox.enabled) {
+    const j = _sandbox.patchJob(req.params.id, req.body || {});
+    return j ? res.json({ success: true, job: j }) : res.status(404).json({ error: 'Job not found (sandbox)' });
+  }
   try {
     const allowed = [
       'stage', 'pipeline', 'subStatus', 'carrier', 'claimNumber', 'estimateValue',
@@ -234,6 +249,12 @@ router.patch('/:id', async (req, res) => {
 
 // POST /api/field/jobs/:id/notes
 router.post('/:id/notes', async (req, res) => {
+  if (_sandbox.enabled) {
+    const { text, repName } = req.body || {};
+    if (!text) return res.status(400).json({ error: 'Note text required' });
+    _sandbox.addNote(req.params.id, { id: 'n' + Date.now(), text, author: repName || 'Me', createdAt: '2026-05-30T15:00:00.000Z' });
+    return res.json({ success: true });
+  }
   try {
     const { text, repCode, repName } = req.body;
     if (!text) return res.status(400).json({ error: 'Note text required' });
@@ -268,6 +289,13 @@ router.post('/:id/tasks', async (req, res) => {
 
 // POST /api/field/jobs/:id/photos — upload photo to portal simple-photos
 router.post('/:id/photos', upload.single('photo'), async (req, res) => {
+  if (_sandbox.enabled) {
+    if (!req.file) return res.status(400).json({ error: 'No photo file' });
+    const dataUri = 'data:' + (req.file.mimetype || 'image/jpeg') + ';base64,' + req.file.buffer.toString('base64');
+    const photo = { id: 'up' + req.file.size + '-' + req.file.buffer.length, url: dataUri, thumbnail: dataUri, caption: req.body.label || '', label: req.body.label || '' };
+    _sandbox.addPhoto(req.params.id, photo);
+    return res.json({ success: true, photo });
+  }
   try {
     // Diagnostic: capture what reached this handler after multer ran. If
     // hasFile is false while Content-Type is multipart, the field name or
@@ -316,8 +344,15 @@ router.post('/:id/photos', upload.single('photo'), async (req, res) => {
   }
 });
 
+// In sandbox, report generation has no portal to call — return a fake success
+// so the builder's success screen renders and the full flow is demoable.
+function _sandboxReport(res) {
+  return res.json({ success: true, url: '/sandbox/report-preview.pdf', sandbox: true });
+}
+
 // POST /api/field/jobs/:id/photo-inspection-report — proxy PDF build
 router.post('/:id/photo-inspection-report', async (req, res) => {
+  if (_sandbox.enabled) return _sandboxReport(res);
   try {
     const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/photo-inspection-report`, {
       method: 'POST',
@@ -333,6 +368,7 @@ router.post('/:id/photo-inspection-report', async (req, res) => {
 
 // POST /api/field/jobs/:id/claim-filing-package — proxy PDF build
 router.post('/:id/claim-filing-package', async (req, res) => {
+  if (_sandbox.enabled) return _sandboxReport(res);
   try {
     const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/claim-filing-package`, {
       method: 'POST',
@@ -343,6 +379,22 @@ router.post('/:id/claim-filing-package', async (req, res) => {
   } catch (e) {
     console.error('[FieldJobs] claim-filing error:', e.message);
     res.status(500).json({ error: 'Failed to build Claim Filing Package' });
+  }
+});
+
+// POST /api/field/jobs/:id/insurance-report — proxy PDF build (v3.1 Create Report)
+router.post('/:id/insurance-report', async (req, res) => {
+  if (_sandbox.enabled) return _sandboxReport(res);
+  try {
+    const { status, ok, data } = await portalFetch(`/api/jobs/${req.params.id}/insurance-report`, {
+      method: 'POST',
+      body: JSON.stringify(req.body)
+    });
+    if (!ok) return res.status(status).json(data);
+    res.json(data);
+  } catch (e) {
+    console.error('[FieldJobs] insurance-report error:', e.message);
+    res.status(500).json({ error: 'Failed to build Insurance Report' });
   }
 });
 
