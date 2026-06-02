@@ -34,6 +34,10 @@ function _sandboxTypes() {
     { id: 'roof-inspection', name: 'Roof Inspection', duration: 45, shortDescription: 'Free on-site roof inspection.', isPublic: true },
     { id: 'insurance-roof-report', name: 'Insurance Roof Report', duration: 45, shortDescription: 'We inspect and document a roof condition report for your insurance file.', isPublic: true },
     { id: 'connect-call', name: 'Connect Call', duration: 30, shortDescription: 'Quick call to find the right next step.', isPublic: true },
+    { id: 'in-person-meeting', name: 'In-Person Meeting', duration: 60, shortDescription: 'Sit down at our office or yours.', isPublic: true },
+    { id: 'adjuster-meeting', name: 'Adjuster Meeting', duration: 60, shortDescription: 'On-site meeting with your insurance adjuster.', isPublic: true },
+    { id: 'scope-review', name: 'Scope Review & Product Selection', duration: 45, shortDescription: 'Review the approved scope and pick your shingle.', isPublic: true },
+    { id: 'final-walkthrough', name: 'Final Walkthrough', duration: 30, shortDescription: 'Post-install walkthrough and sign-off.', isPublic: true },
   ];
 }
 function _sandboxSlots() { return ['9:00 AM', '10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM']; }
@@ -863,12 +867,23 @@ async function repCardPage(req, res) {
       <div class="section-title">Roofs We've Done Near You</div>
       <div style="padding:18px;text-align:center;color:#999;font-size:13px">🗺️ Build map coming soon</div>
     </div>` : ''}
-    ${!isPublic ? `<div class="baseball-section" style="text-align:center">
-      <div class="section-title">Your Booking Page — scan or share</div>
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(req.protocol + '://' + req.get('host') + '/r/' + repSlugForCode(code))}" alt="Booking QR" style="width:200px;height:200px;background:#fff;border-radius:12px;padding:8px;display:inline-block">
-      <div style="font-size:12px;color:#666;margin-top:8px;word-break:break-all">${req.protocol}://${req.get('host')}/r/${repSlugForCode(code)}</div>
-      <a href="/r/${repSlugForCode(code)}" target="_blank" style="display:inline-block;margin-top:10px;color:#00BCD4;font-weight:700;font-size:14px;text-decoration:none">👁 Preview my public page</a>
-    </div>` : ''}
+    ${!isPublic ? (() => {
+      const base = req.protocol + '://' + req.get('host');
+      const homeUrl = base + '/r/' + repSlugForCode(code);
+      const bizUrl = homeUrl + '/connect';
+      const block = (title, sub, url) => `<div class="baseball-section" style="text-align:center">
+      <div class="section-title">${title}</div>
+      <div style="font-size:12px;color:#666;margin:-4px 0 10px">${sub}</div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}" alt="${title} QR" style="width:180px;height:180px;background:#fff;border-radius:12px;padding:8px;display:inline-block">
+      <div style="font-size:12px;color:#666;margin-top:8px;word-break:break-all">${url}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+        <button onclick="shareUrl('${url}','${title.replace(/'/g, "")}')" class="btn btn-secondary" style="flex:0 0 auto;padding:8px 16px;font-size:13px">Share</button>
+        <a href="${url}" target="_blank" style="display:inline-block;padding:8px 16px;color:#00BCD4;font-weight:700;font-size:13px;text-decoration:none">👁 Preview</a>
+      </div>
+    </div>`;
+      return block('Homeowner Booking Page', 'For clients — leads with the free roof check.', homeUrl)
+        + block('Business / Networking Page', 'For partners & contacts — call or meeting only.', bizUrl);
+    })() : ''}
     ${canEdit ? `<div class="baseball-section">
       <div class="section-title">My Booking Links</div>
       <div style="font-size:12px;color:#666;margin:-4px 0 12px">Share a link for a specific reason. Standard links can't be removed — set the days you're available. Add your own anytime.</div>
@@ -957,6 +972,13 @@ async function repCardPage(req, res) {
       } else {
         navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard')).catch(() => alert(url));
       }
+    }
+    function shareUrl(url, title) {
+      if (navigator.share) {
+        navigator.share({ title: title, text: title + ': ' + url, url: url }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => alert('Link copied: ' + url)).catch(() => prompt('Copy this link:', url));
+      } else { prompt('Copy this link:', url); }
     }
   </script>
   ${canEdit ? `<script>
@@ -1247,6 +1269,33 @@ router.get('/r/:slug/b/:linkId', async (req, res) => {
   res.send(bookingPage(slug, src, merged ? merged.name : 'CRC', preselectId));
 });
 
+// Curated booking surfaces. Homeowner page = free-roof-check hero + these
+// lifecycle "other options"; business page = networking-only types. These are
+// standard company types; reps still control each one's availability.
+const HOMEOWNER_OTHER_LINKS = [
+  { id: 'connect-call',     label: 'Connect Call' },
+  { id: 'adjuster-meeting', label: 'Adjuster Meeting' },
+  { id: 'scope-review',     label: 'Scope Review & Product Selection' },
+  { id: 'final-walkthrough', label: 'Final Walkthrough' },
+];
+const BUSINESS_LINKS = [
+  { id: 'connect-call',     label: 'Connect Call',    sub: 'A quick call to find the right next step.' },
+  { id: 'in-person-meeting', label: 'In-Person Meeting', sub: 'Sit down at our office or yours.' },
+];
+
+// /r/:slug/connect — the rep's BUSINESS / networking page (not for homeowners).
+// Connect Call + In-Person Meeting only. Own link + QR, shareable from the rep card.
+router.get('/r/:slug/connect', async (req, res) => {
+  const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).send(unavailablePage());
+  const card = getCard(code) || {};
+  if (card.public_enabled === false) return res.status(404).send(unavailablePage());
+  const merged = getMergedCard(code);
+  const slug = repSlugForCode(code);
+  const src = (req.query.src || 'direct').toString().replace(/[^a-zA-Z0-9_-]/g, '');
+  res.send(businessPage(merged, slug, src));
+});
+
 function bookingPage(slug, src, repName, preselectId) {
   return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -1306,7 +1355,10 @@ const LANDING_JOBS_DONE = '200+';
 function landingPage(merged, slug, src) {
   const m = merged || {};
   const initials = (m.name || 'CRC').split(' ').map(n => n[0]).join('').slice(0, 2);
-  const bookUrl = `/r/${slug}/book?src=${encodeURIComponent(src)}`;
+  const qs = `?src=${encodeURIComponent(src)}`;
+  // Hero goes STRAIGHT to the roof inspection — homeowner taps once, picks a
+  // time, done. No menu to scan.
+  const bookUrl = `/r/${slug}/b/roof-inspection${qs}`;
   const avatar = m.photo
     ? `<img src="${m.photo}" alt="${m.name}" style="width:132px;height:132px;border-radius:50%;object-fit:cover;border:3px solid #07BFEE;box-shadow:0 10px 34px rgba(7,191,238,.28)">`
     : `<div style="width:132px;height:132px;border-radius:50%;background:#16213e;border:3px solid #07BFEE;display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:800;color:#07BFEE">${initials}</div>`;
@@ -1321,6 +1373,15 @@ function landingPage(merged, slug, src) {
       <div style="font-size:14px;line-height:1.55;margin:6px 0;color:#e2e8f0">“${r.t}”</div>
       <div style="font-size:12px;color:#94a3b8">— ${r.a}</div></div>`).join('');
   const ctaBtn = (label) => `<a href="${bookUrl}" style="display:block;text-decoration:none;background:#07BFEE;color:#0A1530;border-radius:12px;padding:16px;text-align:center;font-size:16px;font-weight:800;box-shadow:0 6px 20px rgba(7,191,238,.3)">📅 ${label}</a>`;
+  // Collapsed "Other options" — the rest of the homeowner journey, so a client
+  // you're working with can book every next step from this one page. Hidden by
+  // default so it never competes with the free roof check.
+  const otherOptions = `<details style="margin-top:12px">
+    <summary style="cursor:pointer;list-style:none;text-align:center;color:#94a3b8;font-size:13px;font-weight:700;padding:8px">Other options ▾</summary>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+      ${HOMEOWNER_OTHER_LINKS.map(o => `<a href="/r/${slug}/b/${o.id}${qs}" style="display:block;text-decoration:none;background:#16213e;border:1px solid #2a3a5c;color:#fff;border-radius:10px;padding:13px;text-align:center;font-weight:700;font-size:14px">${o.label}</a>`).join('')}
+    </div>
+  </details>`;
 
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1344,6 +1405,7 @@ function landingPage(merged, slug, src) {
     <div style="color:#07BFEE;font-size:12px;font-weight:700;margin-top:6px">GAF Master Elite · Licensed &amp; Insured</div>
     <div style="color:#cbd5e1;font-size:14px;margin-top:12px;line-height:1.5">A free, no-pressure roof inspection — and we handle the insurance process for you.</div>
     <div style="margin-top:16px">${ctaBtn('Get My Free Roof Check')}</div>
+    ${otherOptions}
     ${callText}
   </div>
 
@@ -1371,6 +1433,49 @@ function landingPage(merged, slug, src) {
     <a href="/rep-card/${m.code}/vcard" style="color:#07BFEE;text-decoration:none;font-size:14px;font-weight:700">💾 Save my contact</a>
   </div>
 
+  <div style="text-align:center;padding:18px;color:#64748b;font-size:11px">Columbus Roofing Company · <i>The Everyday Standard.</i></div>
+</div></body></html>`;
+}
+
+// Business / networking page — NOT for homeowners. Connect Call + In-Person
+// Meeting only. Own URL (/r/:slug/connect) + QR, for business cards / networking.
+function businessPage(merged, slug, src) {
+  const m = merged || {};
+  const initials = (m.name || 'CRC').split(' ').map(n => n[0]).join('').slice(0, 2);
+  const qs = `?src=${encodeURIComponent(src)}`;
+  const avatar = m.photo
+    ? `<img src="${m.photo}" alt="${m.name}" style="width:118px;height:118px;border-radius:50%;object-fit:cover;border:3px solid #07BFEE;box-shadow:0 10px 34px rgba(7,191,238,.28)">`
+    : `<div style="width:118px;height:118px;border-radius:50%;background:#16213e;border:3px solid #07BFEE;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;color:#07BFEE">${initials}</div>`;
+  const phone = m.phone || '';
+  const callText = phone
+    ? `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+         <a href="tel:${phone}" style="flex:1;max-width:150px;text-decoration:none;background:#16213e;border:1px solid #2a3a5c;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:700;font-size:14px">☎ Call</a>
+         <a href="sms:${phone}" style="flex:1;max-width:150px;text-decoration:none;background:#16213e;border:1px solid #2a3a5c;color:#fff;border-radius:10px;padding:12px;text-align:center;font-weight:700;font-size:14px">💬 Text</a>
+       </div>` : '';
+  const buttons = BUSINESS_LINKS.map(b => `<a href="/r/${slug}/b/${b.id}${qs}" style="display:block;text-decoration:none;background:#07BFEE;color:#0A1530;border-radius:12px;padding:15px;text-align:center;margin-bottom:10px;box-shadow:0 6px 20px rgba(7,191,238,.25)">
+      <div style="font-size:16px;font-weight:800">${b.label}</div>
+      <div style="font-size:12px;font-weight:600;opacity:.8;margin-top:2px">${b.sub}</div></a>`).join('');
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${m.name || 'Columbus Roofing'} — Let's Connect</title><style>
+*{box-sizing:border-box}body{margin:0;background:#0A1530;color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.4}
+.wrap{max-width:520px;margin:0 auto;padding-bottom:24px}
+.bar{display:flex;align-items:center;justify-content:center;padding:16px 18px;border-bottom:1px solid #1c2a47}
+.sec{padding:22px 18px;border-bottom:1px solid #1c2a47}
+</style></head><body><div class="wrap">
+  <div class="bar"><img src="/images/crc-badge.png" alt="Columbus Roofing Company" style="height:56px;width:auto"></div>
+  <div class="sec" style="text-align:center;border-bottom:none;padding-top:26px">
+    ${avatar}
+    <div style="font-size:24px;font-weight:800;margin-top:14px">${m.name || ''}</div>
+    <div style="color:#cbd5e1;font-size:14px">${m.title ? m.title + ' · ' : ''}Columbus Roofing Company</div>
+    <div style="color:#cbd5e1;font-size:14px;margin-top:12px;line-height:1.5">Let's connect — pick whatever works best.</div>
+    <div style="margin-top:18px;text-align:left">${buttons}</div>
+    ${callText}
+  </div>
+  <div class="sec" style="border-bottom:none;text-align:center">
+    <a href="/rep-card/${m.code}/vcard" style="color:#07BFEE;text-decoration:none;font-size:14px;font-weight:700">💾 Save my contact</a>
+  </div>
   <div style="text-align:center;padding:18px;color:#64748b;font-size:11px">Columbus Roofing Company · <i>The Everyday Standard.</i></div>
 </div></body></html>`;
 }
