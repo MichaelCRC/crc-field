@@ -105,19 +105,34 @@ router.get('/dashboard', async (req, res) => {
       rows.forEach(bump);
     }
 
+    // Who logged TODAY (compliance) — always today, independent of the period.
+    const loggedToday = new Set();
+    if (_sandbox.enabled || !query) {
+      Object.values(_sb).filter(r => r.activity_date === to && METRICS.some(m => (r[m] || 0) > 0)).forEach(r => loggedToday.add(r.rep_code));
+    } else {
+      const { rows } = await query(
+        `SELECT rep_code FROM daily_activity
+         WHERE activity_date = $1 AND (talk_tos + inspections_ran + sales_appts + claims_filed + approvals) > 0`, [to]);
+      rows.forEach(r => loggedToday.add(r.rep_code));
+    }
+
     const collected = (read('rep-collected.json', { collected: {} }).collected) || {};
+    // Only sales reps (role 'rep') are EXPECTED to log daily — leaders/operators
+    // (MCG, LANE) appear on the board but aren't held to the daily-log check.
     const reps = (listRepCodes() || []).filter(c => c.active && c.showOnLeaderboard).map(c => {
       const a = agg[c.code] || {};
+      const expected = c.role === 'rep';
       return {
-        code: c.code, name: c.name,
+        code: c.code, name: c.name, expected, loggedToday: loggedToday.has(c.code),
         talk_tos: a.talk_tos || 0, inspections_ran: a.inspections_ran || 0,
         sales_appts: a.sales_appts || 0, claims_filed: a.claims_filed || 0, approvals: a.approvals || 0,
         collected: collected[c.code] || 0,
       };
     });
     reps.sort((x, y) => (y.talk_tos - x.talk_tos) || (y.collected - x.collected));
+    const notLoggedToday = reps.filter(r => r.expected && !r.loggedToday).map(r => ({ code: r.code, name: r.name }));
     res.json({
-      period, from, to, goals: GOALS, reps,
+      period, from, to, goals: GOALS, reps, not_logged_today: notLoggedToday,
       totals: {
         talk_tos: reps.reduce((s, r) => s + r.talk_tos, 0),
         inspections_ran: reps.reduce((s, r) => s + r.inspections_ran, 0),

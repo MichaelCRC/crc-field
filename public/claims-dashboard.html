@@ -76,6 +76,7 @@
     <button class="kpi-tab" data-period="month" onclick="kpiSetPeriod('month')">This Month</button>
   </div>
   <div class="stats-grid" id="kpi-totals" style="padding:0 0 4px"></div>
+  <div id="kpi-alert" style="margin:8px 8px 4px"></div>
   <div class="table-wrap" style="margin-top:12px">
     <table class="leaderboard">
       <thead>
@@ -235,11 +236,19 @@ function kpiRender(d) {
     card(t.approvals || 0, 'Approvals'),
     card(kpiMoney(t.collected || 0), 'Collected YTD'),
   ].join('');
+  const nl = d.not_logged_today || [];
+  const alertEl = document.getElementById('kpi-alert');
+  if (nl.length) {
+    alertEl.innerHTML = '<div style="background:rgba(239,68,68,.12);border:1px solid #b91c1c;color:#fca5a5;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700">⚠ Not logged today (' + nl.length + '): ' + nl.map(r => r.name).join(', ') + '</div>';
+  } else {
+    alertEl.innerHTML = '<div style="background:rgba(34,197,94,.10);border:1px solid #15803d;color:#86efac;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700">✓ All sales reps logged today</div>';
+  }
   const goal = (d.goals && d.goals.talk_tos) || 0;
   document.getElementById('kpi-body').innerHTML = (d.reps || []).map(r => {
     const talk = goal ? r.talk_tos + ' <span style="color:#8899bb">/ ' + goal + '</span>' : r.talk_tos;
+    const mark = (r.expected && !r.loggedToday) ? ' <span title="Not logged today" style="color:#fca5a5">&#9888;</span>' : '';
     return '<tr>' +
-      '<td class="rep-name">' + (r.name || r.code) + '</td>' +
+      '<td class="rep-name">' + (r.name || r.code) + mark + '</td>' +
       '<td class="num">' + talk + '</td>' +
       '<td class="num">' + r.inspections_ran + '</td>' +
       '<td class="num">' + r.sales_appts + '</td>' +

@@ -18,7 +18,7 @@
       "role": "admin",
       "title": "Production Director",
       "department": "Operations",
-      "showOnLeaderboard": false,
+      "showOnLeaderboard": true,
       "canFileClaims": false,
       "active": true,
       "createdAt": "2026-04-01",
