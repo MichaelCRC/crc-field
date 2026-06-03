@@ -13,7 +13,7 @@ const _sandbox = require('../lib/sandbox');
 let query = null;
 try { ({ query } = require('../db/client')); } catch { /* sandbox: no PG */ }
 
-const { listRepCodes } = require('../lib/repCodes');
+const { listRepCodes, refreshRepCodes, repCacheStatus } = require('../lib/repCodes');
 const { read } = require('../lib/store');
 
 const METRICS = ['talk_tos', 'inspections_ran', 'sales_appts', 'claims_filed', 'approvals'];
@@ -81,6 +81,8 @@ router.get('/all', async (req, res) => {
 // period, plus YTD Collected $ (finance baseline, period-independent).
 router.get('/dashboard', async (req, res) => {
   const period = ['today', 'week', 'month'].includes(req.query.period) ? req.query.period : 'today';
+  // Warm the rep cache on cold boot, or the board comes back empty.
+  if (!repCacheStatus().loaded) { try { await refreshRepCodes(); } catch {} }
   const to = nyDate();
   let from = to;
   if (period === 'week') { const d = new Date(); d.setDate(d.getDate() - 6); from = nyDate(d); }
@@ -119,7 +121,10 @@ router.get('/dashboard', async (req, res) => {
     const collected = (read('rep-collected.json', { collected: {} }).collected) || {};
     // Only sales reps (role 'rep') are EXPECTED to log daily — leaders/operators
     // (MCG, LANE) appear on the board but aren't held to the daily-log check.
-    const reps = (listRepCodes() || []).filter(c => c.active && c.showOnLeaderboard).map(c => {
+    // "On the board" = active producing reps. Field source: PG cache uses
+    // sells_volume; the flat-file/sandbox source uses showOnLeaderboard — accept
+    // either so it works in both environments.
+    const reps = (listRepCodes() || []).filter(c => c.active && (c.sells_volume || c.showOnLeaderboard)).map(c => {
       const a = agg[c.code] || {};
       const expected = c.role === 'rep';
       return {
