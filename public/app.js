@@ -192,6 +192,7 @@ function switchView(name) {
   if (name === 'stats') loadStats();
   if (name === 'feed') initFeed();
   if (name === 'notes') initNotes();
+  if (name === 'scorecard' && typeof initScorecard === 'function') initScorecard();
   if (name === 'brain') initBrain();
   if (name === 'admin') loadAdmin();
   if (name === 'booking') {

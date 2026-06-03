@@ -257,6 +257,8 @@
          in the notes CSS, leaving the panel permanently blank. -->
     <div id="view-notes" class="app-view"></div>
 
+    <div id="view-scorecard" class="app-view"></div>
+
     <div id="view-feed" class="app-view">
       <!-- Channel tabs -->
       <div id="feed-channels" style="display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--surface-card);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
@@ -365,6 +367,7 @@
     <div id="fab-container" class="fab-container">
       <div id="fab-menu" class="fab-menu" style="display:none">
         <button class="fab-item" onclick="closeFab();reportBug()" title="Report Bug">&#128027;<span>Bug</span></button>
+        <button class="fab-item" onclick="closeFab();switchView('scorecard')" title="My Day">&#128202;<span>My Day</span></button>
         <button class="fab-item" onclick="closeFab();switchView('notes')" title="Notes">&#128221;<span>Notes</span></button>
         <button class="fab-item" onclick="closeFab();switchView('booking')" title="Booking">&#128197;<span>Booking</span></button>
         <button class="fab-item" onclick="closeFab();switchView('brain')" title="Brain">&#129504;<span>Brain</span></button>
@@ -455,6 +458,7 @@
   <script src="fieldobs.js"></script>
   <script src="/markup.js"></script>
   <script src="/booking-native.js"></script>
+  <script src="/scorecard.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <script src="issues-widget.js" defer></script>
   <!-- CRC PWA SW -->

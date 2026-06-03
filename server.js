@@ -14,6 +14,7 @@ app.use('/api/storms', require('./routes/storms'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/maps', require('./routes/maps'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/scorecard', require('./routes/scorecard'));
 app.use('/api/hover', require('./routes/hover'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/brain', require('./routes/brain'));
