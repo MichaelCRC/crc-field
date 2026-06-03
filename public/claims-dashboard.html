@@ -52,6 +52,8 @@
   .month-card .month-count { font-size: 24px; font-weight: 700; color: #fff; margin: 4px 0; }
   .month-card .month-value { font-size: 13px; color: #4ade80; }
   .loading { text-align: center; padding: 60px; color: #8899bb; font-size: 18px; }
+  .kpi-tab { background: #111827; border: 1px solid #1e293b; color: #8899bb; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .kpi-tab.active { background: #00BCD4; color: #06263a; border-color: #00BCD4; }
   .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #1e293b; }
   @media (max-width: 640px) {
     .stat-card .value { font-size: 24px; }
@@ -66,6 +68,31 @@
   <div class="subtitle" id="generated">Loading...</div>
 </div>
 <div class="stats-grid" id="totals"></div>
+<div class="section">
+  <h2>Daily KPIs</h2>
+  <div style="display:flex;gap:8px;margin:0 8px 12px">
+    <button class="kpi-tab active" data-period="today" onclick="kpiSetPeriod('today')">Today</button>
+    <button class="kpi-tab" data-period="week" onclick="kpiSetPeriod('week')">This Week</button>
+    <button class="kpi-tab" data-period="month" onclick="kpiSetPeriod('month')">This Month</button>
+  </div>
+  <div class="stats-grid" id="kpi-totals" style="padding:0 0 4px"></div>
+  <div class="table-wrap" style="margin-top:12px">
+    <table class="leaderboard">
+      <thead>
+        <tr>
+          <th>Rep</th>
+          <th class="num">Talk Tos</th>
+          <th class="num">Insp.</th>
+          <th class="num">Sit-Downs</th>
+          <th class="num">Claims</th>
+          <th class="num">Appr.</th>
+          <th class="num">Collected YTD</th>
+        </tr>
+      </thead>
+      <tbody id="kpi-body"></tbody>
+    </table>
+  </div>
+</div>
 <div class="section">
   <h2>Rep Leaderboard</h2>
   <div class="table-wrap">
@@ -183,8 +210,50 @@ function card(val, label) {
   return '<div class="stat-card"><div class="value">' + val + '</div><div class="label">' + label + '</div></div>';
 }
 
+// ── Daily KPIs (self-logged scorecard rollup + collected $) ──
+let kpiPeriod = 'today';
+const kpiMoney = n => (n > 0) ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '$0';
+function kpiSetPeriod(p) {
+  kpiPeriod = p;
+  document.querySelectorAll('.kpi-tab').forEach(b => b.classList.toggle('active', b.dataset.period === p));
+  kpiLoad();
+}
+async function kpiLoad() {
+  try {
+    const res = await fetch('/api/scorecard/dashboard?period=' + kpiPeriod);
+    const d = await res.json();
+    kpiRender(d);
+  } catch (e) { /* leave prior render */ }
+}
+function kpiRender(d) {
+  const t = d.totals || {};
+  document.getElementById('kpi-totals').innerHTML = [
+    card(t.talk_tos || 0, 'Talk Tos'),
+    card(t.inspections_ran || 0, 'Inspections'),
+    card(t.sales_appts || 0, 'Sit-Downs'),
+    card(t.claims_filed || 0, 'Claims Filed'),
+    card(t.approvals || 0, 'Approvals'),
+    card(kpiMoney(t.collected || 0), 'Collected YTD'),
+  ].join('');
+  const goal = (d.goals && d.goals.talk_tos) || 0;
+  document.getElementById('kpi-body').innerHTML = (d.reps || []).map(r => {
+    const talk = goal ? r.talk_tos + ' <span style="color:#8899bb">/ ' + goal + '</span>' : r.talk_tos;
+    return '<tr>' +
+      '<td class="rep-name">' + (r.name || r.code) + '</td>' +
+      '<td class="num">' + talk + '</td>' +
+      '<td class="num">' + r.inspections_ran + '</td>' +
+      '<td class="num">' + r.sales_appts + '</td>' +
+      '<td class="num">' + r.claims_filed + '</td>' +
+      '<td class="num">' + r.approvals + '</td>' +
+      '<td class="num money">' + kpiMoney(r.collected) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
 load();
+kpiLoad();
 setInterval(load, 300000);
+setInterval(kpiLoad, 120000);
 </script>
   <!-- CRC PWA SW -->
   <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}</script>

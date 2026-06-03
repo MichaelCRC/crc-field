@@ -13,6 +13,9 @@ const _sandbox = require('../lib/sandbox');
 let query = null;
 try { ({ query } = require('../db/client')); } catch { /* sandbox: no PG */ }
 
+const { listRepCodes } = require('../lib/repCodes');
+const { read } = require('../lib/store');
+
 const METRICS = ['talk_tos', 'inspections_ran', 'sales_appts', 'claims_filed', 'approvals'];
 const GOALS = { talk_tos: 20 }; // only Talk Tos has a target for now
 const _sb = {}; // sandbox in-memory: `${rep}|${date}` -> row
@@ -70,6 +73,60 @@ router.get('/all', async (req, res) => {
     if (_sandbox.enabled || !query) return res.json({ date, reps: Object.values(_sb).filter(r => r.activity_date === date) });
     const { rows } = await query('SELECT * FROM daily_activity WHERE activity_date = $1 ORDER BY rep_code', [date]);
     res.json({ date, reps: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/scorecard/dashboard?period=today|week|month — per-rep KPI rollup for
+// the CEO/team dashboard: the 5 self-logged activity metrics summed over the
+// period, plus YTD Collected $ (finance baseline, period-independent).
+router.get('/dashboard', async (req, res) => {
+  const period = ['today', 'week', 'month'].includes(req.query.period) ? req.query.period : 'today';
+  const to = nyDate();
+  let from = to;
+  if (period === 'week') { const d = new Date(); d.setDate(d.getDate() - 6); from = nyDate(d); }
+  else if (period === 'month') { const d = new Date(); from = nyDate(new Date(d.getFullYear(), d.getMonth(), 1)); }
+
+  try {
+    const agg = {};
+    const bump = (r) => {
+      const a = agg[r.rep_code] || (agg[r.rep_code] = { talk_tos: 0, inspections_ran: 0, sales_appts: 0, claims_filed: 0, approvals: 0 });
+      METRICS.forEach(m => { a[m] += (+r[m] || 0); });
+    };
+    if (_sandbox.enabled || !query) {
+      Object.values(_sb).filter(r => r.activity_date >= from && r.activity_date <= to).forEach(bump);
+    } else {
+      const { rows } = await query(
+        `SELECT rep_code,
+                SUM(talk_tos) talk_tos, SUM(inspections_ran) inspections_ran,
+                SUM(sales_appts) sales_appts, SUM(claims_filed) claims_filed, SUM(approvals) approvals
+         FROM daily_activity WHERE activity_date BETWEEN $1 AND $2 GROUP BY rep_code`,
+        [from, to]
+      );
+      rows.forEach(bump);
+    }
+
+    const collected = (read('rep-collected.json', { collected: {} }).collected) || {};
+    const reps = (listRepCodes() || []).filter(c => c.active && c.showOnLeaderboard).map(c => {
+      const a = agg[c.code] || {};
+      return {
+        code: c.code, name: c.name,
+        talk_tos: a.talk_tos || 0, inspections_ran: a.inspections_ran || 0,
+        sales_appts: a.sales_appts || 0, claims_filed: a.claims_filed || 0, approvals: a.approvals || 0,
+        collected: collected[c.code] || 0,
+      };
+    });
+    reps.sort((x, y) => (y.talk_tos - x.talk_tos) || (y.collected - x.collected));
+    res.json({
+      period, from, to, goals: GOALS, reps,
+      totals: {
+        talk_tos: reps.reduce((s, r) => s + r.talk_tos, 0),
+        inspections_ran: reps.reduce((s, r) => s + r.inspections_ran, 0),
+        sales_appts: reps.reduce((s, r) => s + r.sales_appts, 0),
+        claims_filed: reps.reduce((s, r) => s + r.claims_filed, 0),
+        approvals: reps.reduce((s, r) => s + r.approvals, 0),
+        collected: reps.reduce((s, r) => s + r.collected, 0),
+      },
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
