@@ -232,7 +232,8 @@
     <div id="view-stats" class="app-view">
       <div style="padding:16px">
         <div class="chip-row" id="stats-period" style="margin-bottom:16px">
-          <button class="chip active" data-val="week" onclick="loadStats(this.dataset.val)">This Week</button>
+          <button class="chip active" data-val="today" onclick="loadStats(this.dataset.val)">Today</button>
+          <button class="chip" data-val="week" onclick="loadStats(this.dataset.val)">This Week</button>
           <button class="chip" data-val="month" onclick="loadStats(this.dataset.val)">This Month</button>
           <button class="chip" data-val="alltime" onclick="loadStats(this.dataset.val)">All Time</button>
         </div>

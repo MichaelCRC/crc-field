@@ -1,0 +1,654 @@
+{
+  "as_of": "2026-06-03",
+  "note": "Dated payments from JobNimbus CSV (Jan2-Jun2 2026), departed reps reattributed to MCG. Period revenue = these in-range + rep daily entries.",
+  "payments": [
+    {
+      "date": "2026-01-02",
+      "rep": "GAUTH",
+      "amount": 5574,
+      "job": "mfl9ol2p8eitll9x67mzndj"
+    },
+    {
+      "date": "2026-01-02",
+      "rep": "DOM",
+      "amount": 11003.61,
+      "job": "mgayv8be7rs3225jvdpypyj"
+    },
+    {
+      "date": "2026-01-05",
+      "rep": "JUSTIN",
+      "amount": 2575,
+      "job": "mj7f8ipjjekk58vtt3sy39c"
+    },
+    {
+      "date": "2026-01-05",
+      "rep": "GAUTH",
+      "amount": 8500,
+      "job": "mf7qidgmyorge9bf7iiulio"
+    },
+    {
+      "date": "2026-01-09",
+      "rep": "MCG",
+      "amount": 10000,
+      "job": "meimx8nnnk4t4t8d69la7hx"
+    },
+    {
+      "date": "2026-01-09",
+      "rep": "MCG",
+      "amount": 1000,
+      "job": "mg14s2phud6l6zfrqrt80ab"
+    },
+    {
+      "date": "2026-01-09",
+      "rep": "GAUTH",
+      "amount": 1800,
+      "job": "mf7qidgmyorge9bf7iiulio"
+    },
+    {
+      "date": "2026-01-12",
+      "rep": "MCG",
+      "amount": 653.16,
+      "job": "m4oldmzhuzzczetkgvilch6"
+    },
+    {
+      "date": "2026-01-13",
+      "rep": "MCG",
+      "amount": 1000,
+      "job": "mg14s2phud6l6zfrqrt80ab"
+    },
+    {
+      "date": "2026-01-14",
+      "rep": "MCG",
+      "amount": 1652.12,
+      "job": "migfho059wj36u6mcg4onh6"
+    },
+    {
+      "date": "2026-01-15",
+      "rep": "MCG",
+      "amount": 11000,
+      "job": "mg14s2phud6l6zfrqrt80ab"
+    },
+    {
+      "date": "2026-01-16",
+      "rep": "MCG",
+      "amount": 3012,
+      "job": "mg14s2phud6l6zfrqrt80ab"
+    },
+    {
+      "date": "2026-01-23",
+      "rep": "MCG",
+      "amount": 782.16,
+      "job": "01cdcbe9361a41ae9a2ceb3e98db3b64"
+    },
+    {
+      "date": "2026-01-28",
+      "rep": "JUSTIN",
+      "amount": 8382.1,
+      "job": "migih0898bjtsj8bbqpvgif"
+    },
+    {
+      "date": "2026-01-30",
+      "rep": "MCG",
+      "amount": 13178.53,
+      "job": "mh3pg18dmui1ip775z5mu7t"
+    },
+    {
+      "date": "2026-02-02",
+      "rep": "MCG",
+      "amount": 6500,
+      "job": "mkr1jwru56hjdtyg8fbigb3"
+    },
+    {
+      "date": "2026-02-10",
+      "rep": "LANE",
+      "amount": 3036.7,
+      "job": "midk6edxbnogoelykdk4512"
+    },
+    {
+      "date": "2026-02-11",
+      "rep": "MCG",
+      "amount": 782.15,
+      "job": "01cdcbe9361a41ae9a2ceb3e98db3b64"
+    },
+    {
+      "date": "2026-02-13",
+      "rep": "MCG",
+      "amount": 29000,
+      "job": "mdrfjfbvqe4y7y1qnm6p13t"
+    },
+    {
+      "date": "2026-02-16",
+      "rep": "MCG",
+      "amount": 9700,
+      "job": "mhchw1n990gljhwcsertqbm"
+    },
+    {
+      "date": "2026-02-18",
+      "rep": "MCG",
+      "amount": 17129.78,
+      "job": "m93k3ved3e4huqiu69gprnv"
+    },
+    {
+      "date": "2026-02-20",
+      "rep": "MCG",
+      "amount": 8500,
+      "job": "mkr1jwru56hjdtyg8fbigb3"
+    },
+    {
+      "date": "2026-02-21",
+      "rep": "MCG",
+      "amount": 6250.96,
+      "job": "mhyxy16jij3pcvm7sp2oqqn"
+    },
+    {
+      "date": "2026-02-21",
+      "rep": "MCG",
+      "amount": 2250,
+      "job": "mhyxy16jij3pcvm7sp2oqqn"
+    },
+    {
+      "date": "2026-03-02",
+      "rep": "MCG",
+      "amount": 7000,
+      "job": "0d7805b7e93046ad95c8b1b59461ca90"
+    },
+    {
+      "date": "2026-03-02",
+      "rep": "JUSTIN",
+      "amount": 2500,
+      "job": "mj7f8ipjjekk58vtt3sy39c"
+    },
+    {
+      "date": "2026-03-04",
+      "rep": "LANE",
+      "amount": 6125,
+      "job": "mk7a3uv3z7d8dtaznxq4yq7"
+    },
+    {
+      "date": "2026-03-05",
+      "rep": "DOM",
+      "amount": 11366,
+      "job": "mfbffdili7hn0eetiatswn1"
+    },
+    {
+      "date": "2026-03-10",
+      "rep": "JUSTIN",
+      "amount": 4532.9,
+      "job": "5365aaaca5204f1697cf6ce46a646366"
+    },
+    {
+      "date": "2026-03-11",
+      "rep": "MCG",
+      "amount": 6507.36,
+      "job": "0d7805b7e93046ad95c8b1b59461ca90"
+    },
+    {
+      "date": "2026-03-16",
+      "rep": "GAUTH",
+      "amount": 25368.85,
+      "job": "mfl9ol2p8eitll9x67mzndj"
+    },
+    {
+      "date": "2026-03-17",
+      "rep": "MCG",
+      "amount": 10300,
+      "job": "mbifsf2l4e5ow96l6nqcuy3"
+    },
+    {
+      "date": "2026-03-17",
+      "rep": "TOM",
+      "amount": 10000,
+      "job": "7899ca7d0f364bfa8db68c5595e138ed"
+    },
+    {
+      "date": "2026-03-17",
+      "rep": "LANE",
+      "amount": 11650,
+      "job": "mlve9drmzqj9ff2y847n7n2"
+    },
+    {
+      "date": "2026-03-19",
+      "rep": "LANE",
+      "amount": 8000,
+      "job": "mmarmsk9gsky32t9ehqnpqk"
+    },
+    {
+      "date": "2026-03-20",
+      "rep": "MCG",
+      "amount": 7771.56,
+      "job": "mc0l4pfxpq0ti94ifsaj7o7"
+    },
+    {
+      "date": "2026-03-20",
+      "rep": "JUSTIN",
+      "amount": 895.5,
+      "job": "mmthuamlpa3awvuwblpd26z"
+    },
+    {
+      "date": "2026-03-26",
+      "rep": "TOM",
+      "amount": 10090.5,
+      "job": "7899ca7d0f364bfa8db68c5595e138ed"
+    },
+    {
+      "date": "2026-03-27",
+      "rep": "MCG",
+      "amount": 1264.55,
+      "job": "mhc4q5nh9dlqqjnlat9kvss"
+    },
+    {
+      "date": "2026-03-29",
+      "rep": "MCG",
+      "amount": 16101.31,
+      "job": "mhc4q5nh9dlqqjnlat9kvss"
+    },
+    {
+      "date": "2026-03-30",
+      "rep": "JUSTIN",
+      "amount": 1556.23,
+      "job": "f6947b6517de440dbe44d6720d9515d5"
+    },
+    {
+      "date": "2026-03-30",
+      "rep": "MCG",
+      "amount": 11037,
+      "job": "me03jglf98gkw6sfytsen73"
+    },
+    {
+      "date": "2026-03-30",
+      "rep": "LANE",
+      "amount": 8100,
+      "job": "mabbg3f0clgj4xz6szgca28"
+    },
+    {
+      "date": "2026-03-30",
+      "rep": "LANE",
+      "amount": 3475.84,
+      "job": "mabbg3f0clgj4xz6szgca28"
+    },
+    {
+      "date": "2026-03-31",
+      "rep": "LANE",
+      "amount": 6125,
+      "job": "mk7a3uv3z7d8dtaznxq4yq7"
+    },
+    {
+      "date": "2026-04-02",
+      "rep": "JUSTIN",
+      "amount": 895.5,
+      "job": "mmthuamlpa3awvuwblpd26z"
+    },
+    {
+      "date": "2026-04-05",
+      "rep": "NICK",
+      "amount": 12197,
+      "job": "0be9d983717c49d4bfd0850e74d27a09"
+    },
+    {
+      "date": "2026-04-07",
+      "rep": "MCG",
+      "amount": 8639,
+      "job": "9bc55e952aa64eaf88d3aa3e614bfeb7"
+    },
+    {
+      "date": "2026-04-07",
+      "rep": "DOM",
+      "amount": 21539,
+      "job": "meiusbpdaw83mzio1y1floc"
+    },
+    {
+      "date": "2026-04-09",
+      "rep": "MCG",
+      "amount": 12062,
+      "job": "mmwtbbampe7843n4y7wk0mp"
+    },
+    {
+      "date": "2026-04-10",
+      "rep": "JUSTIN",
+      "amount": 6700,
+      "job": "mi537mz8x2d872ukpnjbegx"
+    },
+    {
+      "date": "2026-04-10",
+      "rep": "TOM",
+      "amount": 12719.56,
+      "job": "9fbf36cf1a0848ecb4bcb0032f4fe63b"
+    },
+    {
+      "date": "2026-04-10",
+      "rep": "JUSTIN",
+      "amount": 4532.96,
+      "job": "5365aaaca5204f1697cf6ce46a646366"
+    },
+    {
+      "date": "2026-04-14",
+      "rep": "JUSTIN",
+      "amount": 748.49,
+      "job": "mj7f8ipjjekk58vtt3sy39c"
+    },
+    {
+      "date": "2026-04-14",
+      "rep": "LANE",
+      "amount": 540.75,
+      "job": "5da3dd5de91f4fd1847255f9e40dd64a"
+    },
+    {
+      "date": "2026-04-14",
+      "rep": "GAUTH",
+      "amount": 16180.48,
+      "job": "mfl9ol2p8eitll9x67mzndj"
+    },
+    {
+      "date": "2026-04-14",
+      "rep": "LANE",
+      "amount": 2500,
+      "job": "mmarmsk9gsky32t9ehqnpqk"
+    },
+    {
+      "date": "2026-04-15",
+      "rep": "LANE",
+      "amount": 881.75,
+      "job": "fd9abe38cde745dc8a9af1daa9762b02"
+    },
+    {
+      "date": "2026-04-16",
+      "rep": "NICK",
+      "amount": 6946.35,
+      "job": "mnqgko6tgylm7y3j5tu9zfe"
+    },
+    {
+      "date": "2026-04-16",
+      "rep": "NICK",
+      "amount": 13203.34,
+      "job": "mn3e29zezdqyvo6mxbevil7"
+    },
+    {
+      "date": "2026-04-17",
+      "rep": "MCG",
+      "amount": 8750,
+      "job": "mgvccotoq9w1md55m0qcjd"
+    },
+    {
+      "date": "2026-04-18",
+      "rep": "MCG",
+      "amount": 8750,
+      "job": "mgvccotoq9w1md55m0qcjd"
+    },
+    {
+      "date": "2026-04-20",
+      "rep": "NICK",
+      "amount": 7088.32,
+      "job": "mn0pwn7unxw1u8ea1pjp0p6"
+    },
+    {
+      "date": "2026-04-22",
+      "rep": "JUSTIN",
+      "amount": 12507,
+      "job": "mn3g5cg9i4gawuraa2tmyhh"
+    },
+    {
+      "date": "2026-04-23",
+      "rep": "MCG",
+      "amount": 17004.55,
+      "job": "b6469cefcff142519722c836238d56fb"
+    },
+    {
+      "date": "2026-04-23",
+      "rep": "MCG",
+      "amount": 13204.48,
+      "job": "mbv2rtds2364e1x12wtperh"
+    },
+    {
+      "date": "2026-04-24",
+      "rep": "MCG",
+      "amount": 8250,
+      "job": "mbifsf2l4e5ow96l6nqcuy3"
+    },
+    {
+      "date": "2026-04-26",
+      "rep": "NICK",
+      "amount": 18860.87,
+      "job": "mnn82y6if94fkw02f53s88b"
+    },
+    {
+      "date": "2026-04-27",
+      "rep": "LANE",
+      "amount": 6595.22,
+      "job": "mlve9drmzqj9ff2y847n7n2"
+    },
+    {
+      "date": "2026-04-28",
+      "rep": "LANE",
+      "amount": 6125,
+      "job": "mk7a3uv3z7d8dtaznxq4yq7"
+    },
+    {
+      "date": "2026-04-29",
+      "rep": "MCG",
+      "amount": 6789,
+      "job": "mmwsujmynmrlrp6cnnwp1ve"
+    },
+    {
+      "date": "2026-04-29",
+      "rep": "MCG",
+      "amount": 4244.28,
+      "job": "mc0l4pfxpq0ti94ifsaj7o7"
+    },
+    {
+      "date": "2026-05-01",
+      "rep": "MCG",
+      "amount": 9821,
+      "job": "mn2428m7tq2p0uyq8gwlzbq"
+    },
+    {
+      "date": "2026-05-04",
+      "rep": "LANE",
+      "amount": 6125,
+      "job": "mk7a3uv3z7d8dtaznxq4yq7"
+    },
+    {
+      "date": "2026-05-04",
+      "rep": "LANE",
+      "amount": 525,
+      "job": "5da3dd5de91f4fd1847255f9e40dd64a"
+    },
+    {
+      "date": "2026-05-05",
+      "rep": "NICK",
+      "amount": 7046.1,
+      "job": "mo77fvpk55ftqgy3zxzhfut"
+    },
+    {
+      "date": "2026-05-05",
+      "rep": "MCG",
+      "amount": 12010.69,
+      "job": "ef3a1172e9084150b7961fd6b2d03ea3"
+    },
+    {
+      "date": "2026-05-06",
+      "rep": "MCG",
+      "amount": 2500,
+      "job": "mmzqru1ujmopmc8yapep7eb"
+    },
+    {
+      "date": "2026-05-06",
+      "rep": "TOM",
+      "amount": 9584,
+      "job": "9fbf36cf1a0848ecb4bcb0032f4fe63b"
+    },
+    {
+      "date": "2026-05-06",
+      "rep": "GAUTH",
+      "amount": 4968.66,
+      "job": "mnf48cho3cshy1urnvbu8gj"
+    },
+    {
+      "date": "2026-05-06",
+      "rep": "LANE",
+      "amount": 881.75,
+      "job": "fd9abe38cde745dc8a9af1daa9762b02"
+    },
+    {
+      "date": "2026-05-07",
+      "rep": "NICK",
+      "amount": 1574.68,
+      "job": "0be9d983717c49d4bfd0850e74d27a09"
+    },
+    {
+      "date": "2026-05-10",
+      "rep": "MCG",
+      "amount": 22082,
+      "job": "mng8mms5ix6qsedv8zx9zg9"
+    },
+    {
+      "date": "2026-05-10",
+      "rep": "NICK",
+      "amount": 1353.11,
+      "job": "mnqgko6tgylm7y3j5tu9zfe"
+    },
+    {
+      "date": "2026-05-11",
+      "rep": "JUSTIN",
+      "amount": 751.51,
+      "job": "mj7f8ipjjekk58vtt3sy39c"
+    },
+    {
+      "date": "2026-05-12",
+      "rep": "GAUTH",
+      "amount": 5136.55,
+      "job": "mfl9ol2p8eitll9x67mzndj"
+    },
+    {
+      "date": "2026-05-12",
+      "rep": "MCG",
+      "amount": 6894.69,
+      "job": "baad88b9440341c7aec7256cfbb43179"
+    },
+    {
+      "date": "2026-05-12",
+      "rep": "MCG",
+      "amount": 1629,
+      "job": "mmzqru1ujmopmc8yapep7eb"
+    },
+    {
+      "date": "2026-05-12",
+      "rep": "TOM",
+      "amount": 4250,
+      "job": "0cfd12d4683c493280a51f5bf9918b16"
+    },
+    {
+      "date": "2026-05-13",
+      "rep": "MCG",
+      "amount": 11055.01,
+      "job": "mc0l4pfxpq0ti94ifsaj7o7"
+    },
+    {
+      "date": "2026-05-13",
+      "rep": "NICK",
+      "amount": 11573.06,
+      "job": "mnqgko6tgylm7y3j5tu9zfe"
+    },
+    {
+      "date": "2026-05-13",
+      "rep": "NICK",
+      "amount": 10000,
+      "job": "mn3e29zezdqyvo6mxbevil7"
+    },
+    {
+      "date": "2026-05-14",
+      "rep": "MCG",
+      "amount": 6105,
+      "job": "baad88b9440341c7aec7256cfbb43179"
+    },
+    {
+      "date": "2026-05-15",
+      "rep": "NICK",
+      "amount": 4781.68,
+      "job": "mn0pwn7unxw1u8ea1pjp0p6"
+    },
+    {
+      "date": "2026-05-18",
+      "rep": "JUSTIN",
+      "amount": 9000,
+      "job": "3e7aa09e1b7a4c2ba39efe96d3987c7f"
+    },
+    {
+      "date": "2026-05-18",
+      "rep": "MCG",
+      "amount": 2677.38,
+      "job": "mgi8v5b8fpkr3z77w4q4fqh"
+    },
+    {
+      "date": "2026-05-19",
+      "rep": "NICK",
+      "amount": 14250,
+      "job": "5f946b21c61f4d5ebb3c5edfc350b88d"
+    },
+    {
+      "date": "2026-05-19",
+      "rep": "LANE",
+      "amount": 27078.3,
+      "job": "11a1ef6a75fb417eb4ff7028cf8b5e2d"
+    },
+    {
+      "date": "2026-05-22",
+      "rep": "JOSE",
+      "amount": 8622.25,
+      "job": "mmtbwbfkhsbwn6cxyp43eva"
+    },
+    {
+      "date": "2026-05-22",
+      "rep": "NICK",
+      "amount": 11093.32,
+      "job": "mo914vuv6m9i0mbq9nge9of"
+    },
+    {
+      "date": "2026-05-22",
+      "rep": "LANE",
+      "amount": 5659.46,
+      "job": "mnhminmjtgqu811rfngor3e"
+    },
+    {
+      "date": "2026-05-22",
+      "rep": "NICK",
+      "amount": 2000,
+      "job": "0be9d983717c49d4bfd0850e74d27a09"
+    },
+    {
+      "date": "2026-05-22",
+      "rep": "MCG",
+      "amount": 10825.3,
+      "job": "mmwt93qsszyrrxm4znjpk4"
+    },
+    {
+      "date": "2026-05-27",
+      "rep": "NICK",
+      "amount": 7046.09,
+      "job": "mo77fvpk55ftqgy3zxzhfut"
+    },
+    {
+      "date": "2026-05-29",
+      "rep": "TOM",
+      "amount": 4250,
+      "job": "0cfd12d4683c493280a51f5bf9918b16"
+    },
+    {
+      "date": "2026-06-01",
+      "rep": "TOM",
+      "amount": 4375,
+      "job": "moaa4m3smmzfdyr3ew7vcit"
+    },
+    {
+      "date": "2026-06-02",
+      "rep": "JOSE",
+      "amount": 2185.66,
+      "job": "7168640e9dda48a4882d6ba9066114e2"
+    },
+    {
+      "date": "2026-06-02",
+      "rep": "JOSE",
+      "amount": 5877.29,
+      "job": "7168640e9dda48a4882d6ba9066114e2"
+    }
+  ]
+}

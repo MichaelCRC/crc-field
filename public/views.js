@@ -559,9 +559,10 @@ function zoomToStorm(lat, lng) {
 
 // --- Stats + Leaderboard ---
 async function loadStats(period) {
-  period = period || 'week';
+  period = period || 'today';
   document.querySelectorAll('#stats-period .chip').forEach(c => c.classList.toggle('active', c.dataset.val === period));
   const apiPeriod = period === 'alltime' ? 'all' : period;
+  const revLbl = period === 'alltime' ? 'YTD' : period === 'month' ? 'MTD' : period === 'week' ? 'Wk' : 'Today';
   const money = (n) => { n = Number(n) || 0; return n >= 1000 ? '$' + Math.round(n / 1000) + 'K' : '$' + Math.round(n); };
   try {
     // CSV-based revenue + the daily scorecard — NOT the skewed Nimbus snapshot.
@@ -571,10 +572,10 @@ async function loadStats(period) {
 
     const scoreEl = document.getElementById('company-scoreboard');
     if (scoreEl) scoreEl.innerHTML = `
-      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(t.rev_ytd)}</div><div class="label">Revenue YTD</div></div>
-      <div class="admin-stat"><div class="val">${money(t.rev_mtd)}</div><div class="label">Revenue MTD</div></div>
+      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(t.collected)}</div><div class="label">Revenue ${revLbl}</div></div>
       <div class="admin-stat"><div class="val">${t.jobs || 0}</div><div class="label">Jobs</div></div>
-      <div class="admin-stat"><div class="val">${t.talk_tos || 0}</div><div class="label">Talk Tos</div></div>`;
+      <div class="admin-stat"><div class="val">${t.talk_tos || 0}</div><div class="label">Talk Tos</div></div>
+      <div class="admin-stat"><div class="val">${t.sales_appts || 0}</div><div class="label">Sit-Downs</div></div>`;
 
     const me = (d.reps || []).find(r => r.code === meCode) || {};
     const myEl = document.getElementById('my-stats');
@@ -582,18 +583,18 @@ async function loadStats(period) {
       <div class="admin-stat"><div class="val">${me.talk_tos || 0}</div><div class="label">Talk Tos</div></div>
       <div class="admin-stat"><div class="val">${me.inspections_ran || 0}</div><div class="label">Inspections</div></div>
       <div class="admin-stat"><div class="val">${me.sales_appts || 0}</div><div class="label">Sit-Downs</div></div>
-      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(me.rev_ytd)}</div><div class="label">Rev YTD</div></div>`;
+      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(me.collected)}</div><div class="label">Revenue ${revLbl}</div></div>`;
 
     const sb = document.getElementById('status-breakdown'); if (sb) sb.innerHTML = '';
     const ra = document.getElementById('recent-activity'); if (ra) ra.innerHTML = '';
 
     const lbEl = document.getElementById('leaderboard');
-    if (lbEl) lbEl.innerHTML = `<div style="padding:0 16px;overflow-x:auto"><table style="width:100%;max-width:640px;font-size:12px;border-collapse:collapse;table-layout:fixed"><thead><tr style="font-size:10px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:6px 4px;text-align:left;width:22px">#</th><th style="text-align:left">Rep</th><th style="text-align:right;width:54px">YTD</th><th style="text-align:right;width:48px">MTD</th><th style="text-align:right;width:38px">Talk</th><th style="text-align:right;width:34px">Insp</th><th style="text-align:right;width:30px">Sit</th></tr></thead><tbody>` +
+    if (lbEl) lbEl.innerHTML = `<div style="padding:0 16px;overflow-x:auto"><table style="width:100%;max-width:640px;font-size:12px;border-collapse:collapse;table-layout:fixed"><thead><tr style="font-size:10px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:6px 4px;text-align:left;width:22px">#</th><th style="text-align:left">Rep</th><th style="text-align:right;width:60px">Rev</th><th style="text-align:right;width:42px">Talk</th><th style="text-align:right;width:40px">Insp</th><th style="text-align:right;width:34px">Sit</th></tr></thead><tbody>` +
       (d.reps || []).map((r, i) => {
         const isMe = r.code === meCode;
         const rowStyle = isMe ? 'background:#E0F7FA;color:#0A1530;font-weight:700' : '';
         const flag = (r.expected && !r.loggedToday) ? ' <span style="color:#dc2626" title="Not logged today">&#9888;</span>' : '';
-        return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:6px 4px">${i === 0 ? '&#127942;' : i + 1}</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="/rep-card/${r.code}" style="color:inherit;text-decoration:none">${r.name}${flag}</a></td><td style="text-align:right">${money(r.rev_ytd)}</td><td style="text-align:right">${money(r.rev_mtd)}</td><td style="text-align:right">${r.talk_tos}</td><td style="text-align:right">${r.inspections_ran}</td><td style="text-align:right">${r.sales_appts}</td></tr>`;
+        return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:6px 4px">${i === 0 ? '&#127942;' : i + 1}</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="/rep-card/${r.code}" style="color:inherit;text-decoration:none">${r.name}${flag}</a></td><td style="text-align:right">${money(r.collected)}</td><td style="text-align:right">${r.talk_tos}</td><td style="text-align:right">${r.inspections_ran}</td><td style="text-align:right">${r.sales_appts}</td></tr>`;
       }).join('') + '</tbody></table></div>';
   } catch (e) { console.error('Stats error:', e); }
 }
