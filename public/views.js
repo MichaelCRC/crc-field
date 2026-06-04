@@ -561,65 +561,40 @@ function zoomToStorm(lat, lng) {
 async function loadStats(period) {
   period = period || 'week';
   document.querySelectorAll('#stats-period .chip').forEach(c => c.classList.toggle('active', c.dataset.val === period));
-  
-  // Load company scoreboard from claims dashboard (real JN data)
+  const apiPeriod = period === 'alltime' ? 'all' : period;
+  const money = (n) => { n = Number(n) || 0; return n >= 1000 ? '$' + Math.round(n / 1000) + 'K' : '$' + Math.round(n); };
   try {
-    const dashboard = await fetch('/api/claims-dashboard').then(r => r.json());
-    const co = dashboard.company_totals || {};
-    const scoreEl = document.getElementById('company-scoreboard');
-    if (scoreEl) {
-      scoreEl.innerHTML = `
-        <div class="admin-stat"><div class="val" style="color:var(--teal)">$${((co.total_value||0)/1000).toFixed(0)}K</div><div class="label">Revenue YTD</div></div>
-        <div class="admin-stat"><div class="val">${co.total_jobs||0}</div><div class="label">Total Jobs</div></div>
-        <div class="admin-stat"><div class="val">${co.total_claims||0}</div><div class="label">Claims Filed</div></div>
-        <div class="admin-stat"><div class="val">${co.total_active||0}</div><div class="label">Active Pipeline</div></div>`;
-    }
-    // Also update leaderboard with real data
-    const repData = dashboard.by_rep || [];
-    if (repData.length > 0) {
-      const lbEl = document.getElementById('leaderboard');
-      if (lbEl) {
-        // v3.1 Bug #6 softening (2026-06-01): JN snapshot only carries
-        // amount_to_be_paid for ~5% of jobs; the spec-named fallback
-        // fields (last_estimate, approved_invoice_total) don't exist
-        // in current export. Show '—' instead of '$0K' so the column
-        // doesn't lie about zero revenue.
-        const fmtVal = (v) => v > 0 ? `$${(v/1000).toFixed(0)}K` : '&#8212;';
-        lbEl.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:8px;text-align:left">#</th><th style="text-align:left">Rep</th><th style="text-align:right">Jobs</th><th style="text-align:right">Claims</th><th style="text-align:right">Value</th></tr></thead><tbody>` +
-          repData.slice(0, 15).map((r, i) => {
-            const isMe = r.rep_name && r.rep_name.toLowerCase().includes(repName.split(' ')[0]?.toLowerCase());
-            // 2026-06-01: when isMe, force navy text so the row reads
-            // against the light-cyan highlight. Default inherited color
-            // is white from the dark dashboard theme — invisible on cyan.
-            const rowStyle = isMe ? 'background:#E0F7FA;color:#0A1530;font-weight:700' : '';
-            return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:8px">${i === 0 ? '&#127942;' : i+1}</td><td><a href="/rep-card/${r.rep_code||''}" style="color:inherit;text-decoration:none">${r.rep_name}</a></td><td style="text-align:right">${r.total_jobs}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">${fmtVal(r.total_value)}</td></tr>`;
-          }).join('') + '</tbody></table>';
-      }
-    }
-  } catch (e) { console.error('Scoreboard error:', e); }
+    // CSV-based revenue + the daily scorecard — NOT the skewed Nimbus snapshot.
+    const d = await fetch('/api/scorecard/dashboard?period=' + apiPeriod).then(r => r.json());
+    const t = d.totals || {};
+    const meCode = (repCode || '').toUpperCase();
 
-  try {
-    const [stats, board] = await Promise.all([
-      fetch(`/api/stats/${repCode}?period=${period}`).then(r => r.json()),
-      fetch(`/api/stats?period=${period}`).then(r => r.json()),
-    ]);
-    const trend = (cur, prev) => cur > prev ? '<span style="color:var(--green)">&#9650;</span>' : cur < prev ? '<span style="color:var(--red)">&#9660;</span>' : '<span style="color:var(--gray)">&#8212;</span>';
-    // v3.1 Bug #5 softening (2026-06-01): per-rep aggregation join not wired
-    // yet (depends on rep_daily_kpi + jn_ytd_metrics tables — Build Kickoff
-    // v2 entities #13/#14, Tier E). Until then stats fields may be missing.
-    // Show '—' instead of 'undefined' so the panel reads honestly as
-    // "no data yet" rather than broken.
-    const safe = (v, suffix='') => (v == null || Number.isNaN(v)) ? '&#8212;' : v + suffix;
-    document.getElementById('my-stats').innerHTML = `
-      <div class="admin-stat"><div class="val">${safe(stats.leadsAdded)}</div><div class="label">Leads ${trend(stats.leadsAdded || 0, stats.prevLeadsAdded || 0)}</div></div>
-      <div class="admin-stat"><div class="val">${safe(stats.claimsFiled)}</div><div class="label">Claims ${trend(stats.claimsFiled || 0, stats.prevClaimsFiled || 0)}</div></div>
-      <div class="admin-stat"><div class="val">${safe(stats.conversionRate, '%')}</div><div class="label">Conv Rate</div></div>
-      <div class="admin-stat"><div class="val">${safe(stats.photosTaken)}</div><div class="label">Photos</div></div>`;
-    const bd = stats.statusBreakdown || {};
-    document.getElementById('status-breakdown').innerHTML = Object.entries(bd).map(([s,n]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>${s.replace(/_/g,' ')}</span><strong>${n}</strong></div>`).join('');
-    document.getElementById('recent-activity').innerHTML = (stats.recentActivity || []).map(a => `<div style="padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);font-size:13px">${a.action} -- ${a.address || ''} ${a.homeowner ? '('+a.homeowner+')' : ''}<div style="font-size:11px;color:var(--gray)">${timeAgo(a.time)}</div></div>`).join('');
-    document.getElementById('leaderboard').innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:8px;text-align:left">#</th><th style="text-align:left">Rep</th><th style="text-align:right">Leads</th><th style="text-align:right">Claims</th><th style="text-align:right">Conv%</th></tr></thead><tbody>` +
-      board.map(r => `<tr style="border-bottom:1px solid var(--border);${r.code===repCode?'background:#E0F7FA;font-weight:700':''}"><td style="padding:8px">${r.rank === 1 ? '&#127942;' : r.rank}</td><td>${r.name}</td><td style="text-align:right">${r.leads}</td><td style="text-align:right">${r.claimsFiled}</td><td style="text-align:right">${r.conversionRate}%</td></tr>`).join('') + '</tbody></table>';
+    const scoreEl = document.getElementById('company-scoreboard');
+    if (scoreEl) scoreEl.innerHTML = `
+      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(t.rev_ytd)}</div><div class="label">Revenue YTD</div></div>
+      <div class="admin-stat"><div class="val">${money(t.rev_mtd)}</div><div class="label">Revenue MTD</div></div>
+      <div class="admin-stat"><div class="val">${t.jobs || 0}</div><div class="label">Jobs</div></div>
+      <div class="admin-stat"><div class="val">${t.talk_tos || 0}</div><div class="label">Talk Tos</div></div>`;
+
+    const me = (d.reps || []).find(r => r.code === meCode) || {};
+    const myEl = document.getElementById('my-stats');
+    if (myEl) myEl.innerHTML = `
+      <div class="admin-stat"><div class="val">${me.talk_tos || 0}</div><div class="label">Talk Tos</div></div>
+      <div class="admin-stat"><div class="val">${me.inspections_ran || 0}</div><div class="label">Inspections</div></div>
+      <div class="admin-stat"><div class="val">${me.sales_appts || 0}</div><div class="label">Sit-Downs</div></div>
+      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(me.rev_ytd)}</div><div class="label">Rev YTD</div></div>`;
+
+    const sb = document.getElementById('status-breakdown'); if (sb) sb.innerHTML = '';
+    const ra = document.getElementById('recent-activity'); if (ra) ra.innerHTML = '';
+
+    const lbEl = document.getElementById('leaderboard');
+    if (lbEl) lbEl.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:8px;text-align:left">#</th><th style="text-align:left">Rep</th><th style="text-align:right">Rev YTD</th><th style="text-align:right">Rev MTD</th><th style="text-align:right">Talk</th><th style="text-align:right">Insp</th><th style="text-align:right">Sit</th></tr></thead><tbody>` +
+      (d.reps || []).map((r, i) => {
+        const isMe = r.code === meCode;
+        const rowStyle = isMe ? 'background:#E0F7FA;color:#0A1530;font-weight:700' : '';
+        const flag = (r.expected && !r.loggedToday) ? ' <span style="color:#dc2626" title="Not logged today">&#9888;</span>' : '';
+        return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:8px">${i === 0 ? '&#127942;' : i + 1}</td><td><a href="/rep-card/${r.code}" style="color:inherit;text-decoration:none">${r.name}${flag}</a></td><td style="text-align:right">${money(r.rev_ytd)}</td><td style="text-align:right">${money(r.rev_mtd)}</td><td style="text-align:right">${r.talk_tos}</td><td style="text-align:right">${r.inspections_ran}</td><td style="text-align:right">${r.sales_appts}</td></tr>`;
+      }).join('') + '</tbody></table>';
   } catch (e) { console.error('Stats error:', e); }
 }
 function timeAgo(t) { if (!t) return ''; const d = Date.now() - new Date(t).getTime(); if (d < 3600000) return Math.round(d/60000) + 'm ago'; if (d < 86400000) return Math.round(d/3600000) + 'h ago'; return Math.round(d/86400000) + 'd ago'; }

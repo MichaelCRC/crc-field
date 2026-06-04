@@ -107,13 +107,14 @@ router.get('/all', async (req, res) => {
 // the CEO/team dashboard: the 5 self-logged activity metrics summed over the
 // period, plus YTD Collected $ (finance baseline, period-independent).
 router.get('/dashboard', async (req, res) => {
-  const period = ['today', 'week', 'month'].includes(req.query.period) ? req.query.period : 'today';
+  const period = ['today', 'week', 'month', 'all'].includes(req.query.period) ? req.query.period : 'today';
   // Warm the rep cache on cold boot, or the board comes back empty.
   if (!repCacheStatus().loaded) { try { await refreshRepCodes(); } catch {} }
   const to = nyDate();
   let from = to;
   if (period === 'week') { const d = new Date(); d.setDate(d.getDate() - 6); from = nyDate(d); }
   else if (period === 'month') { const d = new Date(); from = nyDate(new Date(d.getFullYear(), d.getMonth(), 1)); }
+  else if (period === 'all') { from = '2000-01-01'; }
 
   try {
     const agg = {};
