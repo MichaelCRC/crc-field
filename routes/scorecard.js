@@ -23,7 +23,7 @@ const _sb = {}; // sandbox in-memory: `${rep}|${date}` -> row
 function nyDate(d) { return new Date(d || Date.now()).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); }
 function repOf(req) { return String(req.query.rep || req.headers['x-field-rep'] || '').toUpperCase(); }
 function zeroRow(rep, date) {
-  return { rep_code: rep, activity_date: date, talk_tos: 0, inspections_ran: 0, sales_appts: 0, claims_filed: 0, approvals: 0 };
+  return { rep_code: rep, activity_date: date, talk_tos: 0, inspections_ran: 0, sales_appts: 0, claims_filed: 0, approvals: 0, collected: 0 };
 }
 
 // GET /api/scorecard?rep=MCG&date=YYYY-MM-DD — a rep's scorecard for the day
@@ -61,6 +61,33 @@ router.post('/increment', async (req, res) => {
        DO UPDATE SET ${metric} = GREATEST(0, daily_activity.${metric} + $3), updated_at = NOW()
        RETURNING *`,
       [rep, date, d]
+    );
+    res.json({ scorecard: rows[0] });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/scorecard/collect {amount, date} — rep enters money collected; adds
+// to today's collected (on top of the CSV baseline). Trued-up weekly vs the CSV.
+router.post('/collect', async (req, res) => {
+  const rep = repOf(req);
+  if (!rep) return res.status(400).json({ error: 'rep required' });
+  const amount = Math.round((parseFloat(req.body && req.body.amount) || 0) * 100) / 100;
+  const date = (req.body && req.body.date) || nyDate();
+  if (!amount) return res.status(400).json({ error: 'amount required' });
+  try {
+    if (_sandbox.enabled || !query) {
+      const k = rep + '|' + date;
+      const row = _sb[k] || (_sb[k] = zeroRow(rep, date));
+      row.collected = Math.max(0, Math.round(((row.collected || 0) + amount) * 100) / 100);
+      return res.json({ scorecard: row });
+    }
+    const { rows } = await query(
+      `INSERT INTO daily_activity (rep_code, activity_date, collected)
+       VALUES ($1, $2, GREATEST(0, $3))
+       ON CONFLICT (rep_code, activity_date)
+       DO UPDATE SET collected = GREATEST(0, daily_activity.collected + $3), updated_at = NOW()
+       RETURNING *`,
+      [rep, date, amount]
     );
     res.json({ scorecard: rows[0] });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -118,7 +145,16 @@ router.get('/dashboard', async (req, res) => {
       rows.forEach(r => loggedToday.add(r.rep_code));
     }
 
-    const collected = (read('rep-collected.json', { collected: {} }).collected) || {};
+    const baseline = (read('rep-collected.json', { collected: {} }).collected) || {};
+    // Money reps have entered this year — adds on top of the CSV baseline.
+    const entered = {};
+    const yearStart = nyDate(new Date(new Date().getFullYear(), 0, 1));
+    if (_sandbox.enabled || !query) {
+      Object.values(_sb).filter(r => r.activity_date >= yearStart).forEach(r => { entered[r.rep_code] = (entered[r.rep_code] || 0) + (+r.collected || 0); });
+    } else {
+      const { rows } = await query(`SELECT rep_code, COALESCE(SUM(collected),0) c FROM daily_activity WHERE activity_date >= $1 GROUP BY rep_code`, [yearStart]);
+      rows.forEach(r => { entered[r.rep_code] = +r.c || 0; });
+    }
     // Only sales reps (role 'rep') are EXPECTED to log daily — leaders/operators
     // (MCG, LANE) appear on the board but aren't held to the daily-log check.
     // "On the board" = active producing reps. Field source: PG cache uses
@@ -131,7 +167,7 @@ router.get('/dashboard', async (req, res) => {
         code: c.code, name: c.name, expected, loggedToday: loggedToday.has(c.code),
         talk_tos: a.talk_tos || 0, inspections_ran: a.inspections_ran || 0,
         sales_appts: a.sales_appts || 0, claims_filed: a.claims_filed || 0, approvals: a.approvals || 0,
-        collected: collected[c.code] || 0,
+        collected: Math.round(((baseline[c.code] || 0) + (entered[c.code] || 0)) * 100) / 100,
       };
     });
     reps.sort((x, y) => (y.talk_tos - x.talk_tos) || (y.collected - x.collected));

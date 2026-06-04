@@ -53,6 +53,34 @@ function scRender() {
     btns.appendChild(scBtn('–', function () { scBump(m.k, -1); }));
     tile.appendChild(left); tile.appendChild(btns); wrap.appendChild(tile);
   });
+
+  // Money Collected — a dollar entry (adds), not a tap counter.
+  var collected = Number(_scData.collected || 0);
+  var mt = document.createElement('div');
+  mt.style.cssText = 'background:#fff;border:1px solid #e3e8f0;border-radius:14px;padding:15px 16px;margin-bottom:12px';
+  mt.innerHTML = '<div style="font-size:13px;color:#566;font-weight:700">💵  Money Collected Today</div>'
+    + '<div style="font-size:30px;font-weight:800;color:#16a34a;line-height:1.05;margin:3px 0 11px">$' + collected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<input id="sc-collect-amt" type="number" inputmode="decimal" placeholder="Add a payment ($)" style="flex:1;min-width:0;padding:12px;border:1px solid #d8dee9;border-radius:10px;font-size:15px">'
+    + '<button id="sc-collect-btn" type="button" style="flex:0 0 auto;padding:0 20px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer">Add</button>'
+    + '</div>';
+  wrap.appendChild(mt);
+  var btn = document.getElementById('sc-collect-btn');
+  var inp = document.getElementById('sc-collect-amt');
+  if (btn) btn.onclick = scAddMoney;
+  if (inp) inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') scAddMoney(); });
+}
+
+function scAddMoney() {
+  var inp = document.getElementById('sc-collect-amt');
+  var amt = Math.round((parseFloat(inp && inp.value) || 0) * 100) / 100;
+  if (!amt || amt <= 0) { if (inp) inp.focus(); return; }
+  _scData.collected = (Number(_scData.collected) || 0) + amt; // optimistic
+  scRender();
+  fetch('/api/scorecard/collect', { method: 'POST', headers: scHeaders(), body: JSON.stringify({ amount: amt }) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (d && d.scorecard) { _scData = d.scorecard; scRender(); } })
+    .catch(function () { /* keep optimistic */ });
 }
 
 function scBtn(txt, fn) {
