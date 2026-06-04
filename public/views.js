@@ -588,13 +588,13 @@ async function loadStats(period) {
     const ra = document.getElementById('recent-activity'); if (ra) ra.innerHTML = '';
 
     const lbEl = document.getElementById('leaderboard');
-    if (lbEl) lbEl.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed"><thead><tr style="font-size:10px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:6px 4px;text-align:left;width:22px">#</th><th style="text-align:left">Rep</th><th style="text-align:right;width:54px">YTD</th><th style="text-align:right;width:48px">MTD</th><th style="text-align:right;width:38px">Talk</th><th style="text-align:right;width:34px">Insp</th><th style="text-align:right;width:30px">Sit</th></tr></thead><tbody>` +
+    if (lbEl) lbEl.innerHTML = `<div style="padding:0 16px;overflow-x:auto"><table style="width:100%;max-width:640px;font-size:12px;border-collapse:collapse;table-layout:fixed"><thead><tr style="font-size:10px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:6px 4px;text-align:left;width:22px">#</th><th style="text-align:left">Rep</th><th style="text-align:right;width:54px">YTD</th><th style="text-align:right;width:48px">MTD</th><th style="text-align:right;width:38px">Talk</th><th style="text-align:right;width:34px">Insp</th><th style="text-align:right;width:30px">Sit</th></tr></thead><tbody>` +
       (d.reps || []).map((r, i) => {
         const isMe = r.code === meCode;
         const rowStyle = isMe ? 'background:#E0F7FA;color:#0A1530;font-weight:700' : '';
         const flag = (r.expected && !r.loggedToday) ? ' <span style="color:#dc2626" title="Not logged today">&#9888;</span>' : '';
         return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:6px 4px">${i === 0 ? '&#127942;' : i + 1}</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="/rep-card/${r.code}" style="color:inherit;text-decoration:none">${r.name}${flag}</a></td><td style="text-align:right">${money(r.rev_ytd)}</td><td style="text-align:right">${money(r.rev_mtd)}</td><td style="text-align:right">${r.talk_tos}</td><td style="text-align:right">${r.inspections_ran}</td><td style="text-align:right">${r.sales_appts}</td></tr>`;
-      }).join('') + '</tbody></table>';
+      }).join('') + '</tbody></table></div>';
   } catch (e) { console.error('Stats error:', e); }
 }
 function timeAgo(t) { if (!t) return ''; const d = Date.now() - new Date(t).getTime(); if (d < 3600000) return Math.round(d/60000) + 'm ago'; if (d < 86400000) return Math.round(d/3600000) + 'h ago'; return Math.round(d/86400000) + 'd ago'; }
