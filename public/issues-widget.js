@@ -3,7 +3,7 @@
 (function () {
   if (window.__crcIssueWidget) return;
   window.__crcIssueWidget = true;
-  const PORTAL_URL = (typeof FEED_PORTAL_URL !== 'undefined' && FEED_PORTAL_URL) || 'https://crc-supplements-portal.onrender.com';
+  const PORTAL_URL = (typeof FEED_PORTAL_URL !== 'undefined' && FEED_PORTAL_URL) || 'https://crc-supplements-dev.onrender.com';
   const APP_KEY = (typeof FEED_APP_KEY !== 'undefined' && FEED_APP_KEY) || 'crc-field-2026';
 
   function headers() {

@@ -1,10 +1,10 @@
 /**
  * Native booking flow for the CRC field app.
  * Replaces the iframe to /book with a design-native, mobile-first UI.
- * Talks to the portal at https://crc-supplements-portal.onrender.com
+ * Talks to the portal at https://crc-supplements-dev.onrender.com
  */
 (function () {
-  const PORTAL = 'https://crc-supplements-portal.onrender.com';
+  const PORTAL = 'https://crc-supplements-dev.onrender.com';
   const APP_KEY = 'crc-field-2026';
 
   const bookingState = {

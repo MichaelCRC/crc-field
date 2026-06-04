@@ -455,7 +455,7 @@ async function _irGenerate() {
 function _irShowSuccess(data, mode) {
   var body = document.getElementById('ir-body');
   if (!body) return;
-  var url = data.url ? ('https://crc-supplements-portal.onrender.com' + data.url) : '';
+  var url = data.url ? ('https://crc-supplements-dev.onrender.com' + data.url) : '';
 
   // Refresh the job detail so the doc shows up immediately in the job's documents section
   // The portal already saved the doc to uploadedDocs -- we just need to reload

@@ -13,7 +13,7 @@
  * net. app.js drops poll cadence to 60s when connected, 30s otherwise.
  */
 (function () {
-  const PORTAL = 'https://crc-supplements-portal.onrender.com';
+  const PORTAL = 'https://crc-supplements-dev.onrender.com';
   const APP_KEY = 'crc-field-2026';
   const EVENTS = [
     'job.created', 'job.updated', 'job.deleted', 'job.transferred',

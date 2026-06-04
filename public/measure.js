@@ -14,7 +14,7 @@ var _measureSheet = null;
 function _portalUrl() {
   return (typeof SUPPLEMENT_PORTAL_URL !== 'undefined' && SUPPLEMENT_PORTAL_URL)
     || (typeof process !== 'undefined' && process.env && process.env.SUPPLEMENT_PORTAL_URL)
-    || 'https://crc-supplements-portal.onrender.com';
+    || 'https://crc-supplements-dev.onrender.com';
 }
 
 // jobId is optional. When supplied, the drawing layer will sync to the portal

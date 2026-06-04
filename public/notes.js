@@ -5,7 +5,7 @@
  * the same X-Field-App-Key + X-Field-Rep headers as feed.js. Offline
  * basics: a tiny pendingPatches queue in memory + last-list cache in
  * localStorage so re-entering the view feels instant. */
-const NOTES_PORTAL_URL = (typeof FEED_PORTAL_URL !== 'undefined' && FEED_PORTAL_URL) || 'https://crc-supplements-portal.onrender.com';
+const NOTES_PORTAL_URL = (typeof FEED_PORTAL_URL !== 'undefined' && FEED_PORTAL_URL) || 'https://crc-supplements-dev.onrender.com';
 const NOTES_APP_KEY = (typeof FEED_APP_KEY !== 'undefined' && FEED_APP_KEY) || 'crc-field-2026';
 const NOTES_CACHE_KEY = 'crc_notes_cache_v1';
 

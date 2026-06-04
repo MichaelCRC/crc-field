@@ -1,7 +1,7 @@
 /* CRC Activity Feed — field app view.
  * Talks to the portal at PORTAL_URL using X-Field-App-Key + X-Field-Rep headers.
  */
-const FEED_PORTAL_URL = 'https://crc-supplements-portal.onrender.com';
+const FEED_PORTAL_URL = 'https://crc-supplements-dev.onrender.com';
 // The key is baked into the build for the field PWA. The portal expects it
 // to match process.env.FIELD_APP_KEY. Rotate in both places when it changes.
 const FEED_APP_KEY = 'crc-field-2026';

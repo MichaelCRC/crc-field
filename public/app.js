@@ -250,7 +250,7 @@ async function saveQuickNote() {
   if (!text) return;
   if (status) status.textContent = 'Saving...';
   try {
-    var res = await fetch('https://crc-supplements-portal.onrender.com/api/notes', {
+    var res = await fetch('https://crc-supplements-dev.onrender.com/api/notes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -330,7 +330,7 @@ async function viewLead(id) {
       <div id="lead-documents-section" style="margin-bottom:16px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         ${lead.phone ? `<a href="tel:${lead.phone}" class="chip" style="text-decoration:none">Call</a><a href="sms:${lead.phone}" class="chip" style="text-decoration:none">Text</a>` : ''}
-        ${lead.portalJobId ? `<a href="https://crc-supplements-portal.onrender.com/#job-${lead.portalJobId}" target="_blank" class="chip" style="text-decoration:none;background:var(--navy);color:white">Open in Portal</a>` : ''}
+        ${lead.portalJobId ? `<a href="https://crc-supplements-dev.onrender.com/#job-${lead.portalJobId}" target="_blank" class="chip" style="text-decoration:none;background:var(--navy);color:white">Open in Portal</a>` : ''}
         <button class="chip" style="background:var(--navy);color:white" onclick="switchView('brain')">&#129504; Ask Brain</button>
       </div>
       <div style="margin-bottom:16px">
@@ -510,7 +510,7 @@ function shareRecruitLink() {
 }
 
 // ── LEAD DOCUMENTS + SIGNATURE ──────────────────
-const PORTAL_URL = 'https://crc-supplements-portal.onrender.com';
+const PORTAL_URL = 'https://crc-supplements-dev.onrender.com';
 
 async function loadLeadDocuments(portalJobId) {
   const el = document.getElementById('lead-documents-section');
