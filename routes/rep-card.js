@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { read, write } = require('../lib/store');
-const { listRepCodes, validateRepCode, isAdmin } = require('../lib/repCodes');
+const { listRepCodes, validateRepCode, isAdmin, isLeader } = require('../lib/repCodes');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -340,7 +340,7 @@ function _sbLeadBucket(t) { return t === 'rock' ? 'rocks' : t === 'todo' ? 'todo
 function adminAuth(req) {
   const auth = (req.query.auth || req.headers['x-field-rep'] || '').toUpperCase();
   if (!auth || !validateRepCode(auth)) return { code: 401, msg: 'Auth required' };
-  if (!isAdmin(auth)) return { code: 403, msg: 'Admin only' };
+  if (!isLeader(auth)) return { code: 403, msg: 'Leadership only' };
   return { ok: true };
 }
 router.get('/api/leadership', async (req, res) => {
