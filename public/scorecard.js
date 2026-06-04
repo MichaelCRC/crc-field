@@ -17,8 +17,8 @@ function initScorecard() {
   if (!v) return;
   var today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   v.innerHTML = '<div style="padding:18px 16px 90px">'
-    + '<div style="font-size:22px;font-weight:800;color:#0A1530">My Day</div>'
-    + '<div style="color:#8a93a5;font-size:13px;margin-bottom:16px">' + today + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:#ffffff">My Day</div>'
+    + '<div style="color:#94a3b8;font-size:13px;margin-bottom:16px">' + today + '</div>'
     + '<div id="sc-tiles"><div style="color:#94a3b8">Loading…</div></div></div>';
   scLoad();
 }
