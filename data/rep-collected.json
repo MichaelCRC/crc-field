@@ -1,16 +1,16 @@
 {
   "as_of": "2026-06-03",
-  "note": "YTD collected per rep, seeded from the JobNimbus payments CSV (Jan 2 - Jun 2, 2026). Departed reps' volume (Tyler Cupp, Rhys Bennett, Holly Rodgers, Tanner Morris, Drew Nitzschke) reattributed to MCG. Grand total 827073.31. Ongoing updates land here via the JN sync / re-import (deferred).",
-  "collected": {
-    "MCG": 355666.02,
-    "NICK": 129013.92,
-    "LANE": 103424.77,
-    "GAUTH": 67528.54,
-    "JUSTIN": 55577.19,
-    "TOM": 55269.06,
-    "DOM": 43908.61,
-    "JOSE": 16685.20,
-    "ANI": 0,
-    "DAN": 0
+  "note": "Per-rep YTD collected, June MTD, and job count seeded from the JobNimbus payments CSV (Jan 2 - Jun 2, 2026). Departed reps' volume (Tyler Cupp, Rhys Bennett, Holly Rodgers, Tanner Morris, Drew Nitzschke) reattributed to MCG. jobs = unique Job Ids with payments. Reps' daily entries add on top; trued-up weekly vs a fresh CSV.",
+  "reps": {
+    "MCG":    { "ytd": 355666.02, "mtd": 0,       "jobs": 29 },
+    "NICK":   { "ytd": 129013.92, "mtd": 0,       "jobs": 8 },
+    "LANE":   { "ytd": 103424.77, "mtd": 0,       "jobs": 9 },
+    "GAUTH":  { "ytd": 67528.54,  "mtd": 0,       "jobs": 3 },
+    "JUSTIN": { "ytd": 55577.19,  "mtd": 0,       "jobs": 8 },
+    "TOM":    { "ytd": 55269.06,  "mtd": 4375,    "jobs": 4 },
+    "DOM":    { "ytd": 43908.61,  "mtd": 0,       "jobs": 3 },
+    "JOSE":   { "ytd": 16685.20,  "mtd": 8062.95, "jobs": 2 },
+    "ANI":    { "ytd": 0,         "mtd": 0,       "jobs": 0 },
+    "DAN":    { "ytd": 0,         "mtd": 0,       "jobs": 0 }
   }
 }

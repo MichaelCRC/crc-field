@@ -145,15 +145,24 @@ router.get('/dashboard', async (req, res) => {
       rows.forEach(r => loggedToday.add(r.rep_code));
     }
 
-    const baseline = (read('rep-collected.json', { collected: {} }).collected) || {};
-    // Money reps have entered this year — adds on top of the CSV baseline.
-    const entered = {};
-    const yearStart = nyDate(new Date(new Date().getFullYear(), 0, 1));
+    const baseline = (read('rep-collected.json', { reps: {} }).reps) || {};
+    // Money entered this year / this month — adds on top of the CSV baseline.
+    const enteredYtd = {}, enteredMtd = {};
+    const now = new Date();
+    const yearStart = nyDate(new Date(now.getFullYear(), 0, 1));
+    const monthStart = nyDate(new Date(now.getFullYear(), now.getMonth(), 1));
     if (_sandbox.enabled || !query) {
-      Object.values(_sb).filter(r => r.activity_date >= yearStart).forEach(r => { entered[r.rep_code] = (entered[r.rep_code] || 0) + (+r.collected || 0); });
+      Object.values(_sb).forEach(r => {
+        if (r.activity_date >= yearStart) enteredYtd[r.rep_code] = (enteredYtd[r.rep_code] || 0) + (+r.collected || 0);
+        if (r.activity_date >= monthStart) enteredMtd[r.rep_code] = (enteredMtd[r.rep_code] || 0) + (+r.collected || 0);
+      });
     } else {
-      const { rows } = await query(`SELECT rep_code, COALESCE(SUM(collected),0) c FROM daily_activity WHERE activity_date >= $1 GROUP BY rep_code`, [yearStart]);
-      rows.forEach(r => { entered[r.rep_code] = +r.c || 0; });
+      const { rows } = await query(
+        `SELECT rep_code,
+                COALESCE(SUM(collected) FILTER (WHERE activity_date >= $1), 0) ytd,
+                COALESCE(SUM(collected) FILTER (WHERE activity_date >= $2), 0) mtd
+         FROM daily_activity WHERE activity_date >= $1 GROUP BY rep_code`, [yearStart, monthStart]);
+      rows.forEach(r => { enteredYtd[r.rep_code] = +r.ytd || 0; enteredMtd[r.rep_code] = +r.mtd || 0; });
     }
     // Only sales reps (role 'rep') are EXPECTED to log daily — leaders/operators
     // (MCG, LANE) appear on the board but aren't held to the daily-log check.
@@ -162,12 +171,15 @@ router.get('/dashboard', async (req, res) => {
     // either so it works in both environments.
     const reps = (listRepCodes() || []).filter(c => c.active && (c.sells_volume || c.showOnLeaderboard)).map(c => {
       const a = agg[c.code] || {};
+      const b = baseline[c.code] || {};
       const expected = c.role === 'rep';
+      const rev_ytd = Math.round(((b.ytd || 0) + (enteredYtd[c.code] || 0)) * 100) / 100;
+      const rev_mtd = Math.round(((b.mtd || 0) + (enteredMtd[c.code] || 0)) * 100) / 100;
       return {
         code: c.code, name: c.name, expected, loggedToday: loggedToday.has(c.code),
         talk_tos: a.talk_tos || 0, inspections_ran: a.inspections_ran || 0,
         sales_appts: a.sales_appts || 0, claims_filed: a.claims_filed || 0, approvals: a.approvals || 0,
-        collected: Math.round(((baseline[c.code] || 0) + (entered[c.code] || 0)) * 100) / 100,
+        collected: rev_ytd, rev_ytd, rev_mtd, jobs: b.jobs || 0,
       };
     });
     reps.sort((x, y) => (y.talk_tos - x.talk_tos) || (y.collected - x.collected));
@@ -181,6 +193,9 @@ router.get('/dashboard', async (req, res) => {
         claims_filed: reps.reduce((s, r) => s + r.claims_filed, 0),
         approvals: reps.reduce((s, r) => s + r.approvals, 0),
         collected: reps.reduce((s, r) => s + r.collected, 0),
+        rev_ytd: Math.round(reps.reduce((s, r) => s + r.rev_ytd, 0) * 100) / 100,
+        rev_mtd: Math.round(reps.reduce((s, r) => s + r.rev_mtd, 0) * 100) / 100,
+        jobs: reps.reduce((s, r) => s + r.jobs, 0),
       },
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
