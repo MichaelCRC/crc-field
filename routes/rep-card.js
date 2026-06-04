@@ -94,6 +94,15 @@ function _sbDelete(code, linkId) {
   if (i === -1) return { notFound: true }; arr.splice(i, 1); return { ok: true };
 }
 
+// Sandbox sample company-calendar events (offline only).
+function _sbCompanyEvents() {
+  const mk = (daysOut, hh, summary, loc) => {
+    const d = new Date(); d.setDate(d.getDate() + daysOut); d.setHours(hh, 0, 0, 0);
+    return { id: 'sb-' + daysOut + '-' + hh, summary, start: d.toISOString(), end: new Date(d.getTime() + 3600000).toISOString(), location: loc || '', organizer: { email: 'crc@columbusroofingco.com', self: true } };
+  };
+  return [mk(1, 9, 'CRC Team Meeting', 'HQ'), mk(2, 7, 'CRC Build — 123 Main St', '123 Main St'), mk(4, 13, 'CRC Training: Sales Process', 'HQ')];
+}
+
 // Auth gate for rep-link management: rep manages their own links, admin any.
 function repLinkAuth(req, code) {
   const auth = (req.query.auth || '').toUpperCase();
@@ -312,6 +321,17 @@ router.patch('/api/rep-codes/:code', async (req, res) => {
 // The Field App is a trusted write-proxy to the portal booking engine. The rep
 // manages their OWN links (standard = availability only + never deletable;
 // custom = full add/edit/delete). repId = the authenticated rep's code.
+
+// GET /api/calendar?rep=CODE&days=30 — company calendar (crc@ events) + the
+// rep's own calendar. Proxies the portal; never exposes other reps' calendars.
+router.get('/api/calendar', async (req, res) => {
+  const code = (req.query.rep || '').toUpperCase();
+  const days = (req.query.days || '30').toString().replace(/[^0-9]/g, '') || '30';
+  if (_sandbox.enabled) return res.json({ company: _sbCompanyEvents(), personal: [] });
+  const { ok, data } = await portalApi(`/api/booking/calendar?repId=${encodeURIComponent(code)}&days=${encodeURIComponent(days)}`);
+  if (!ok) return res.status(502).json({ error: 'Could not load calendar' });
+  res.json(data);
+});
 
 // GET /api/rep-links/:code — a rep's effective links
 router.get('/api/rep-links/:code', async (req, res) => {

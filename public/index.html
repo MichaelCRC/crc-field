@@ -259,6 +259,8 @@
 
     <div id="view-scorecard" class="app-view"></div>
 
+    <div id="view-calendar" class="app-view"></div>
+
     <div id="view-feed" class="app-view">
       <!-- Channel tabs -->
       <div id="feed-channels" style="display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--surface-card);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
@@ -399,8 +401,8 @@
     <div id="more-menu" class="more-overlay" onclick="if(event.target===this)closeMoreMenu()">
       <div class="more-panel">
         <div class="more-handle"></div>
-        <button class="more-item" onclick="closeMoreMenu();switchView('booking')">
-          <span class="more-icon">&#128197;</span><span>Book Appointment</span><span class="more-arrow">&#8250;</span>
+        <button class="more-item" onclick="closeMoreMenu();switchView('calendar')">
+          <span class="more-icon">&#128197;</span><span>Company Calendar</span><span class="more-arrow">&#8250;</span>
         </button>
         <button class="more-item" onclick="closeMoreMenu();switchView('stats')">
           <span class="more-icon">&#128202;</span><span>Dashboard</span><span class="more-arrow">&#8250;</span>
@@ -459,6 +461,7 @@
   <script src="/markup.js"></script>
   <script src="/booking-native.js"></script>
   <script src="/scorecard.js"></script>
+  <script src="/calendar.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <script src="issues-widget.js" defer></script>
   <!-- CRC PWA SW -->
