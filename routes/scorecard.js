@@ -83,9 +83,9 @@ router.post('/collect', async (req, res) => {
     }
     const { rows } = await query(
       `INSERT INTO daily_activity (rep_code, activity_date, collected)
-       VALUES ($1, $2, GREATEST(0, $3))
+       VALUES ($1, $2, GREATEST(0::numeric, $3::numeric))
        ON CONFLICT (rep_code, activity_date)
-       DO UPDATE SET collected = GREATEST(0, daily_activity.collected + $3), updated_at = NOW()
+       DO UPDATE SET collected = GREATEST(0::numeric, daily_activity.collected + $3::numeric), updated_at = NOW()
        RETURNING *`,
       [rep, date, amount]
     );
