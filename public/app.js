@@ -42,7 +42,7 @@ async function validateAndEnter(code) {
     if (badge) badge.textContent = code;
     const nm = document.getElementById('field-user-name'); if (nm) nm.textContent = data.name;
     const rl = document.getElementById('field-user-role'); if (rl) rl.textContent = String(data.role || 'rep').toUpperCase() + ' · ' + code;
-    if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
+    if (data.role === 'admin') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; const ml = document.getElementById('more-leadership'); if (ml) ml.style.display = ''; }
     loadLeads();
     initCheckin();
     // Open the real-time event stream to the Portal. Reps receive events
@@ -194,6 +194,7 @@ function switchView(name) {
   if (name === 'notes') initNotes();
   if (name === 'scorecard' && typeof initScorecard === 'function') initScorecard();
   if (name === 'calendar' && typeof initCalendar === 'function') initCalendar();
+  if (name === 'leadership' && typeof initLeadership === 'function') initLeadership();
   if (name === 'brain') initBrain();
   if (name === 'admin') loadAdmin();
   if (name === 'booking') {

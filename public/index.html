@@ -261,6 +261,8 @@
 
     <div id="view-calendar" class="app-view"></div>
 
+    <div id="view-leadership" class="app-view"></div>
+
     <div id="view-feed" class="app-view">
       <!-- Channel tabs -->
       <div id="feed-channels" style="display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--surface-card);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0">
@@ -418,6 +420,9 @@
         </button>
         <!-- Referrals removed 2026-06-01 per v3 spec section 9 line 13 + v3.1 section 6 line 15.
              Re-add when ready for rep referral tracking system (future build). -->
+        <button class="more-item" id="more-leadership" style="display:none" onclick="closeMoreMenu();switchView('leadership')">
+          <span class="more-icon">&#127919;</span><span>Leadership</span><span class="more-arrow">&#8250;</span>
+        </button>
         <button class="more-item" onclick="closeMoreMenu();location.href='/roster'">
           <span class="more-icon">&#128101;</span><span>Team Roster</span><span class="more-arrow">&#8250;</span>
         </button>
@@ -462,6 +467,7 @@
   <script src="/booking-native.js"></script>
   <script src="/scorecard.js"></script>
   <script src="/calendar.js"></script>
+  <script src="/leadership.js"></script>
   <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
   <script src="issues-widget.js" defer></script>
   <!-- CRC PWA SW -->

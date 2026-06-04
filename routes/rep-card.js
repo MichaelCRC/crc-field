@@ -333,6 +333,52 @@ router.get('/api/calendar', async (req, res) => {
   res.json(data);
 });
 
+// ─── LEADERSHIP BOARD (admin only) — proxies the portal ───
+const _sbLeadership = { rocks: [], todos: [], issues: [] };
+let _sbLeadId = 1;
+function _sbLeadBucket(t) { return t === 'rock' ? 'rocks' : t === 'todo' ? 'todos' : 'issues'; }
+function adminAuth(req) {
+  const auth = (req.query.auth || req.headers['x-field-rep'] || '').toUpperCase();
+  if (!auth || !validateRepCode(auth)) return { code: 401, msg: 'Auth required' };
+  if (!isAdmin(auth)) return { code: 403, msg: 'Admin only' };
+  return { ok: true };
+}
+router.get('/api/leadership', async (req, res) => {
+  const a = adminAuth(req); if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) return res.json(_sbLeadership);
+  const { ok, data } = await portalApi('/api/leadership');
+  if (!ok) return res.status(502).json({ error: 'Could not load board' });
+  res.json(data);
+});
+router.post('/api/leadership', async (req, res) => {
+  const a = adminAuth(req); if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) {
+    const b = req.body || {};
+    const it = { id: 'sb' + (_sbLeadId++), type: b.type, title: b.title, owner: b.owner || '', status: b.status || 'open', notes: b.notes || '', created_at: new Date().toISOString() };
+    _sbLeadership[_sbLeadBucket(b.type)].push(it); return res.json({ item: it });
+  }
+  const { ok, status, data } = await portalApi('/api/leadership', { method: 'POST', body: JSON.stringify(req.body || {}) });
+  if (!ok) return res.status(status || 502).json(data); res.json(data);
+});
+router.patch('/api/leadership/:id', async (req, res) => {
+  const a = adminAuth(req); if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) {
+    for (const k of ['rocks', 'todos', 'issues']) { const it = _sbLeadership[k].find(x => x.id === req.params.id); if (it) { Object.assign(it, req.body || {}); return res.json({ item: it }); } }
+    return res.status(404).json({ error: 'not found' });
+  }
+  const { ok, status, data } = await portalApi('/api/leadership/' + encodeURIComponent(req.params.id), { method: 'PATCH', body: JSON.stringify(req.body || {}) });
+  if (!ok) return res.status(status || 502).json(data); res.json(data);
+});
+router.delete('/api/leadership/:id', async (req, res) => {
+  const a = adminAuth(req); if (!a.ok) return res.status(a.code).json({ error: a.msg });
+  if (_sandbox.enabled) {
+    for (const k of ['rocks', 'todos', 'issues']) { const i = _sbLeadership[k].findIndex(x => x.id === req.params.id); if (i >= 0) { _sbLeadership[k].splice(i, 1); return res.json({ ok: true }); } }
+    return res.status(404).json({ error: 'not found' });
+  }
+  const { ok, status, data } = await portalApi('/api/leadership/' + encodeURIComponent(req.params.id), { method: 'DELETE' });
+  if (!ok) return res.status(status || 502).json(data); res.json(data);
+});
+
 // GET /api/rep-links/:code — a rep's effective links
 router.get('/api/rep-links/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
