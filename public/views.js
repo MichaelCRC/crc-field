@@ -572,10 +572,12 @@ async function loadStats(period) {
 
     const scoreEl = document.getElementById('company-scoreboard');
     if (scoreEl) scoreEl.innerHTML = `
-      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(t.collected)}</div><div class="label">Revenue ${revLbl}</div></div>
-      <div class="admin-stat"><div class="val">${t.jobs || 0}</div><div class="label">Jobs</div></div>
       <div class="admin-stat"><div class="val">${t.talk_tos || 0}</div><div class="label">Talk Tos</div></div>
-      <div class="admin-stat"><div class="val">${t.sales_appts || 0}</div><div class="label">Sit-Downs</div></div>`;
+      <div class="admin-stat"><div class="val">${t.inspections_ran || 0}</div><div class="label">Inspections</div></div>
+      <div class="admin-stat"><div class="val">${t.sales_appts || 0}</div><div class="label">Sit-Downs</div></div>
+      <div class="admin-stat"><div class="val">${t.claims_filed || 0}</div><div class="label">Claims</div></div>
+      <div class="admin-stat"><div class="val">${t.approvals || 0}</div><div class="label">Approvals</div></div>
+      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(t.collected)}</div><div class="label">Collected ${revLbl}</div></div>`;
 
     const me = (d.reps || []).find(r => r.code === meCode) || {};
     const myEl = document.getElementById('my-stats');
@@ -583,18 +585,20 @@ async function loadStats(period) {
       <div class="admin-stat"><div class="val">${me.talk_tos || 0}</div><div class="label">Talk Tos</div></div>
       <div class="admin-stat"><div class="val">${me.inspections_ran || 0}</div><div class="label">Inspections</div></div>
       <div class="admin-stat"><div class="val">${me.sales_appts || 0}</div><div class="label">Sit-Downs</div></div>
-      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(me.collected)}</div><div class="label">Revenue ${revLbl}</div></div>`;
+      <div class="admin-stat"><div class="val">${me.claims_filed || 0}</div><div class="label">Claims</div></div>
+      <div class="admin-stat"><div class="val">${me.approvals || 0}</div><div class="label">Approvals</div></div>
+      <div class="admin-stat"><div class="val" style="color:var(--teal)">${money(me.collected)}</div><div class="label">Collected ${revLbl}</div></div>`;
 
     const sb = document.getElementById('status-breakdown'); if (sb) sb.innerHTML = '';
     const ra = document.getElementById('recent-activity'); if (ra) ra.innerHTML = '';
 
     const lbEl = document.getElementById('leaderboard');
-    if (lbEl) lbEl.innerHTML = `<div style="padding:0 16px;overflow-x:auto"><table style="width:100%;max-width:640px;font-size:12px;border-collapse:collapse;table-layout:fixed"><thead><tr style="font-size:10px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:6px 4px;text-align:left;width:22px">#</th><th style="text-align:left">Rep</th><th style="text-align:right;width:60px">Rev</th><th style="text-align:right;width:42px">Talk</th><th style="text-align:right;width:40px">Insp</th><th style="text-align:right;width:34px">Sit</th></tr></thead><tbody>` +
+    if (lbEl) lbEl.innerHTML = `<div style="padding:0 16px;overflow-x:auto"><table style="width:100%;min-width:520px;font-size:12px;border-collapse:collapse;table-layout:fixed"><thead><tr style="font-size:10px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--navy)"><th style="padding:6px 4px;text-align:left;width:5%">#</th><th style="text-align:left;width:27%">Rep</th><th style="text-align:right;width:16%">Rev</th><th style="text-align:right;width:11%">Talk</th><th style="text-align:right;width:11%">Insp</th><th style="text-align:right;width:10%">Sit</th><th style="text-align:right;width:10%">Claims</th><th style="text-align:right;width:10%">Appr</th></tr></thead><tbody>` +
       (d.reps || []).map((r, i) => {
         const isMe = r.code === meCode;
         const rowStyle = isMe ? 'background:#E0F7FA;color:#0A1530;font-weight:700' : '';
         const flag = (r.expected && !r.loggedToday) ? ' <span style="color:#dc2626" title="Not logged today">&#9888;</span>' : '';
-        return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:6px 4px">${i === 0 ? '&#127942;' : i + 1}</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="/rep-card/${r.code}" style="color:inherit;text-decoration:none">${r.name}${flag}</a></td><td style="text-align:right">${money(r.collected)}</td><td style="text-align:right">${r.talk_tos}</td><td style="text-align:right">${r.inspections_ran}</td><td style="text-align:right">${r.sales_appts}</td></tr>`;
+        return `<tr style="border-bottom:1px solid var(--border);${rowStyle}"><td style="padding:6px 4px">${i === 0 ? '&#127942;' : i + 1}</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="/rep-card/${r.code}" style="color:inherit;text-decoration:none">${r.name}${flag}</a></td><td style="text-align:right">${money(r.collected)}</td><td style="text-align:right">${r.talk_tos}</td><td style="text-align:right">${r.inspections_ran}</td><td style="text-align:right">${r.sales_appts}</td><td style="text-align:right">${r.claims_filed}</td><td style="text-align:right">${r.approvals}</td></tr>`;
       }).join('') + '</tbody></table></div>';
   } catch (e) { console.error('Stats error:', e); }
 }
