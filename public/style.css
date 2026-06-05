@@ -1101,3 +1101,8 @@ html, body { overflow-x: hidden; }
 #view-map.active ~ * #map-location-btn,
 body.map-active .map-location-btn { display: flex; }
 .map-location-btn.visible { display: flex; }
+
+/* Feed: posted cards match the composer width (was a narrow ~640px centered
+   list while the composer ran full-width, so posts looked like small cards). */
+#view-feed .feed-list, #feed-list { max-width: none; margin-left: 0; margin-right: 0; }
+.feed-card { width: 100%; box-sizing: border-box; }

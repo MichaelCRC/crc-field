@@ -179,6 +179,9 @@ function applyHashRoute() {
 // --- View Switching ---
 function switchView(name) {
   closeMoreMenu();
+  // Close the job-detail overlay on any nav — otherwise it stays on top of the
+  // newly selected view (you'd only see the switch after going back to Jobs).
+  const _jd = document.getElementById('job-detail'); if (_jd) _jd.classList.remove('open');
   document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
