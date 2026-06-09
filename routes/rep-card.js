@@ -1280,6 +1280,7 @@ router.get('/r/:slug', async (req, res) => {
 router.get('/api/public/:slug/types', async (req, res) => {
   const code = findRepBySlug(req.params.slug);
   if (!code) return res.status(404).json({ error: 'Rep not found' });
+  if ((getCard(code) || {}).public_enabled === false) return res.status(404).json({ error: 'Rep not found' });
   // Effective links = standard public types (with this rep's availability) +
   // the rep's custom links. So custom links appear in the public flow too.
   if (_sandbox.enabled) return res.json({ types: _sbEffectiveLinks(code).filter(t => t.isPublic) });
@@ -1290,6 +1291,8 @@ router.get('/api/public/:slug/types', async (req, res) => {
 
 router.get('/api/public/:slug/slots', async (req, res) => {
   const code = findRepBySlug(req.params.slug);
+  if (!code) return res.status(404).json({ error: 'Rep not found' });
+  if ((getCard(code) || {}).public_enabled === false) return res.status(404).json({ error: 'Rep not found' });
   const { date, typeId } = req.query;
   if (!date || !typeId) return res.status(400).json({ error: 'date and typeId required' });
   if (_sandbox.enabled) return res.json({ slots: _sandboxSlots() });
@@ -1302,6 +1305,7 @@ router.get('/api/public/:slug/slots', async (req, res) => {
 router.post('/api/public/:slug/book', async (req, res) => {
   const code = findRepBySlug(req.params.slug);
   if (!code) return res.status(404).json({ error: 'Rep not found' });
+  if ((getCard(code) || {}).public_enabled === false) return res.status(404).json({ error: 'Rep not found' });
   const { typeId, date, time, homeowner = {}, src } = req.body || {};
   if (!typeId || !date || !time) return res.status(400).json({ error: 'typeId, date, time required' });
   if (!homeowner.name || !homeowner.phone) return res.status(400).json({ error: 'Name and phone required' });
