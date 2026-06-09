@@ -43,7 +43,7 @@ async function validateAndEnter(code) {
     const nm = document.getElementById('field-user-name'); if (nm) nm.textContent = data.name;
     const rl = document.getElementById('field-user-role'); if (rl) rl.textContent = String(data.role || 'rep').toUpperCase() + ' · ' + code;
     if (data.role === 'admin' || data.role === 'ceo') { document.getElementById('nav-admin').style.display = ''; document.getElementById('chat-tab-leadership').style.display = ''; }
-    if (['admin', 'ceo', 'operator'].includes(data.role)) { const ml = document.getElementById('more-leadership'); if (ml) ml.style.display = ''; }
+    if (['admin', 'ceo', 'operator', 'sales_manager'].includes(data.role)) { const ml = document.getElementById('more-leadership'); if (ml) ml.style.display = ''; }
     loadLeads();
     initCheckin();
     // Open the real-time event stream to the Portal. Reps receive events
