@@ -322,6 +322,13 @@ router.patch('/api/rep-codes/:code', async (req, res) => {
 // manages their OWN links (standard = availability only + never deletable;
 // custom = full add/edit/delete). repId = the authenticated rep's code.
 
+// GET /api/cc-photo/:ccId — same-origin redirect to the portal's CompanyCam
+// photo proxy (which re-fetches a fresh, non-expired URL). Lets job photos load
+// via <img> without the client knowing the portal base. Public (image load).
+router.get('/api/cc-photo/:ccId', (req, res) => {
+  res.redirect(302, PORTAL_URL + '/api/cc-photo/' + encodeURIComponent(req.params.ccId));
+});
+
 // GET /api/calendar?rep=CODE&days=30 — company calendar (crc@ events) + the
 // rep's own calendar. Proxies the portal; never exposes other reps' calendars.
 router.get('/api/calendar', async (req, res) => {

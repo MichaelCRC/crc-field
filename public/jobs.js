@@ -1141,12 +1141,16 @@ function collectJobPhotos(job) {
   var seen = Object.create(null);
   function push(p, source) {
     if (!p) return;
+    var id = p.id || p._id || '';
     var url = p.url || p.thumbnail || '';
+    // CompanyCam URLs are expiring signed links → route through the proxy
+    // (/api/cc-photo/:ccId) which re-fetches a fresh URL on load.
+    if (source === 'companycam' && id) url = '/api/cc-photo/' + encodeURIComponent(id);
     if (!url || seen[url]) return;
     seen[url] = true;
     out.push({
       url: url,
-      thumbnail: p.thumbnail || p.url || '',
+      thumbnail: (source === 'companycam' && id) ? url : (p.thumbnail || p.url || ''),
       caption: p.caption || p.label || '',
       label: p.label || p.caption || '',
       tag: (Array.isArray(p.tags) ? p.tags[0] : p.tag) || '',
