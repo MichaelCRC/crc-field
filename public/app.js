@@ -911,41 +911,188 @@ async function sigAuthSubmit(jobId, jobAddress) {
 }
 
 /* ============================================================
-   DAILY CHECK-IN
+   DAILY DAY-PROMPT  (morning check-in / afternoon My Day KPIs)
+   ------------------------------------------------------------
+   Before 1pm local: a forcing "Start your day" check-in popup
+   (dismissable with "later", but re-nags and the Home banner goes
+   red until submitted). 1pm+ : a soft "My Day" KPI popup that puts
+   the tap counters in front of the rep once per afternoon. The
+   + > My Day surface stays available any time — this just surfaces
+   the right thing at the right time of day.
+   Whether the rep has checked in today is driven off the server
+   (/api/field/checkins/status), with localStorage as a fast path,
+   so it doesn't misfire across devices.
    ============================================================ */
-const CI_KEY = 'crc-checkin-date';
+const MORNING_CUTOFF_HOUR = 13;            // hour < 13 (local) => morning window
+const CI_KEY = 'crc-checkin-date';         // local "checked in" date (fast path)
+const CI_TEXT_KEY = 'crc-checkin-today-text';
+const KPI_PROMPT_KEY = 'crc-kpi-prompt-date'; // local "afternoon KPI shown" date
+let _dayPromptBusy = false;
+let _checkedInToday = false;
 
+function _todayStr() { return new Date().toISOString().split('T')[0]; }
+function _firstName() { return (repName || '').trim().split(/\s+/)[0] || ''; }
+
+// Entry point (called from validateAndEnter after login). Paint the banner
+// from what we know locally, then resolve truth from the server and prompt.
 function initCheckin() {
   const banner = document.getElementById('checkin-banner');
   if (!banner || !repCode) return;
-  const today = new Date().toISOString().split('T')[0];
-  const stored = localStorage.getItem(CI_KEY);
-  if (stored === today) {
-    // Already submitted today — show done state
-    const doneText = localStorage.getItem('crc-checkin-today-text') || '';
-    document.getElementById('checkin-banner-prompt').style.display = 'none';
-    document.getElementById('checkin-done').style.display = 'block';
-    document.getElementById('checkin-done-text').textContent = doneText;
-    banner.style.display = 'block';
+  banner.style.display = 'block';
+  refreshCheckinBanner(localStorage.getItem(CI_KEY) === _todayStr());
+  maybeShowDayPrompt();
+}
+
+// Reflect check-in state in the Home status strip. When not yet done we leave
+// the teal "start your day" prompt; once the rep has dismissed the forcing
+// popup at least once we flip it red so it reads as unfinished.
+function refreshCheckinBanner(checkedIn) {
+  _checkedInToday = !!checkedIn;
+  const banner = document.getElementById('checkin-banner');
+  const prompt = document.getElementById('checkin-banner-prompt');
+  const done = document.getElementById('checkin-done');
+  if (!banner || !prompt || !done) return;
+  banner.style.display = 'block';
+  if (checkedIn) {
+    prompt.style.display = 'none';
+    done.style.display = 'block';
+    const txt = localStorage.getItem(CI_TEXT_KEY) || '';
+    document.getElementById('checkin-done-text').textContent = txt;
   } else {
-    // Not yet submitted — show prompt
-    banner.style.display = 'block';
+    done.style.display = 'none';
+    prompt.style.display = 'block';
   }
 }
 
-function toggleCheckin() {
-  const form = document.getElementById('checkin-form');
-  const chevron = document.getElementById('checkin-chevron');
-  const open = form.style.display !== 'none';
-  form.style.display = open ? 'none' : 'block';
-  chevron.textContent = open ? '▼' : '▲';
+function markBannerIncomplete() {
+  if (_checkedInToday) return;
+  const banner = document.getElementById('checkin-banner');
+  const title = document.getElementById('checkin-banner-title');
+  const sub = document.getElementById('checkin-banner-sub');
+  const prompt = document.getElementById('checkin-banner-prompt');
+  if (banner) banner.style.borderColor = 'var(--red)';
+  if (prompt) prompt.style.background = '#3a1416';
+  if (title) title.textContent = '⚠ Daily check-in not done';
+  if (sub) sub.textContent = 'Tap to start your day';
 }
 
-async function submitCheckin() {
-  const today = document.getElementById('ci-today').value.trim();
-  const errEl = document.getElementById('ci-error');
-  if (!today) { errEl.textContent = 'Please fill in what you\'re working on today.'; return; }
-  errEl.textContent = '';
+// Resolve "did THIS rep check in today" — server is source of truth, with a
+// localStorage fast path so we don't block the UI on a round trip.
+async function fetchCheckedInToday() {
+  if (localStorage.getItem(CI_KEY) === _todayStr()) return true;
+  try {
+    const d = await fetch('/api/field/checkins/status').then(r => r.json());
+    const mine = (d.submitted || []).find(c => (c.repCode || '').toUpperCase() === repCode.toUpperCase());
+    if (mine) {
+      localStorage.setItem(CI_KEY, _todayStr());
+      if (mine.workingToday) localStorage.setItem(CI_TEXT_KEY, mine.workingToday.substring(0, 80));
+      return true;
+    }
+  } catch (e) { /* offline — fall through to not-checked-in */ }
+  return false;
+}
+
+// Decide which (if any) popup to put in front of the rep right now.
+async function maybeShowDayPrompt() {
+  if (!repCode || _dayPromptBusy) return;
+  if (isDayModalOpen()) return;
+  _dayPromptBusy = true;
+  try {
+    const checkedIn = await fetchCheckedInToday();
+    refreshCheckinBanner(checkedIn);
+    const hour = new Date().getHours();
+    if (!checkedIn) {
+      // Morning, OR afternoon but never checked in: check-in wins (forcing).
+      openDayModal('checkin');
+    } else if (hour >= MORNING_CUTOFF_HOUR) {
+      // Afternoon, already checked in: soft KPI nudge, at most once per day.
+      if (localStorage.getItem(KPI_PROMPT_KEY) !== _todayStr()) {
+        localStorage.setItem(KPI_PROMPT_KEY, _todayStr());
+        openDayModal('kpi');
+      }
+    }
+    // else: morning + already checked in => nothing (banner shows done).
+  } finally {
+    _dayPromptBusy = false;
+  }
+}
+
+/* ---- Day-prompt modal ---- */
+function isDayModalOpen() {
+  const m = document.getElementById('day-modal');
+  return !!m && m.style.display === 'flex';
+}
+
+function closeDayModal() {
+  const m = document.getElementById('day-modal');
+  if (m) m.style.display = 'none';
+  SC_TILES_ID = 'sc-tiles'; // hand the scorecard renderer back to the My Day view
+}
+
+function openDayModal(mode) {
+  const m = document.getElementById('day-modal');
+  const card = document.getElementById('day-modal-card');
+  if (!m || !card) return;
+  if (mode === 'kpi') card.innerHTML = dayModalKpiHtml();
+  else card.innerHTML = dayModalCheckinHtml();
+  m.style.display = 'flex';
+  m.scrollTop = 0;
+  if (mode === 'kpi') {
+    // Render the live tap counters / money entry inside the modal.
+    if (typeof initScorecardInto === 'function') initScorecardInto('day-sc-tiles');
+  } else {
+    const t = document.getElementById('dm-today');
+    if (t) setTimeout(() => t.focus(), 150);
+  }
+}
+
+function dayModalCheckinHtml() {
+  const greet = _firstName() ? ('Good morning, ' + _firstName()) : 'Good morning';
+  return ''
+    + '<div style="background:var(--navy);padding:18px 18px 16px;color:#fff">'
+    +   '<div style="font-size:19px;font-weight:800">👋 ' + greet + '</div>'
+    +   '<div style="font-size:12px;color:var(--teal);margin-top:2px">Start your day — quick check-in</div>'
+    + '</div>'
+    + '<div style="padding:16px 16px 18px;background:#f8f9ff">'
+    +   '<div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:4px">What are you working on today? <span style="color:var(--red)">*</span></div>'
+    +   '<textarea id="dm-today" rows="2" placeholder="Knocking Westerville, adjuster meeting at 2pm..." style="width:100%;border:1px solid #dde;border-radius:8px;padding:9px;font-size:14px;font-family:inherit;resize:none;margin-bottom:11px"></textarea>'
+    +   '<div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:4px">What did you close or accomplish yesterday?</div>'
+    +   '<textarea id="dm-yesterday" rows="2" placeholder="Optional..." style="width:100%;border:1px solid #dde;border-radius:8px;padding:9px;font-size:14px;font-family:inherit;resize:none;margin-bottom:11px"></textarea>'
+    +   '<div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;margin-bottom:4px">Anything you need help with?</div>'
+    +   '<textarea id="dm-help" rows="1" placeholder="Optional..." style="width:100%;border:1px solid #dde;border-radius:8px;padding:9px;font-size:14px;font-family:inherit;resize:none;margin-bottom:14px"></textarea>'
+    +   '<button onclick="submitDayCheckin()" style="width:100%;padding:13px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer">Start my day →</button>'
+    +   '<div id="dm-error" style="color:var(--red);font-size:12px;margin-top:7px;text-align:center"></div>'
+    +   '<button onclick="dismissDayCheckin()" style="width:100%;margin-top:8px;padding:6px;background:none;border:none;color:#8a93a6;font-size:13px;cursor:pointer">I\'ll do it later</button>'
+    + '</div>';
+}
+
+function dayModalKpiHtml() {
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return ''
+    + '<div style="background:var(--navy);padding:18px 18px 16px;color:#fff;display:flex;align-items:flex-start;justify-content:space-between">'
+    +   '<div><div style="font-size:19px;font-weight:800">📊 How\'s your day going?</div>'
+    +   '<div style="font-size:12px;color:var(--teal);margin-top:2px">' + today + ' — tap to update your numbers</div></div>'
+    +   '<button onclick="closeDayModal()" aria-label="Close" style="background:none;border:none;color:#9aa3b5;font-size:24px;line-height:1;cursor:pointer;padding:0 2px">×</button>'
+    + '</div>'
+    + '<div style="padding:14px 14px 8px;background:#eef2f7"><div id="day-sc-tiles"><div style="color:#94a3b8">Loading…</div></div></div>'
+    + '<div style="padding:4px 14px 16px;background:#eef2f7">'
+    +   '<button onclick="closeDayModal()" style="width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer">Done for now</button>'
+    + '</div>';
+}
+
+// "I'll do it later" — close the forcing popup but leave the banner red so it
+// reads as unfinished; it re-opens next time the app is brought to the front.
+function dismissDayCheckin() {
+  closeDayModal();
+  markBannerIncomplete();
+}
+
+async function submitDayCheckin() {
+  const todayEl = document.getElementById('dm-today');
+  const errEl = document.getElementById('dm-error');
+  const today = (todayEl && todayEl.value.trim()) || '';
+  if (!today) { if (errEl) errEl.textContent = 'Tell us what you\'re working on today.'; return; }
+  if (errEl) errEl.textContent = '';
   try {
     const res = await fetch('/api/field/checkins', {
       method: 'POST',
@@ -953,24 +1100,31 @@ async function submitCheckin() {
       body: JSON.stringify({
         repCode,
         repName: repName || repCode,
-        closedYesterday: document.getElementById('ci-yesterday').value.trim(),
+        closedYesterday: (document.getElementById('dm-yesterday') || {}).value || '',
         workingToday: today,
-        needHelp: document.getElementById('ci-help').value.trim()
+        needHelp: (document.getElementById('dm-help') || {}).value || ''
       })
     });
     if (!res.ok) throw new Error('Server error');
-    // Mark submitted in localStorage
-    const dateStr = new Date().toISOString().split('T')[0];
-    localStorage.setItem(CI_KEY, dateStr);
-    localStorage.setItem('crc-checkin-today-text', today.substring(0, 80));
-    // Swap UI to done state
-    document.getElementById('checkin-banner-prompt').style.display = 'none';
-    document.getElementById('checkin-form').style.display = 'none';
-    document.getElementById('checkin-done').style.display = 'block';
-    document.getElementById('checkin-done-text').textContent = today.substring(0, 80);
+    localStorage.setItem(CI_KEY, _todayStr());
+    localStorage.setItem(CI_TEXT_KEY, today.substring(0, 80));
+    closeDayModal();
+    refreshCheckinBanner(true);
     if (typeof showToast === 'function') showToast('Check-in submitted ✓');
+    // If it's already the afternoon, roll straight into the soft KPI nudge.
+    if (new Date().getHours() >= MORNING_CUTOFF_HOUR && localStorage.getItem(KPI_PROMPT_KEY) !== _todayStr()) {
+      localStorage.setItem(KPI_PROMPT_KEY, _todayStr());
+      setTimeout(() => openDayModal('kpi'), 350);
+    }
   } catch (e) {
-    errEl.textContent = 'Failed to submit. Try again.';
+    if (errEl) errEl.textContent = 'Failed to submit. Try again.';
   }
 }
+
+// Re-evaluate when the app is brought back to the foreground (a fresh "open").
+// The morning check-in re-nags until done; the afternoon KPI nudge respects
+// its once-per-day gate, so this won't spam.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && repCode) maybeShowDayPrompt();
+});
 

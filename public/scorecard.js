@@ -12,9 +12,16 @@ var SC_METRICS = [
 function scRep() { return (typeof repCode !== 'undefined' ? repCode : '').toUpperCase(); }
 function scHeaders() { return { 'Content-Type': 'application/json', 'X-Field-Rep': scRep() }; }
 
+// Which container the tiles render into. The full My Day view uses 'sc-tiles';
+// the afternoon KPI popup points this at its own container so the same tap
+// counters / money entry render inside the modal. scBump/scAddMoney re-render
+// into whatever this currently points at.
+var SC_TILES_ID = 'sc-tiles';
+
 function initScorecard() {
   var v = document.getElementById('view-scorecard');
   if (!v) return;
+  SC_TILES_ID = 'sc-tiles';
   var today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   v.innerHTML = '<div style="padding:18px 16px 90px">'
     + '<div style="font-size:22px;font-weight:800;color:#ffffff">My Day</div>'
@@ -23,15 +30,25 @@ function initScorecard() {
   scLoad();
 }
 
+// Render the same KPI tiles into an arbitrary container (used by the
+// afternoon "My Day" popup). Caller supplies a container that already exists
+// in the DOM.
+function initScorecardInto(tilesId) {
+  SC_TILES_ID = tilesId;
+  var wrap = document.getElementById(tilesId);
+  if (wrap) wrap.innerHTML = '<div style="color:#94a3b8">Loading…</div>';
+  scLoad();
+}
+
 function scLoad() {
   fetch('/api/scorecard?rep=' + encodeURIComponent(scRep()))
     .then(function (r) { return r.json(); })
     .then(function (d) { _scData = d.scorecard || {}; scRender(); })
-    .catch(function () { document.getElementById('sc-tiles').innerHTML = '<div style="color:#c00;font-size:13px">Could not load your scorecard.</div>'; });
+    .catch(function () { var w = document.getElementById(SC_TILES_ID); if (w) w.innerHTML = '<div style="color:#c00;font-size:13px">Could not load your scorecard.</div>'; });
 }
 
 function scRender() {
-  var wrap = document.getElementById('sc-tiles');
+  var wrap = document.getElementById(SC_TILES_ID);
   if (!wrap) return;
   wrap.innerHTML = '';
   SC_METRICS.forEach(function (m) {

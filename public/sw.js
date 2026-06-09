@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crc-field-v41-2026-06-09';
+const CACHE_NAME = 'crc-field-v42-2026-06-09';
 const AUDIO_CACHE = 'crc-audio-v2';
 const SHELL = [
   '/', '/style.css', '/app.js', '/views.js', '/manifest.json', '/training.html',
