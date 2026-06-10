@@ -100,12 +100,12 @@ function _renderBuilder() {
   overlay.style.cssText = 'position:fixed;inset:0;z-index:1100;background:#F8FAFC;display:flex;flex-direction:column;overflow:hidden';
 
   var title = s.mode === 'claim-filing' ? 'Next Steps Packet'
-    : s.mode === 'insurance-report' ? 'Insurance Report'
+    : s.mode === 'insurance-report' ? 'CRC Roof Report'
     : 'Photo Inspection Report';
   var subtitle = s.mode === 'claim-filing'
     ? 'Select photos and fill in details for the homeowner packet.'
     : s.mode === 'insurance-report'
-    ? 'A roof condition report the homeowner keeps on file for their insurer.'
+    ? 'One roof report for tune-up delivery and insurance documentation.'
     : 'Select photos to include. Add a label and (optionally) markup to each.';
 
   overlay.innerHTML = ''
@@ -159,7 +159,7 @@ function _buildBody() {
   // keeps on file for their insurer.
   if (s.mode === 'insurance-report') {
     html += '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">'
-      + '<div style="font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Insurance Report Details</div>'
+      + '<div style="font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">CRC Roof Report Details</div>'
       + '<label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px">Summary</label>'
       + '<textarea id="ir-ins-summary" oninput="_irState.insSummary=this.value" rows="3" placeholder="Brief summary for the homeowner\'s insurance file..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px">' + _esc(s.insSummary || '') + '</textarea>'
       + '<label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:5px">Overall Condition <span style="font-weight:400">(steers the report tone)</span></label>'
@@ -269,8 +269,8 @@ function _irBuildPreviewHtml(s) {
   var job = s.job || {};
   var meta = _irReportMeta(s);
   var rep = (typeof repName !== 'undefined' && repName) ? repName : 'CRC Representative';
-  var title = { 'insurance-report': 'Roof Condition Report', 'photo-report': 'Photo Inspection Report', 'claim-filing': 'Insurance Claim — Next Steps' }[s.mode] || 'Property Report';
-  var subtitle = { 'insurance-report': "Prepared for the homeowner's insurance records", 'photo-report': 'Documented roof & exterior inspection', 'claim-filing': 'Storm damage documentation for claim filing' }[s.mode] || '';
+  var title = { 'insurance-report': 'CRC Roof Report', 'photo-report': 'Photo Inspection Report', 'claim-filing': 'Insurance Claim - Next Steps' }[s.mode] || 'Property Report';
+  var subtitle = { 'insurance-report': "Roof inspection and condition documentation", 'photo-report': 'Documented roof & exterior inspection', 'claim-filing': 'Storm damage documentation for claim filing' }[s.mode] || '';
 
   var photos = Array.from(s.selected).map(function (url) {
     var p = s.photos.find(function (x) { return x.url === url; }) || { url: url };
@@ -414,8 +414,9 @@ async function _irGenerate() {
     var p = s.photos.find(function(x){ return x.url === url; }) || { url: url };
     // takenAt drives the date/time stamp the report prints under each photo
     // (homeowner's insurance reference). createdAt comes from CompanyCam's
-    // capture time or the in-app upload time (collectJobPhotos).
-    return { url: url, label: (s.labels[url] || p.label || p.caption || '').trim(), takenAt: p.createdAt || null };
+    // capture time or the in-app upload time (collectJobPhotos). tag becomes
+    // the component label above the photo (North Slope, Chimney Flashing, ...).
+    return { url: url, label: (s.labels[url] || p.label || p.caption || '').trim(), caption: (s.labels[url] || '').trim(), tag: p.tag || '', takenAt: p.createdAt || null };
   });
 
   var endpoint = s.mode === 'claim-filing' ? 'claim-filing-package'
