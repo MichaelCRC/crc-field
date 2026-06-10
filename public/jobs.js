@@ -917,12 +917,46 @@ function renderJobDetail(job) {
   }
   html += '</div>';
 
+  // ── Reports & Documents ──
+  // Generated reports (Roof Condition / Photo Inspection / Next Steps) save to
+  // the job on the portal. List them here so reps can pull them up on site and
+  // re-share with the homeowner, not just see a "Built" badge.
+  var jobDocs = (job.uploadedDocs || []).slice().reverse(); // newest first
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Reports &amp; Documents'
+    + (jobDocs.length ? ' <span style="background:var(--teal);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700">' + jobDocs.length + '</span>' : '') + '</div>';
+  if (!jobDocs.length) {
+    html += '<div style="font-size:12px;color:var(--gray)">No reports yet. Use Create Report above.</div>';
+  } else {
+    jobDocs.forEach(function(d){
+      var when = d.uploadedAt ? new Date(d.uploadedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+      var label = (d.type || d.filename || 'Document').toString().replace(/</g,'&lt;');
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E2E8F0;border-radius:8px;margin-bottom:8px;background:#fff">'
+        + '<span style="font-size:20px">&#128196;</span>'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + label + (d.version > 1 ? ' (v' + d.version + ')' : '') + '</div>'
+        +   '<div style="font-size:11px;color:var(--gray)">' + when + (d.selectionCount ? ' &middot; ' + d.selectionCount + ' photos' : '') + '</div>'
+        + '</div>'
+        + '<button onclick="_openJobDoc(\'' + jid + '\',\'' + d.id + '\')" style="flex:0 0 auto;padding:7px 14px;background:var(--teal);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent">View</button>'
+        + '</div>';
+    });
+  }
+  html += '</div>';
+
   html += '<button onclick="closeJobDetail()" style="width:100%;padding:12px;background:transparent;border:1.5px solid var(--teal);border-radius:8px;font-size:14px;font-weight:700;color:var(--teal);cursor:pointer;margin-bottom:20px;-webkit-tap-highlight-color:transparent">Back to My Jobs</button>';
   html += '</div>';
   detail.innerHTML = html;
 
   // Kick off storm history lookup after DOM is in place.
   loadJobStormHistory(job);
+}
+
+// Open a saved job report/document. The portal serves it inline (PDF) at a
+// public, field-exempt endpoint, so a new-tab open renders it in the device's
+// PDF viewer where it can be shared/saved. Cross-origin → new tab is correct.
+function _openJobDoc(jid, docId) {
+  var url = 'https://crc-supplements-dev.onrender.com/api/jobs/' + encodeURIComponent(jid) + '/documents/' + encodeURIComponent(docId) + '/download';
+  window.open(url, '_blank');
 }
 
 function _stormTypeLabel(t) {

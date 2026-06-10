@@ -412,7 +412,10 @@ async function _irGenerate() {
 
   var selections = Array.from(s.selected).map(function(url){
     var p = s.photos.find(function(x){ return x.url === url; }) || { url: url };
-    return { url: url, label: (s.labels[url] || p.label || p.caption || '').trim() };
+    // takenAt drives the date/time stamp the report prints under each photo
+    // (homeowner's insurance reference). createdAt comes from CompanyCam's
+    // capture time or the in-app upload time (collectJobPhotos).
+    return { url: url, label: (s.labels[url] || p.label || p.caption || '').trim(), takenAt: p.createdAt || null };
   });
 
   var endpoint = s.mode === 'claim-filing' ? 'claim-filing-package'
