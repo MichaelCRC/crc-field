@@ -21,6 +21,21 @@ function _irSaveLabels(arr) {
 }
 var IR_LABEL_CHIPS = _irGetLabels();
 
+// CRC Roof Report structured inputs (must match the portal renderer:
+// handlers/reportSections/insuranceReport.js CONDITION_COMPONENTS / ACTION_ITEMS).
+var IR_COMPONENTS = ['Shingle Field', 'Flashings', 'Ridge and Hip Cap', 'Valleys', 'Gutters', 'Soft Metals', 'Fascia and Soffit', 'Penetrations'];
+var IR_CONDITIONS = ['Not Inspected', 'Good', 'Fair', 'Poor'];
+var IR_ACTIONS = [
+  'Re-sealed and re-caulked all exposed flashing joints',
+  'Re-sealed pipe boots and vent flashings',
+  'Re-caulked skylight perimeters',
+  'Secured and sealed lifted or loose shingles',
+  'Sealed exposed nail heads',
+  'Cleaned gutters - debris removed and downspouts flushed',
+  'Cleared debris from roof valleys and low points',
+  'Blew off ridge line and debris accumulation points',
+];
+
 var _irState = null;
 
 // ── Entry points ────────────────────────────────────────────────────────────
@@ -65,7 +80,15 @@ async function _launchBuilder(jobId, mode) {
     // Insurance report extras
     insSummary: '',
     insDescription: '',
-    insCondition: 'sound'   // sound | wear | damage — steers the CRC Brain tone
+    insCondition: 'sound',  // sound | wear | damage — steers the CRC Brain tone
+    // CRC Roof Report structured inputs (Phase 2) — fill the report sections.
+    conditionAssessment: {},   // component -> { condition, notes }
+    remainingLife: '',
+    stormDamage: 'no',         // 'yes' | 'no'
+    actions: {},               // action label -> true
+    actionsNotes: '',
+    actionsFlagged: '',        // newline-separated future-repair items
+    nextInspectionDate: ''     // YYYY-MM-DD; blank -> portal defaults +12mo
   };
   // Prefill damage summary template for claim-filing mode
   if (mode === 'claim-filing') {
@@ -175,6 +198,7 @@ function _buildBody() {
       + '</div>'
       + '<textarea id="ir-ins-desc" oninput="_irState.insDescription=this.value" rows="5" placeholder="Tap “Generate with CRC Brain” for an official statement, or write your own..." style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.insDescription || '') + '</textarea>'
       + '</div>';
+    html += _irRoofFields(s);
   }
 
   // Options toolbar
@@ -370,6 +394,89 @@ function _irSetCondition(el) {
   });
 }
 
+// ── CRC Roof Report structured inputs (Phase 2) ──
+// Condition Assessment table + remaining life + storm flag + actions + next
+// inspection. These flow to the portal renderer via the submit body and fill
+// the corresponding report sections. Inline state updates keep scroll/focus.
+function _irRoofFields(s) {
+  var ca = s.conditionAssessment || {};
+  var card = 'background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px';
+  var lbl = 'font-size:12px;font-weight:800;color:#1B2360;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px';
+  var sublbl = 'font-size:11px;font-weight:700;color:#64748B';
+  var h = '';
+
+  // Condition Assessment
+  h += '<div style="' + card + '">'
+    + '<div style="' + lbl + '">Condition Assessment</div>'
+    + '<div style="font-size:11px;color:#94A3B8;margin-bottom:10px">Rate each component (defaults to Not Inspected).</div>';
+  IR_COMPONENTS.forEach(function (comp) {
+    var cur = ca[comp] || {};
+    var key = comp.replace(/'/g, "\\'");
+    h += '<div style="margin-bottom:10px">'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<span style="flex:1;font-size:13px;color:#1B2360;font-weight:600">' + comp + '</span>'
+      + '<select onchange="_irCond(\'' + key + '\',\'condition\',this.value)" style="flex:0 0 auto;padding:6px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;font-family:inherit;background:#fff">'
+      + IR_CONDITIONS.map(function (c) { var on = (cur.condition || 'Not Inspected') === c; return '<option value="' + c + '"' + (on ? ' selected' : '') + '>' + c + '</option>'; }).join('')
+      + '</select></div>'
+      + '<input type="text" placeholder="Notes (optional)" value="' + _esc(cur.notes || '') + '" oninput="_irCond(\'' + key + '\',\'notes\',this.value)" style="width:100%;margin-top:4px;padding:6px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;font-family:inherit;box-sizing:border-box">'
+      + '</div>';
+  });
+  h += '<div style="display:flex;gap:10px;margin-top:4px">'
+    + '<div style="flex:1"><label style="' + sublbl + ';display:block;margin-bottom:3px">Estimated Remaining Life</label>'
+    + '<input type="text" placeholder="e.g. 12-15 years" value="' + _esc(s.remainingLife || '') + '" oninput="_irState.remainingLife=this.value" style="width:100%;padding:7px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box"></div>'
+    + '<div style="flex:0 0 auto"><label style="' + sublbl + ';display:block;margin-bottom:3px">Storm Damage</label>'
+    + '<div id="ir-storm-toggle" style="display:flex;gap:4px">'
+    + [['no', 'No'], ['yes', 'Yes']].map(function (o) { var on = (s.stormDamage || 'no') === o[0]; return '<button type="button" data-val="' + o[0] + '" onclick="_irStorm(\'' + o[0] + '\')" style="padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:' + (on ? (o[0] === 'yes' ? '#DC2626' : '#0A1530') : '#F1F5F9') + ';color:' + (on ? '#fff' : '#1B2360') + ';border:1px solid ' + (on ? 'transparent' : '#CBD5E1') + '">' + o[1] + '</button>'; }).join('')
+    + '</div></div></div>'
+    + '</div>';
+
+  // Actions Taken
+  h += '<div style="' + card + '">'
+    + '<div style="' + lbl + '">Actions Taken (Tune-Up)</div>'
+    + '<div style="font-size:11px;color:#94A3B8;margin-bottom:10px">Check what was completed during the visit.</div>';
+  IR_ACTIONS.forEach(function (a) {
+    var on = !!(s.actions || {})[a];
+    var key = a.replace(/'/g, "\\'");
+    h += '<label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;cursor:pointer">'
+      + '<input type="checkbox"' + (on ? ' checked' : '') + ' onchange="_irAction(\'' + key + '\',this.checked)" style="width:17px;height:17px;accent-color:#07BFEE;margin:1px 0 0;flex:0 0 auto">'
+      + '<span style="font-size:13px;color:#334155;line-height:1.3">' + a + '</span></label>';
+  });
+  h += '<label style="' + sublbl + ';display:block;margin:8px 0 3px">Additional Notes</label>'
+    + '<textarea rows="2" placeholder="Optional..." oninput="_irState.actionsNotes=this.value" style="width:100%;padding:7px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.actionsNotes || '') + '</textarea>'
+    + '<label style="' + sublbl + ';display:block;margin:8px 0 3px">Items Flagged for Future Repair <span style="font-weight:400">(one per line)</span></label>'
+    + '<textarea rows="2" placeholder="Optional..." oninput="_irState.actionsFlagged=this.value" style="width:100%;padding:7px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box">' + _esc(s.actionsFlagged || '') + '</textarea>'
+    + '</div>';
+
+  // Next inspection
+  h += '<div style="' + card + '">'
+    + '<label style="' + sublbl + ';display:block;margin-bottom:3px">Next Recommended Inspection <span style="font-weight:400">(blank = 12 months out)</span></label>'
+    + '<input type="date" value="' + _esc(s.nextInspectionDate || '') + '" oninput="_irState.nextInspectionDate=this.value" style="width:100%;padding:7px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">'
+    + '</div>';
+
+  return h;
+}
+
+function _irCond(comp, field, val) {
+  if (!_irState.conditionAssessment) _irState.conditionAssessment = {};
+  if (!_irState.conditionAssessment[comp]) _irState.conditionAssessment[comp] = {};
+  _irState.conditionAssessment[comp][field] = val;
+}
+function _irAction(label, checked) {
+  if (!_irState.actions) _irState.actions = {};
+  if (checked) _irState.actions[label] = true; else delete _irState.actions[label];
+}
+function _irStorm(v) {
+  if (!_irState) return;
+  _irState.stormDamage = v;
+  var row = document.getElementById('ir-storm-toggle');
+  if (row) row.querySelectorAll('button').forEach(function (b) {
+    var on = b.dataset.val === v;
+    b.style.background = on ? (v === 'yes' ? '#DC2626' : '#0A1530') : '#F1F5F9';
+    b.style.color = on ? '#fff' : '#1B2360';
+    b.style.borderColor = on ? 'transparent' : '#CBD5E1';
+  });
+}
+
 // CRC Brain — generate an official condition statement so rep descriptions are
 // consistent and professional. Fills the Description field; rep can still edit.
 async function _irGenerateDescription() {
@@ -440,6 +547,19 @@ async function _irGenerate() {
   if (s.mode === 'insurance-report') {
     body.summary = s.insSummary;
     body.description = s.insDescription;
+    // Structured CRC Roof Report inputs — only sent when the rep actually
+    // filled them, so the portal omits empty sections (graceful).
+    var ca = s.conditionAssessment || {};
+    var caHas = Object.keys(ca).some(function (k) { var v = ca[k] || {}; return (v.condition && v.condition !== 'Not Inspected') || (v.notes && v.notes.trim()); });
+    if (caHas) body.conditionAssessment = ca;
+    if (s.remainingLife && s.remainingLife.trim()) body.remainingLife = s.remainingLife.trim();
+    body.stormDamage = s.stormDamage || 'no'; // drives the insurance summary sentence + table flag
+    var checked = Object.keys(s.actions || {});
+    var flagged = (s.actionsFlagged || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+    if (checked.length || (s.actionsNotes && s.actionsNotes.trim()) || flagged.length) {
+      body.actionsTaken = { items: checked, notes: (s.actionsNotes || '').trim(), flagged: flagged };
+    }
+    if (s.nextInspectionDate) body.nextInspectionDate = s.nextInspectionDate;
   }
 
   try {
