@@ -559,6 +559,10 @@ function openCreateReport(jobId) {
   // smooth flow as Photo + Insurance Report (no "mark ready" two-tap). The
   // packet PDF itself (portal generator) is unchanged.
   if (isIns) opts.push(opt('Next Steps Packet', 'Homeowner is ready to file a claim', '#16A34A', function(){ openClaimFilingPackage(jobId); }));
+  // Retail proposal — runs the CRC engine (Mac Mini) off the job's measurements
+  // + a few complexities. Available on any job (retail is an option even on
+  // insurance jobs). Needs measurements pulled first.
+  opts.push(opt('Retail Proposal', 'Cash/retail roofing proposal — 3 package options', '#0A7C3A', function(){ openRetailProposal(jobId); }));
   showActionSheet('Create Report', opts);
 }
 

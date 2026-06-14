@@ -397,6 +397,37 @@ router.post('/:id/insurance-report', async (req, res) => {
   }
 });
 
+// POST /api/field/jobs/:id/retail-estimate — enqueue a retail proposal for the
+// CRC engine (Mac Mini). The portal holds the queue; the Mini's Hermes polls,
+// runs build_retail_proposal.py in CRC Documents, and posts the PDF back. Body
+// is the assembled retail_input.json (measurements + rep complexity form).
+router.post('/:id/retail-estimate', requireRep, async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch('/api/hermes/tasks', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'retail_estimate', jobId: req.params.id, payload: req.body, createdBy: req.repCode }),
+    });
+    if (!ok) return res.status(status).json(data && data.error ? data : { error: 'Could not queue proposal', detail: data });
+    res.status(201).json({ success: true, taskId: data.taskId });
+  } catch (e) {
+    console.error('[FieldJobs] retail-estimate enqueue error:', e.message);
+    res.status(500).json({ error: 'Failed to queue retail proposal' });
+  }
+});
+
+// GET /api/field/jobs/:id/retail-estimate/:taskId — poll task status. Returns
+// { task } with status queued|claimed|done|error and result.documents when done.
+router.get('/:id/retail-estimate/:taskId', requireRep, async (req, res) => {
+  try {
+    const { status, ok, data } = await portalFetch(`/api/hermes/tasks/${req.params.taskId}`);
+    if (!ok) return res.status(status).json(data && data.error ? data : { error: 'Status check failed' });
+    res.json(data);
+  } catch (e) {
+    console.error('[FieldJobs] retail-estimate status error:', e.message);
+    res.status(500).json({ error: 'Failed to check proposal status' });
+  }
+});
+
 // GET /api/field/jobs/:id/next-steps-pdf — proxy to portal
 router.get('/:id/next-steps-pdf', async (req, res) => {
   try {
