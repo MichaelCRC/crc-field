@@ -559,10 +559,6 @@ function openCreateReport(jobId) {
   // smooth flow as Photo + Insurance Report (no "mark ready" two-tap). The
   // packet PDF itself (portal generator) is unchanged.
   if (isIns) opts.push(opt('Next Steps Packet', 'Homeowner is ready to file a claim', '#16A34A', function(){ openClaimFilingPackage(jobId); }));
-  // Retail proposal — runs the CRC engine (Mac Mini) off the job's measurements
-  // + a few complexities. Available on any job (retail is an option even on
-  // insurance jobs). Needs measurements pulled first.
-  opts.push(opt('Retail Proposal', 'Cash/retail roofing proposal — 3 package options', '#0A7C3A', function(){ openRetailProposal(jobId); }));
   showActionSheet('Create Report', opts);
 }
 
@@ -779,6 +775,14 @@ function renderJobDetail(job) {
     anyReport ? '&#10003; Built' : (wfPhotos.length ? 'Create' : 'No photos yet'),
     anyReport ? '#16A34A' : (wfPhotos.length ? '#00B5CC' : '#94A3B8'),
     wfPhotos.length ? ('openCreateReport(\'' + jid + '\')') : '');
+  // Retail Proposal — its own action (a proposal/estimate, not a report). Runs
+  // the CRC engine off the job's measurements + a few complexities. Gated on
+  // measurements (not photos); the modal guides the rep to pull Hover if absent.
+  var retailBuilt = (job.uploadedDocs || []).some(function(d){ return (d.type || d.docType) === 'Retail Proposal'; });
+  html += _workflowChip('&#128176;', 'Retail Proposal',
+    retailBuilt ? '&#10003; Built' : (squares ? 'Generate' : 'Pull Hover first'),
+    retailBuilt ? '#16A34A' : (squares ? '#0A7C3A' : '#94A3B8'),
+    'openRetailProposal(\'' + jid + '\')');
   html += '</div>';
 
   // ── Move Stage + Transfer + Mark buttons ──
