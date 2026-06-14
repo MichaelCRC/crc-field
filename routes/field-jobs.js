@@ -36,8 +36,19 @@ const portalHeaders = {
 async function portalFetch(path, opts = {}) {
   const res = await fetch(`${PORTAL_URL}${path}`, {
     ...opts,
+    redirect: 'manual',   // don't silently follow a 302→/login and parse HTML as "no data"
     headers: { ...portalHeaders, ...(opts.headers || {}) }
   });
+  // A redirect means the portal rejected our field-app auth (cookie gate sends
+  // unauthenticated requests to /login). Surface it as a real failure instead
+  // of letting an empty/HTML body masquerade as an empty result set.
+  if (res.status >= 300 && res.status < 400) {
+    return { status: 502, ok: false, data: { error: 'Portal rejected field-app auth (redirected to login)', host: PORTAL_URL } };
+  }
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    return { status: 502, ok: false, data: { error: 'Portal returned non-JSON', host: PORTAL_URL, status: res.status } };
+  }
   const data = await res.json().catch(() => ({}));
   return { status: res.status, ok: res.ok, data };
 }
@@ -62,7 +73,7 @@ router.get('/', requireRep, async (req, res) => {
     const { ok, status, data } = await portalFetch('/api/jobs' + qs, {
       headers: { 'x-field-app-key': FIELD_APP_KEY, 'x-field-rep': req.repCode }
     });
-    if (!ok) return res.status(status).json({ error: 'Portal jobs fetch failed', detail: data });
+    if (!ok) return res.status(status).json({ error: 'Portal jobs fetch failed', host: PORTAL_URL, detail: data });
 
     const list = Array.isArray(data) ? data : (Array.isArray(data.jobs) ? data.jobs : []);
     const now = new Date();
