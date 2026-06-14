@@ -1,12 +1,53 @@
 const express = require('express');
 const router = express.Router();
 const { getDataCore, listLeads, listZones, createZone, read, write } = require('../lib/store');
-const { listRepCodes } = require('../lib/repCodes');
+const { listRepCodes, refreshRepCodes } = require('../lib/repCodes');
 const { defaultChat } = require('../lib/autoPost');
 const { analyze, formatReport } = require('../lib/systemIntelligence');
 // Shared gate: reads x-field-rep (the app-wide header) as well as the legacy
 // x-rep-code / ?repCode= the admin client sends, and validates active+admin.
 const { requireAdmin } = require('../lib/authGate');
+
+// Rep-code writes are proxied to the portal roster (the PG-backed system of
+// record). The old flat-file write to rep-codes.json was a no-op — the field
+// auth cache reads Postgres, so flat-file edits vanished on the next 5-min
+// refresh. PORTAL_URL fallback is the live dev host (never the retired
+// -portal); FIELD_APP_KEY authenticates the field app to the portal gate.
+const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-dev.onrender.com';
+const FIELD_APP_KEY = process.env.FIELD_APP_KEY || 'crc-field-2026';
+
+async function rosterFetch(path, { method = 'GET', body } = {}, repCode) {
+  const res = await fetch(`${PORTAL_URL}${path}`, {
+    method,
+    redirect: 'manual',  // a 302→/login means the portal rejected our auth
+    headers: {
+      'Content-Type': 'application/json',
+      'x-field-app-key': FIELD_APP_KEY,
+      'x-field-rep': repCode || '',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (res.status >= 300 && res.status < 400) {
+    return { ok: false, status: 502, data: { error: 'Portal rejected field-app auth' } };
+  }
+  const ct = res.headers.get('content-type') || '';
+  const data = ct.includes('application/json') ? await res.json().catch(() => ({})) : {};
+  return { ok: res.ok, status: res.status, data };
+}
+
+// Map a portal roster user (safeUser shape) onto the legacy rep-code shape the
+// field admin client already renders, keeping user_id/email/phone available.
+function rosterToLegacy(u) {
+  return {
+    user_id: u.user_id,
+    code: u.rep_code,
+    name: u.name,
+    role: u.role,
+    email: u.email || '',
+    phone: u.phone || '',
+    active: u.is_active !== undefined ? !!u.is_active : !!u.active,
+  };
+}
 
 // Data core
 router.get('/data-core', requireAdmin, (req, res) => res.json(getDataCore()));
@@ -57,28 +98,65 @@ router.get('/export', requireAdmin, (req, res) => {
 });
 
 // Rep code management
-router.get('/rep-codes', requireAdmin, (req, res) => res.json(listRepCodes()));
-router.post('/rep-codes', requireAdmin, (req, res) => {
-  const { code, name, role } = req.body;
-  if (!code || !name) return res.status(400).json({ error: 'Code and name required' });
-  const { write } = require('../lib/store');
-  const codes = listRepCodes();
-  const upper = code.toUpperCase();
-  if (codes.find(c => c.code === upper)) return res.status(400).json({ error: 'Code already exists' });
-  codes.push({ code: upper, name, role: role || 'rep', active: true, createdAt: new Date().toISOString() });
-  write('rep-codes.json', { codes });
-  res.status(201).json({ success: true, code: upper });
+// GET — full roster (active + inactive) from the portal so admins can both
+// deactivate and reactivate. Falls back to the active-only auth cache if the
+// portal is unreachable, so the screen still renders.
+router.get('/rep-codes', requireAdmin, async (req, res) => {
+  const { ok, data } = await rosterFetch('/api/roster/reps?filter=all', {}, req.repCode);
+  if (ok && Array.isArray(data.reps)) return res.json(data.reps.map(rosterToLegacy));
+  console.warn('[admin] roster list failed, falling back to auth cache');
+  return res.json(listRepCodes());
 });
-router.patch('/rep-codes/:code', requireAdmin, (req, res) => {
-  const { write } = require('../lib/store');
-  const codes = listRepCodes();
-  const idx = codes.findIndex(c => c.code === req.params.code.toUpperCase());
-  if (idx === -1) return res.status(404).json({ error: 'Code not found' });
-  if (req.body.active !== undefined) codes[idx].active = req.body.active;
-  if (req.body.name) codes[idx].name = req.body.name;
-  if (req.body.role) codes[idx].role = req.body.role;
-  write('rep-codes.json', { codes });
-  res.json({ success: true, code: codes[idx] });
+
+// POST — create a rep in the portal roster (PG). The portal requires email +
+// phone (for login + welcome email), so the field add-rep form collects them.
+router.post('/rep-codes', requireAdmin, async (req, res) => {
+  const { code, name, email, phone, role } = req.body || {};
+  if (!code || !name) return res.status(400).json({ error: 'Code and name required' });
+  if (!email || !phone) return res.status(400).json({ error: 'Email and phone required to create a rep' });
+  const { ok, status, data } = await rosterFetch('/api/roster/reps', {
+    method: 'POST',
+    body: { rep_code: code.toUpperCase(), name, email, phone, role: role || 'rep' },
+  }, req.repCode);
+  if (!ok) return res.status(status).json(data && data.error ? data : { error: 'Portal create failed', detail: data });
+  refreshRepCodes().catch(() => {});  // reflect the new rep in the auth cache now
+  return res.status(201).json({ success: true, code: code.toUpperCase(), user: data.user, emailWarning: data.emailWarning });
+});
+
+// PATCH — toggle active (deactivate/reactivate) and/or edit name/role/rep_code,
+// all against the portal roster. Resolves code→user_id from the full roster so
+// inactive reps (absent from the active-only auth cache) can be reactivated.
+router.patch('/rep-codes/:code', requireAdmin, async (req, res) => {
+  const upper = req.params.code.toUpperCase();
+  const list = await rosterFetch('/api/roster/reps?filter=all', {}, req.repCode);
+  if (!list.ok || !Array.isArray(list.data.reps)) {
+    return res.status(list.status || 502).json({ error: 'Could not load roster to resolve rep' });
+  }
+  const target = list.data.reps.find(u => u.rep_code === upper);
+  if (!target) return res.status(404).json({ error: 'Code not found' });
+  const userId = target.user_id;
+
+  // Active toggle uses the dedicated endpoints (they stamp terminated_at/by).
+  if (req.body.active !== undefined) {
+    const path = req.body.active
+      ? `/api/roster/reps/${userId}/reactivate`
+      : `/api/roster/reps/${userId}/deactivate`;
+    const r = await rosterFetch(path, { method: 'POST', body: {} }, req.repCode);
+    if (!r.ok) return res.status(r.status).json(r.data && r.data.error ? r.data : { error: 'Portal toggle failed' });
+  }
+
+  // Field edits (name/role/rep_code) go through PATCH.
+  const patch = {};
+  if (req.body.name) patch.name = req.body.name;
+  if (req.body.role) patch.role = req.body.role;
+  if (req.body.newCode) patch.rep_code = String(req.body.newCode).toUpperCase();
+  if (Object.keys(patch).length) {
+    const r = await rosterFetch(`/api/roster/reps/${userId}`, { method: 'PATCH', body: patch }, req.repCode);
+    if (!r.ok) return res.status(r.status).json(r.data && r.data.error ? r.data : { error: 'Portal update failed' });
+  }
+
+  refreshRepCodes().catch(() => {});  // reflect the change in the auth cache now
+  return res.json({ success: true, code: upper });
 });
 
 // --- Chat Thread Management ---

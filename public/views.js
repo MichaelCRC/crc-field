@@ -612,7 +612,7 @@ async function loadAdmin() {
     document.getElementById('admin-stats').innerHTML = `<div class="admin-stat"><div class="val">${core.metadata?.total_contacts||0}</div><div class="label">Contacts</div></div><div class="admin-stat"><div class="val">${core.metadata?.total_properties||0}</div><div class="label">Properties</div></div><div class="admin-stat"><div class="val">${leads.length}</div><div class="label">Total Leads</div></div><div class="admin-stat"><div class="val">${leads.filter(l=>l.status==='won').length}</div><div class="label">Won</div></div>`;
     document.getElementById('admin-reps').innerHTML = reps.map(r => `<div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div><strong>${r.name}</strong> (${r.code})</div><div style="font-size:13px;color:var(--gray)">${r.thisWeek} this week / ${r.totalLeads} total</div></div>`).join('');
     const allCodes = await fetch(`/api/admin/rep-codes?repCode=${repCode}`).then(r=>r.json());
-    document.getElementById('admin-rep-codes').innerHTML = `<div id="add-rep-form" style="display:none;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="text" id="new-rep-code" placeholder="Code" style="width:100px;padding:8px;border:1px solid var(--border);border-radius:4px;text-transform:uppercase"><input type="text" id="new-rep-name" placeholder="Name" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:4px"><button class="chip active" onclick="addRepCode()">Add</button></div></div>` + allCodes.map(c => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div><strong>${c.code}</strong> -- ${c.name} (${c.role})</div><div>${c.active ? (c.role!=='admin'?`<button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',false)">Deactivate</button>`:'') : `<span style="color:var(--red);font-size:12px">Inactive</span> <button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',true)">Reactivate</button>`}</div></div>`).join('');
+    document.getElementById('admin-rep-codes').innerHTML = `<div id="add-rep-form" style="display:none;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="text" id="new-rep-code" placeholder="Code" style="width:90px;padding:8px;border:1px solid var(--border);border-radius:4px;text-transform:uppercase"><input type="text" id="new-rep-name" placeholder="Full name" style="flex:1;min-width:140px;padding:8px;border:1px solid var(--border);border-radius:4px"><input type="email" id="new-rep-email" placeholder="Email" style="flex:1;min-width:160px;padding:8px;border:1px solid var(--border);border-radius:4px"><input type="tel" id="new-rep-phone" placeholder="Phone" style="width:130px;padding:8px;border:1px solid var(--border);border-radius:4px"><select id="new-rep-role" style="padding:8px;border:1px solid var(--border);border-radius:4px"><option value="rep">Rep</option><option value="door_knocker">Door knocker</option><option value="sales_manager">Sales manager</option><option value="operator">Operator</option><option value="admin">Admin</option></select><button class="chip active" onclick="addRepCode()">Add</button></div><div style="font-size:11px;color:var(--gray);margin-top:6px">New reps start on password <strong>crc2026</strong> and get a welcome email.</div></div>` + allCodes.map(c => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border)"><div><strong>${c.code}</strong> -- ${c.name} (${c.role})</div><div>${c.active ? (c.role!=='admin'?`<button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',false)">Deactivate</button>`:'') : `<span style="color:var(--red);font-size:12px">Inactive</span> <button class="chip" style="font-size:11px;padding:4px 10px" onclick="toggleRepCode('${c.code}',true)">Reactivate</button>`}</div></div>`).join('');
     document.getElementById('admin-leads').innerHTML = leads.slice(0,50).map(l => `<div style="display:flex;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);font-size:13px"><div>${l.address?.substring(0,30)} -- ${l.homeowner||''}</div><div style="color:var(--gray)">${l.repCode} / ${l.status}</div></div>`).join('');
     // Load chat threads
     loadChatThreads();
@@ -677,10 +677,20 @@ async function createChatThread() {
   } catch (e) { alert('Failed: ' + e.message); }
 }
 async function addRepCode() {
-  const code = document.getElementById('new-rep-code')?.value?.trim(); const name = document.getElementById('new-rep-name')?.value?.trim();
+  const code = document.getElementById('new-rep-code')?.value?.trim();
+  const name = document.getElementById('new-rep-name')?.value?.trim();
+  const email = document.getElementById('new-rep-email')?.value?.trim();
+  const phone = document.getElementById('new-rep-phone')?.value?.trim();
+  const role = document.getElementById('new-rep-role')?.value || 'rep';
   if (!code||!name) return alert('Code and name required');
-  try { await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { method:'POST', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({code,name,role:'rep'}) }); loadAdmin(); }
-  catch(e) { alert('Failed to add rep code: ' + e.message); }
+  if (!email||!phone) return alert('Email and phone are required to create a rep');
+  try {
+    const r = await fetch(`/api/admin/rep-codes?repCode=${repCode}`, { method:'POST', headers:{'Content-Type':'application/json','x-rep-code':repCode}, body:JSON.stringify({code,name,email,phone,role}) });
+    const data = await r.json().catch(()=>({}));
+    if (!r.ok) return alert('Could not add rep: ' + (data.error || r.status));
+    if (data.emailWarning) alert(data.emailWarning);
+    loadAdmin();
+  } catch(e) { alert('Failed to add rep: ' + e.message); }
 }
 async function toggleRepCode(code, active) {
   if (!active && !confirm('Deactivate '+code+'?')) return;
