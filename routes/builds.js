@@ -14,6 +14,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { requireAdmin } = require('../lib/authGate');
 const fs = require('fs');
 const path = require('path');
 
@@ -91,7 +92,7 @@ router.get('/summary', async (req, res) => {
 });
 
 // POST /api/builds/refresh — geocode any new completed JN jobs
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', requireAdmin, async (req, res) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not set' });
 

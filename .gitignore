@@ -1,3 +1,10 @@
 node_modules/
 .env
 .claude/
+
+# Scratch / discovery dumps (local only)
+dump-codebase.sh
+dump-field-app.sh
+crc-field-codebase-dump.txt
+INFRASTRUCTURE.txt
+data/spc-cache.json

@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { listLeads, getLead, createLead, updateLead } = require('../lib/store');
+const { listLeads, getLead, updateLead } = require('../lib/store');
 const { syncToPortal } = require('../lib/portalSync');
 const { autoPost } = require('../lib/autoPost');
+const { requireRep } = require('../lib/authGate');
+
+// Portal is the system of record. Door-knock + quick-mark leads converge here
+// (like the primary ADD LEAD path) instead of the dead Postgres leads table.
+const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-dev.onrender.com';
+const HERMES_SECRET = process.env.HERMES_API_SECRET;
+
+// Every lead route requires a valid, active rep (server-side kill switch).
+router.use(requireRep);
 
 // List leads
 router.get('/', async (req, res) => {
@@ -33,17 +42,46 @@ router.get('/:id', async (req, res) => {
   res.json(lead);
 });
 
-// Create lead -- retail syncs immediately, insurance waits for claim_filed
+// Create lead (door-knock / quick-mark) — converges on the portal (system of
+// record), carrying repCode so the portal's JN push routes it to the rep's
+// board (Holly default when unassigned). Mirrors the primary ADD LEAD path,
+// replacing the old write to the dead Postgres leads table.
 router.post('/', async (req, res) => {
-  if (!req.body.address) return res.status(400).json({ error: 'Address required' });
-  const lead = await createLead(req.body);
-  // Only sync retail leads to portal immediately
-  if (lead.jobCategory === 'retail') {
-    syncToPortal(lead).then(async jobId => {
-      if (jobId) await updateLead(lead.id, { portalJobId: jobId });
-    }).catch(() => {});
+  const b = req.body || {};
+  if (!b.address) return res.status(400).json({ error: 'Address required' });
+  const nameParts = String(b.homeowner || b.homeownerName || '').trim().split(' ').filter(Boolean);
+  const payload = {
+    address: b.address,
+    firstName: b.firstName || nameParts[0] || '',
+    lastName: b.lastName || nameParts.slice(1).join(' ') || '',
+    homeownerName: b.homeowner || b.homeownerName || '',
+    phone: b.phone || '',
+    email: b.email || '',
+    repCode: req.repCode || String(b.repCode || '').toUpperCase(),
+    jobCategory: b.jobCategory || 'insurance',
+    pipeline: b.jobCategory === 'retail' ? 'retail' : 'insurance',
+    stage: b.status || 'new_lead',
+    source: b.source || 'Door Knock',
+    lat: b.lat ?? null,
+    lng: b.lng ?? null,
+    notes: b.notes || '',
+  };
+  try {
+    const r = await fetch(`${PORTAL_URL}/api/hermes/job`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-hermes-secret': HERMES_SECRET },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      console.error('[Leads] portal create failed:', r.status, data);
+      return res.status(r.status).json({ error: 'Portal create failed', detail: data });
+    }
+    res.status(201).json({ success: true, id: data.jobId || data.id, job: data });
+  } catch (e) {
+    console.error('[Leads] door-knock portal create failed:', e.message);
+    res.status(500).json({ error: 'Failed to create lead' });
   }
-  res.status(201).json(lead);
 });
 
 // Update lead -- claim_filed triggers portal sync + orchestrator

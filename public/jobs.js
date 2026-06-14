@@ -80,10 +80,15 @@ async function loadJobs() {
   if (!el) return;
   el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray)">Loading jobs...</div>';
   try {
+    // Credential travels in the X-Field-Rep header (not the URL, which leaks to
+    // logs). Admins pass ?all=1 to see the whole company; everyone else is
+    // scoped to their own jobs server-side.
     const url = (typeof repRole !== 'undefined' && repRole === 'admin')
-      ? '/api/field/jobs'
-      : '/api/field/jobs?repCode=' + (typeof repCode !== 'undefined' ? repCode : '');
-    const jobs = await fetch(url).then(r => { if (!r.ok) throw new Error('Failed to load'); return r.json(); });
+      ? '/api/field/jobs?all=1'
+      : '/api/field/jobs';
+    const jobs = await fetch(url, {
+      headers: { 'X-Field-Rep': (typeof repCode !== 'undefined' ? repCode : '').toUpperCase() }
+    }).then(r => { if (!r.ok) throw new Error('Failed to load'); return r.json(); });
     _jobsCache = jobs;
     renderJobsList();
   } catch (e) {

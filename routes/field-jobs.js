@@ -16,11 +16,16 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-const { query } = require('../db/client');
 const _sandbox = require('../lib/sandbox');  // FIELD_SANDBOX=1: in-memory, no DB/portal. No-op in prod.
+const { requireRep } = require('../lib/authGate');
+const { isAdmin } = require('../lib/repCodes');
 
-const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
-const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
+// Fallback host is the LIVE dev portal (system of record), never the retired
+// -portal host. Hermes secret has no fallback — a missing secret fails portal
+// auth rather than writing under a guessable default.
+const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-dev.onrender.com';
+const HERMES_SECRET = process.env.HERMES_API_SECRET;
+const FIELD_APP_KEY = process.env.FIELD_APP_KEY || 'crc-field-2026';
 
 // Shared headers for portal calls
 const portalHeaders = {
@@ -37,72 +42,55 @@ async function portalFetch(path, opts = {}) {
   return { status: res.status, ok: res.ok, data };
 }
 
-// GET /api/field/jobs?repCode=MCG  — direct Postgres read
-// Bypasses the cookie-gated portal /api/jobs list endpoint that the May 6
-// auth tightening (commit 66cf033c) closed. Pulls cards from the shared
-// Postgres directly. The remaining proxy endpoints in this file still work
-// because they hit per-resource paths (/api/jobs/:id, /api/hermes/*) that
-// remain exempt from the cookie middleware.
-router.get('/', async (req, res) => {
-  if (_sandbox.enabled) return res.json(_sandbox.listJobs(req.query.repCode));
+// GET /api/field/jobs  — My Jobs, sourced from the LIVE portal (system of record).
+//
+// The Postgres `jobs` table is a frozen migration snapshot (last synced ~May 24)
+// and never receives app-created jobs, so it's no longer read here. Instead we
+// read the live portal /api/jobs list, which the portal filters to the rep's
+// own jobs. Access is gated server-side by requireRep (the real kill switch):
+// a deactivated rep is rejected even with a cached client session. Reps are
+// always scoped to their own repCode; only an admin asking for ?all=1 sees the
+// whole company.
+router.get('/', requireRep, async (req, res) => {
+  if (_sandbox.enabled) return res.json(_sandbox.listJobs(req.repCode));
   try {
-    const repCode = String(req.query.repCode || '').toUpperCase().trim();
+    const wantsAll = req.query.all === '1' || req.query.all === 'true';
+    const adminAll = wantsAll && isAdmin(req.repCode);
+    const targetRep = adminAll ? '' : req.repCode;   // non-admins always scoped to self
 
-    // Same shared SELECT for both filtered + unfiltered (admin) cases.
-    // metadata->>'repCode' is the legacy field the cards filter on. The
-    // first-class sales_rep_id FK isn't used here because the migration
-    // defaulted unassigned jobs to MCG, which would over-collect for him.
-    const baseSql = `
-      SELECT j.field_local_id, j.job_id, j.carrier, j.claim_number, j.job_type,
-             j.metadata, j.created_at, j.updated_at,
-             p.street_address, p.city, p.state, p.zip,
-             c.first_name, c.last_name, c.primary_phone
-        FROM jobs j
-        LEFT JOIN properties p ON p.property_id = j.property_id
-        LEFT JOIN customers c ON c.customer_id = j.customer_id`;
-    const filterSql = repCode
-      ? ` WHERE UPPER(COALESCE(j.metadata->>'repCode','')) = $1`
-      : '';
-    const orderSql = ` ORDER BY j.created_at DESC LIMIT 1000`;
-    const { rows } = await query(baseSql + filterSql + orderSql, repCode ? [repCode] : []);
+    const qs = targetRep ? ('?repCode=' + encodeURIComponent(targetRep)) : '';
+    const { ok, status, data } = await portalFetch('/api/jobs' + qs, {
+      headers: { 'x-field-app-key': FIELD_APP_KEY, 'x-field-rep': req.repCode }
+    });
+    if (!ok) return res.status(status).json({ error: 'Portal jobs fetch failed', detail: data });
 
+    const list = Array.isArray(data) ? data : (Array.isArray(data.jobs) ? data.jobs : []);
     const now = new Date();
-    const jobs = rows.map(row => {
-      const md = row.metadata || {};
-      const tasks = Array.isArray(md.tasks) ? md.tasks : [];
-      const jobNotes = Array.isArray(md.jobNotes) ? md.jobNotes : [];
-
-      // Migration historically wrote the full address into properties.street_address
-      // (street + city + state + zip as one string). Prefer the metadata copy when
-      // present — that's what the legacy portal returned to the field app.
-      const address = md.address || row.street_address || '';
-
-      const firstName = row.first_name || md.homeowner?.firstName || '';
-      const lastName  = row.last_name  || md.homeowner?.lastName  || '';
-      const phone     = row.primary_phone || md.homeowner?.phone || md.phone || '';
-      const homeownerName = md.homeownerName || `${firstName} ${lastName}`.trim();
-
+    const jobs = list.map(j => {
+      const tasks = Array.isArray(j.tasks) ? j.tasks : [];
+      const jobNotes = Array.isArray(j.jobNotes) ? j.jobNotes : [];
+      const ho = j.homeowner || {};
       return {
-        id: row.field_local_id || row.job_id,
-        address,
-        homeownerName,
-        homeowner: { firstName, lastName, phone },
-        phone,
-        pipeline: md.jobCategory || md.pipeline || row.job_type || 'insurance',
-        stage: md.stage || 'new_lead',
-        subStatus: md.subStatus || null,
-        carrier: row.carrier || md.carrier || '',
-        claimNumber: row.claim_number || md.claimNumber || '',
-        adjusterDate: md.adjusterDate || null,
-        repCode: md.repCode || '',
-        lastActivity: md.lastActivity || row.updated_at || row.created_at,
-        createdAt: row.created_at,
+        id: j.id,
+        address: j.address || '',
+        homeownerName: j.homeownerName || `${ho.firstName || ''} ${ho.lastName || ''}`.trim(),
+        homeowner: { firstName: ho.firstName || '', lastName: ho.lastName || '', phone: ho.phone || '' },
+        phone: ho.phone || j.phone || '',
+        pipeline: j.jobCategory || j.pipeline || 'insurance',
+        stage: j.stage || 'new_lead',
+        subStatus: j.subStatus || null,
+        carrier: j.carrier || '',
+        claimNumber: j.claimNumber || '',
+        adjusterDate: j.adjusterDate || (j.adjuster && j.adjuster.date) || null,
+        repCode: j.repCode || '',
+        lastActivity: j.lastActivity || j.updated_at || j.created_at,
+        createdAt: j.created_at || j.createdAt,
         openTasks: tasks.filter(t => !t.completed).length,
         overdueTasks: tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < now).length,
         noteCount: jobNotes.length,
-        photoCount: md.photos?.photoCount || (Array.isArray(md.simplePhotos) ? md.simplePhotos.length : 0),
-        estimateValue: md.estimateValue || null,
-        streetViewUrl: md.streetViewUrl || null,
+        photoCount: (j.photos && j.photos.photoCount) || (Array.isArray(j.simplePhotos) ? j.simplePhotos.length : 0),
+        estimateValue: j.estimateValue || null,
+        streetViewUrl: j.streetViewUrl || null,
       };
     });
 
@@ -113,7 +101,7 @@ router.get('/', async (req, res) => {
 
     res.json(jobs);
   } catch (e) {
-    console.error('[FieldJobs] GET / direct-pg error:', e?.stack || e?.message || e);
+    console.error('[FieldJobs] GET / portal-read error:', e?.message || e);
     res.status(500).json({ error: 'Failed to load jobs', detail: e?.message });
   }
 });

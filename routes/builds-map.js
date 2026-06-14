@@ -10,6 +10,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
+const { requireRep } = require('../lib/authGate');
 
 const DB_FILE = path.join(__dirname, '..', 'data', 'builds-db.json');
 const CSV_FILE = path.join(__dirname, '..', 'data', 'abc-deliveries.csv');
@@ -115,7 +116,7 @@ router.get('/pins', async (req, res) => {
 });
 
 // ── PATCH /api/builds-map/pins/:id ───────────────────────────────────
-router.patch('/pins/:id', async (req, res) => {
+router.patch('/pins/:id', requireRep, async (req, res) => {
   const db = readDb();
   const idx = db.pins.findIndex(p => p.id === req.params.id);
   if (idx < 0) return res.status(404).json({ error: 'Pin not found' });
@@ -128,7 +129,7 @@ router.patch('/pins/:id', async (req, res) => {
 });
 
 // ── POST /api/builds-map/pins (manual add) ───────────────────────────
-router.post('/pins', async (req, res) => {
+router.post('/pins', requireRep, async (req, res) => {
   const { address, name, shingleColor, notes } = req.body || {};
   if (!address || !String(address).trim()) return res.status(400).json({ error: 'address required' });
   const db = readDb();
@@ -188,7 +189,7 @@ async function geocodeBatch(pins, apiKey) {
 // ── POST /api/builds-map/geocode ─────────────────────────────────────
 // Geocodes up to 10 ungeocoded pins per call. Cache-first; pins already
 // geocoded or marked geocodeFailed are skipped.
-router.post('/geocode', async (req, res) => {
+router.post('/geocode', requireRep, async (req, res) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not set' });
 
@@ -204,7 +205,7 @@ router.post('/geocode', async (req, res) => {
 // ── POST /api/builds-map/geocode-all ─────────────────────────────────
 // Batches through ALL ungeocoded pins (10 per API call, 1s between batches).
 // Keeps going until nothing is left or all remaining are marked failed.
-router.post('/geocode-all', async (req, res) => {
+router.post('/geocode-all', requireRep, async (req, res) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GOOGLE_MAPS_API_KEY not set' });
 

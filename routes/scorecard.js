@@ -15,6 +15,11 @@ try { ({ query } = require('../db/client')); } catch { /* sandbox: no PG */ }
 
 const { listRepCodes, refreshRepCodes, repCacheStatus } = require('../lib/repCodes');
 const { read } = require('../lib/store');
+const { requireRep } = require('../lib/authGate');
+
+// Every scorecard route requires a valid, active rep (server-side kill switch).
+// repOf() still reads the rep for row scoping; requireRep enforces it's active.
+router.use(requireRep);
 
 const METRICS = ['talk_tos', 'inspections_ran', 'sales_appts', 'claims_filed', 'approvals'];
 const GOALS = { talk_tos: 20 }; // only Talk Tos has a target for now

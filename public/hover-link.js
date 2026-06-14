@@ -4,12 +4,10 @@
  * (see HOVER_SPRINT_FINDINGS.md). Best we can do:
  *   1. Copy address+name to clipboard so rep can paste into Hover.
  *   2. Try custom scheme hover:// to open the iOS app.
- *   3. Fall back to https://hover.to if the scheme doesn't fire.
- *   4. Toast an App Store link if iOS blocks the attempt.
+ *   3. If the scheme doesn't fire, toast an App Store link (never hover.to web).
  */
 
 var HOVER_SCHEME = 'hover://';
-var HOVER_WEB = 'https://hover.to';
 var HOVER_APPSTORE = 'https://apps.apple.com/us/app/hover-design-measure/id942568673';
 
 function hoverHomeownerName(job) {
@@ -38,7 +36,6 @@ function buildHoverClipboardText(job) {
 function hoverLaunchTargets() {
   return {
     scheme: HOVER_SCHEME,
-    fallback: HOVER_WEB,
     appStore: HOVER_APPSTORE,
   };
 }
@@ -73,7 +70,7 @@ function openHoverForJob(job) {
     navigator.clipboard.writeText(paste).catch(function () { /* silent */ });
   }
 
-  console.log('[hover-link] scheme=%s fallback=%s paste=%o', targets.scheme, targets.fallback, paste);
+  console.log('[hover-link] scheme=%s appStore=%s paste=%o', targets.scheme, targets.appStore, paste);
 
   var start = Date.now();
   var fired = false;
@@ -81,9 +78,11 @@ function openHoverForJob(job) {
   function fallback() {
     if (fired) return;
     fired = true;
+    // Never route reps to hover.to web. If the scheme didn't fire, the Hover
+    // app isn't installed — offer the App Store. Address + name are already on
+    // the clipboard for paste-in.
     if (!document.hidden && Date.now() - start < 2500) {
-      console.log('[hover-link] scheme did not fire; opening web fallback');
-      window.location.href = targets.fallback;
+      _hoverToast('Open the Hover app to start your capture.', targets.appStore, 'Get Hover');
     }
   }
 

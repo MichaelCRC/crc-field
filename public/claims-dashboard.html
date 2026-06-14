@@ -129,6 +129,23 @@
   <div class="stats-grid" id="weekly"></div>
 </div>
 <script>
+// Standalone page (no app.js). Attach the rep credential header from the
+// shared same-origin localStorage so gated APIs (claims-dashboard requires a
+// leader) authenticate. Viewer must have logged into the field app first.
+(function () {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    init = init || {};
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.startsWith('/api/') || url.startsWith('api/')) {
+      const headers = new Headers(init.headers || {});
+      const rc = (localStorage.getItem('crc-rep-code') || '').toUpperCase();
+      if (rc && !headers.has('X-Field-Rep')) headers.set('X-Field-Rep', rc);
+      init.headers = headers;
+    }
+    return _origFetch(input, init);
+  };
+})();
 // v3.1 Bug #6 softening (2026-06-01): JN snapshot only carries
 // amount_to_be_paid for ~5% of jobs. Show em-dash for $0 rows so
 // the leaderboard doesn't lie about zero revenue. Total Value card

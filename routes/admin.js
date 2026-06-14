@@ -1,15 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { getDataCore, listLeads, listZones, createZone, read, write } = require('../lib/store');
-const { isAdmin, listRepCodes } = require('../lib/repCodes');
+const { listRepCodes } = require('../lib/repCodes');
 const { defaultChat } = require('../lib/autoPost');
 const { analyze, formatReport } = require('../lib/systemIntelligence');
-
-function requireAdmin(req, res, next) {
-  const code = (req.headers['x-rep-code'] || req.query.repCode || '').toUpperCase();
-  if (!isAdmin(code)) return res.status(403).json({ error: 'Admin access required' });
-  next();
-}
+// Shared gate: reads x-field-rep (the app-wide header) as well as the legacy
+// x-rep-code / ?repCode= the admin client sends, and validates active+admin.
+const { requireAdmin } = require('../lib/authGate');
 
 // Data core
 router.get('/data-core', requireAdmin, (req, res) => res.json(getDataCore()));
@@ -168,8 +165,8 @@ router.post('/intelligence', requireAdmin, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Zones
-router.get('/zones', async (req, res) => res.json(listZones()));
-router.post('/zones', async (req, res) => { res.status(201).json(createZone(req.body)); });
+// Zones — gated like every other admin route (was the one open pair).
+router.get('/zones', requireAdmin, async (req, res) => res.json(listZones()));
+router.post('/zones', requireAdmin, async (req, res) => { res.status(201).json(createZone(req.body)); });
 
 module.exports = router;

@@ -88,6 +88,10 @@
   window.__fcIssuePick = function (btn) { btn.closest('.crc-issue-types').querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); };
   window.__fcIssuePri = function (btn) { btn.closest('.crc-issue-priority').querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); };
   window.__fcIssueClose = close;
+  // FAB "Bug" button + More menu call reportBug() — wire it to the reporter.
+  // Submits to the portal /api/issues, which fires a live Telegram alert to
+  // Michael's home channel (approve/defer/wontfix buttons) during shakedown.
+  window.reportBug = open;
   window.__fcIssueSubmit = async function (submitBtn) {
     const o = document.getElementById('crc-issue-overlay'); if (!o) return;
     const type = (o.querySelector('.crc-issue-types .on') || {}).dataset?.type || 'broken';

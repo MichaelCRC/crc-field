@@ -1,4 +1,29 @@
 /* CRC Field Intel -- Mobile Frontend */
+
+// Attach the rep credential as a header (X-Field-Rep) to every same-origin
+// /api/ request, so the server can enforce the kill switch (active=FALSE locks
+// a rep out of the endpoints, not just the UI) and the credential stays out of
+// the URL/query string. Cross-origin portal calls (https://…) are untouched —
+// they carry their own auth.
+(function () {
+  if (window.__fieldFetchPatched) return;
+  window.__fieldFetchPatched = true;
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    init = init || {};
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.startsWith('/api/') || url.startsWith('api/')) {
+      const headers = new Headers(init.headers || (typeof input !== 'string' && input.headers) || {});
+      if (!headers.has('X-Field-Rep')) {
+        const rc = (localStorage.getItem('crc-rep-code') || '').toUpperCase();
+        if (rc) headers.set('X-Field-Rep', rc);
+      }
+      init.headers = headers;
+    }
+    return _origFetch(input, init);
+  };
+})();
+
 let repCode = localStorage.getItem('crc-rep-code') || '';
 let repName = localStorage.getItem('crc-rep-name') || '';
 let repRole = localStorage.getItem('crc-rep-role') || '';

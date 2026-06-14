@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { read, write } = require('../lib/store');
+const { requireRep } = require('../lib/authGate');
+
+// All referral routes require a valid, active rep (server-side kill switch).
+router.use(requireRep);
 
 const FILE = 'referrals.json';
 

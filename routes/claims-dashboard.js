@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const { listProducingRepCodes, refreshRepCodes, repCacheStatus } = require('../lib/repCodes');
+const { requireLeader } = require('../lib/authGate');
 
 // Try multiple paths: local dev path, then bundled data path
 const JN_PATHS = [
@@ -125,7 +126,7 @@ function buildDashboard() {
 }
 
 // API endpoint
-router.get('/', async (req, res) => {
+router.get('/', requireLeader, async (req, res) => {
   // Pre-warm rep cache on cold boot so the by_rep filter doesn't see
   // an empty cache (which would drop every rep from the leaderboard).
   if (!repCacheStatus().loaded) await refreshRepCodes();

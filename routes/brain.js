@@ -4,8 +4,10 @@ const { read, write } = require('../lib/store');
 const { buildPrompt } = require('../lib/brainContext');
 const { isAdmin } = require('../lib/repCodes');
 const _sandbox = require('../lib/sandbox');
-const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-portal.onrender.com';
-const HERMES_SECRET = process.env.HERMES_API_SECRET || 'crc-hermes-2026';
+// Fallback host is the LIVE dev portal, never the retired -portal host.
+// Hermes secret has no fallback — a missing secret fails portal auth.
+const PORTAL_URL = process.env.SUPPLEMENT_PORTAL_URL || 'https://crc-supplements-dev.onrender.com';
+const HERMES_SECRET = process.env.HERMES_API_SECRET;
 
 const HISTORY_FILE = 'brain-chats.json';
 
